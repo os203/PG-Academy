@@ -30,7 +30,7 @@ export default function RootLayout({
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <AuthProvider>
             <Navbar />
-            <main className="flex-grow pt-20 flex flex-col">
+            <main className="grow pt-20 flex flex-col">
               {children}
             </main>
             <Footer />

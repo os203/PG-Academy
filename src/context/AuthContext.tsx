@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 
 export interface User {
   id: string;
@@ -24,6 +24,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
+  const pathname = usePathname();
 
   const silentRefresh = async () => {
     try {
@@ -37,14 +38,38 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } catch (error) {
       console.error('Silent refresh failed', error);
       setUser(null);
-    } finally {
-      setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    silentRefresh();
-  }, []);
+    let isMounted = true;
+
+    const doInitialRefresh = async () => {
+      setIsLoading(true);
+      try {
+        const res = await fetch('/api/auth/refresh', { method: 'POST' });
+        if (res.ok) {
+          const data = await res.json();
+          if (isMounted) setUser(data.user);
+        } else {
+          if (isMounted) setUser(null);
+        }
+      } catch (error) {
+        console.error('Initial auth fetch failed', error);
+        if (isMounted) setUser(null);
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    doInitialRefresh();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [pathname]);
 
   useEffect(() => {
     if (!user) return;

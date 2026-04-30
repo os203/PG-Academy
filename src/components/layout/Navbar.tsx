@@ -14,8 +14,8 @@ export default function Navbar() {
     <nav className="fixed top-0 w-full z-50 glass">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-20 items-center">
-          <div className="flex-shrink-0 flex items-center gap-2 hover-lift">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-accent to-brand-primary flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-brand-accent/20">
+          <div className="shrink-0 flex items-center gap-2 hover-lift">
+            <div className="w-10 h-10 rounded-xl bg-linear-to-br from-brand-accent to-brand-primary flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-brand-accent/20">
               P
             </div>
             <Link href="/" className="font-bold text-2xl tracking-tight text-foreground">
