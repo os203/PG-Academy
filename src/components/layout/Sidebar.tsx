@@ -8,12 +8,22 @@ import { useAuth } from '@/context/AuthContext';
 export default function Sidebar() {
     const [open, setOpen] = useState(false);
     const { user } = useAuth();
+    const [isMobile, setIsMobile] = useState(false);
 
+    // Detect screen
+    useEffect(() => {
+        const handleResize = () => {
+            setIsMobile(window.innerWidth < 768);
+        };
+        handleResize();
+        window.addEventListener("resize", handleResize);
+        return () => window.removeEventListener("resize", handleResize);
+    }, []);
 
 
     //Preventing Scroll on Mobile
     useEffect(() => {
-        if (window.innerWidth < 768) {
+        if (isMobile) {
             document.body.style.overflow = open ? "hidden" : "auto";
         }
     }, [open]);
@@ -30,10 +40,10 @@ export default function Sidebar() {
 
 
     return (
-        <div className="flex min-h-screen min-w-14 bg-background flex-col items-center justify-center border-r-[1px] border-gray-700 pl-4">
+        <div className={`${!isMobile ?"flex min-h-screen min-w-14 bg-background flex-col items-center justify-center border-r-[1px] border-gray-700 pl-4" : ""}`}>
             <button
                 onClick={() => setOpen(!open)}
-                className={`fixed top-4 transition-all duration-300 ${open ? "left-52 md:left-60 top-6" : "py-2 left-4"} z-100  cursor-pointer text-foreground/80 hover:text-brand-accent transition-colors hover:bg-secondary  rounded-md hover:-translate-y-0.5`}
+                className={`fixed top-4 transition-all duration-300 ${open ? "left-52 md:left-60 top-6" : "py-2 left-4"} z-100  cursor-pointer text-foreground/80 hover:text-brand-accent transition-colors  rounded-md hover:-translate-y-0.5`}
             >
                 {open ? <PanelLeftClose /> : <PanelRightClose />}
             </button>
@@ -49,7 +59,7 @@ export default function Sidebar() {
             {/* Sidebar */}
             <aside
                 className={`bg-background text-foreground/80 h-screen z-50 transition-all duration-300 ease-in-out border-r-[1px] border-gray-700
-                fixed top-0 left-0 ${open ? "translate-x-0 -translate-y-8" : "-translate-x-full"} md:static md:translate-x-0 w-64 max-w-xs sm:w-64 md:w-72 ${!open ? "md:hidden" : "md:block"}
+                fixed top-0 left-0 ${open ? "translate-x-0 -translate-y-9" : "-translate-x-full"} md:static md:translate-x-0 w-64 max-w-xs sm:w-64 md:w-72 ${isMobile ? "top-8": ''} ${!open ? "md:hidden" : "md:block"}
                 `}>
                 <div className=" flex items-center gap-2 p-5 text-lg font-bold border-b border-gray-700">
 
@@ -83,7 +93,7 @@ export default function Sidebar() {
                         <Settings />
                         <span className="ml-2">Sitting</span>
                     </a>
-                    
+
                 </nav>
             </aside>
         </div>
