@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import { Outfit, Geist } from "next/font/google";
 import "./globals.css";
-import Navbar from "@/components/layout/Navbar";
-import Footer from "@/components/layout/Footer";
 import { cn } from "@/lib/utils";
 import { AuthProvider } from "@/context/AuthContext";
 import { ThemeProvider } from "@/components/ThemeProvider";
@@ -29,11 +27,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col selection:bg-brand-accent selection:text-white transition-colors duration-300">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <AuthProvider>
-            <Navbar />
-            <main className="flex-grow pt-20 flex flex-col">
               {children}
-            </main>
-            <Footer />
           </AuthProvider>
         </ThemeProvider>
       </body>

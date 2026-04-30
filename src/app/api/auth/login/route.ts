@@ -3,6 +3,7 @@ import { db } from '@/lib/db';
 import { comparePasswords, signAccessToken, signRefreshToken } from '@/lib/auth';
 import { loginSchema } from '@/lib/validations/auth'; 
 
+
 export async function POST(req: Request) {
   try {
     const body = await req.json();
@@ -56,11 +57,13 @@ export async function POST(req: Request) {
       },
     });
 
+    const isSecureEnv = process.env.NODE_ENV === 'production' && process.env.REQUIRE_HTTPS === 'true';
+
     response.cookies.set({
       name: 'token',
       value: accessToken,
       httpOnly: true,
-      secure: true,
+      secure: isSecureEnv,
       sameSite: 'lax',
       path: '/',
       maxAge: 15 * 60, // 15 minutes
@@ -70,7 +73,7 @@ export async function POST(req: Request) {
       name: 'refresh_token',
       value: refreshToken,
       httpOnly: true,
-      secure: true,
+      secure: isSecureEnv,
       sameSite: 'lax',
       path: '/',
       maxAge: 7 * 24 * 60 * 60,

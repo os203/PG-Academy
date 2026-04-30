@@ -62,7 +62,7 @@ export async function POST(req: Request) {
       name: 'token',
       value: accessToken,
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: process.env.NODE_ENV === 'production' && process.env.REQUIRE_HTTPS === 'true',
       sameSite: 'lax',
       path: '/',
       maxAge: 15 * 60, // 15 minutes
@@ -72,7 +72,7 @@ export async function POST(req: Request) {
       name: 'refresh_token',
       value: refreshToken,
       httpOnly: true, 
-      secure: process.env.NODE_ENV === 'production',
+      secure: process.env.NODE_ENV === 'production' && process.env.REQUIRE_HTTPS === 'true',
       sameSite: 'lax',
       path: '/',
       maxAge: 7 * 24 * 60 * 60, // 7 days

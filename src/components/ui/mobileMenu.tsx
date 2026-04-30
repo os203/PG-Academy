@@ -2,11 +2,13 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { Menu, X } from "lucide-react";
+import { Menu, X, LayoutDashboard } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
+import { useAuth } from '@/context/AuthContext';
 
 export default function MobileMenu() {
     const [isOpen, setIsOpen] = useState(false);
+    const { user } = useAuth();
     const menuRef = useRef<HTMLDivElement>(null);
 
     // Close when pressed outside the menu
@@ -80,17 +82,29 @@ export default function MobileMenu() {
                         About
                     </Link>
 
-                    <Link href="/login" onClick={() => setIsOpen(false)} className="hover:text-brand-accent">
-                        Sign In
-                    </Link>
-
-                    <Link
-                        href="/register"
-                        onClick={() => setIsOpen(false)}
-                        className="bg-brand-primary text-white px-5 py-2 rounded-full text-center"
-                    >
-                        Get Started
-                    </Link>
+                    {user ? (
+                        <Link
+                            href="/dashboard"
+                            onClick={() => setIsOpen(false)}
+                            className="bg-brand-primary/10 text-brand-primary hover:bg-brand-primary/20 px-5 py-3 rounded-xl flex items-center gap-3 font-medium transition-colors"
+                        >
+                            <LayoutDashboard size={20} />
+                            Dashboard
+                        </Link>
+                    ) : (
+                        <>
+                            <Link href="/login" onClick={() => setIsOpen(false)} className="hover:text-brand-accent">
+                                Sign In
+                            </Link>
+                            <Link
+                                href="/register"
+                                onClick={() => setIsOpen(false)}
+                                className="bg-brand-primary text-white px-5 py-2 rounded-full text-center"
+                            >
+                                Get Started
+                            </Link>
+                        </>
+                    )}
 
                 </div>
             </div>
