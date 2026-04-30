@@ -6,11 +6,11 @@ import { Button } from "@/components/ui/button";
 import { motion, Variants } from "framer-motion";
 import AnimatedTabs from "@/components/forgeui/animated-tabs";
 import { NotificationList, NotificationItem } from "@/components/animate-ui/components/community/notification-list";
-import StripedRowsTable from "@/components/ui/StripedRowsTable";
+import StripedRowsTable, { Course } from "@/components/ui/StripedRowsTable";
 import { RevenueChart } from "@/components/ui/RevenueChart";
 import { Users, BookOpen, Wallet, Activity, Plus, Megaphone, AlertCircle, MessageSquare, CheckSquare, ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 const containerVariants: Variants = {
   hidden: { opacity: 0 },
@@ -55,12 +55,102 @@ const instructorNotifications: NotificationItem[] = [
 export default function InstructorDashboard() {
   const { user, isLoading } = useAuth();
   const router = useRouter();
+  
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [loadingCourses, setLoadingCourses] = useState(true);
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [editingCourse, setEditingCourse] = useState<Course | null>(null);
+
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [price, setPrice] = useState("");
+
+  const fetchCourses = async () => {
+    try {
+      const res = await fetch("/api/courses", { cache: "no-store" });
+      if (res.ok) {
+        const data = await res.json();
+        setCourses(Array.isArray(data?.courses) ? data.courses : []);
+      }
+    } catch (error) {
+      console.error(error);
+      setCourses([]);
+    } finally {
+      setLoadingCourses(false);
+    }
+  };
 
   useEffect(() => {
     if (!isLoading && !user) {
       router.push('/login');
     }
   }, [user, isLoading, router]);
+
+  useEffect(() => {
+    if (user) {
+      void fetchCourses();
+    }
+  }, [user]);
+
+  const handleCreateCourse = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const res = await fetch("/api/courses", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title, description, price: parseFloat(price) || 0 }),
+      });
+      if (res.ok) {
+        setShowCreateForm(false);
+        setTitle("");
+        setDescription("");
+        setPrice("");
+        await fetchCourses();
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handleEditCourse = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingCourse) return;
+    try {
+      const res = await fetch(`/api/courses/${editingCourse.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title, description, price: parseFloat(price) || 0 }),
+      });
+      if (res.ok) {
+        setEditingCourse(null);
+        setTitle("");
+        setDescription("");
+        setPrice("");
+        await fetchCourses();
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const deleteCourse = async (id: string) => {
+    const confirmed = window.confirm("Are you sure you want to delete this course?");
+    if (!confirmed) return;
+    try {
+      const res = await fetch(`/api/courses/${id}`, { method: "DELETE" });
+      if (res.ok) await fetchCourses();
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const openEditModal = (course: Course) => {
+    setEditingCourse(course);
+    setTitle(course.title);
+    setDescription(course.description);
+    setPrice(course.price.toString());
+    setShowCreateForm(false);
+  };
 
   if (isLoading) {
     return (
@@ -103,7 +193,7 @@ export default function InstructorDashboard() {
             <Button variant="outline" className="hidden sm:flex items-center gap-2">
               <Megaphone className="h-4 w-4" /> Announce
             </Button>
-            <Button className="flex items-center gap-2 bg-brand-primary hover:bg-brand-primary/90 text-white w-full sm:w-auto">
+            <Button onClick={() => { setShowCreateForm(true); setEditingCourse(null); setTitle(""); setDescription(""); setPrice(""); }} className="flex items-center gap-2 bg-brand-primary hover:bg-brand-primary/90 text-white w-full sm:w-auto">
               <Plus className="h-4 w-4" /> Create Course
             </Button>
           </div>
@@ -179,6 +269,61 @@ export default function InstructorDashboard() {
           </Card>
         </motion.div>
 
+        {/* Create / Edit Form Overlay */}
+        {(showCreateForm || editingCourse) && (
+          <motion.div variants={itemVariants}>
+            <Card className="border-brand-primary/50 shadow-lg relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-brand-primary to-brand-accent"></div>
+              <CardHeader>
+                <CardTitle>{editingCourse ? "Edit Course" : "Create a New Course"}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={editingCourse ? handleEditCourse : handleCreateCourse} className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-foreground">Course Title</label>
+                    <input 
+                      type="text" 
+                      required 
+                      value={title} 
+                      onChange={(e) => setTitle(e.target.value)} 
+                      className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-foreground">Description</label>
+                    <textarea 
+                      required 
+                      value={description} 
+                      onChange={(e) => setDescription(e.target.value)} 
+                      className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary min-h-[100px]"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-foreground">Price ($)</label>
+                    <input 
+                      type="number" 
+                      min="0" 
+                      step="0.01" 
+                      required 
+                      value={price} 
+                      onChange={(e) => setPrice(e.target.value)} 
+                      className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                    />
+                  </div>
+                  <div className="flex justify-end gap-3 pt-4">
+                    <Button type="button" variant="outline" onClick={() => { setShowCreateForm(false); setEditingCourse(null); setTitle(""); setDescription(""); setPrice(""); }}>
+                      Cancel
+                    </Button>
+                    <Button type="submit" className="bg-brand-primary text-white hover:bg-brand-primary/90">
+                      {editingCourse ? "Save Changes" : "Create Course"}
+                    </Button>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+
         {/* Main Content Split */}
         <motion.div variants={itemVariants} className="grid grid-cols-1 xl:grid-cols-3 gap-8">
           
@@ -193,7 +338,11 @@ export default function InstructorDashboard() {
             </div>
             
             <div className="bg-background rounded-xl shadow-sm overflow-hidden">
-              <StripedRowsTable />
+              {loadingCourses ? (
+                <div className="p-8 text-center text-muted-foreground animate-pulse">Loading courses...</div>
+              ) : (
+                <StripedRowsTable courses={courses} onEdit={openEditModal} onDelete={deleteCourse} />
+              )}
             </div>
           </div>
 
