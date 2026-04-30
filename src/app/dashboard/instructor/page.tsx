@@ -269,59 +269,65 @@ export default function InstructorDashboard() {
           </Card>
         </motion.div>
 
-        {/* Create / Edit Form Overlay */}
+        {/* Create / Edit Form Modal */}
         {(showCreateForm || editingCourse) && (
-          <motion.div variants={itemVariants}>
-            <Card className="border-brand-primary/50 shadow-lg relative overflow-hidden">
-              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-brand-primary to-brand-accent"></div>
-              <CardHeader>
-                <CardTitle>{editingCourse ? "Edit Course" : "Create a New Course"}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={editingCourse ? handleEditCourse : handleCreateCourse} className="space-y-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-foreground">Course Title</label>
-                    <input 
-                      type="text" 
-                      required 
-                      value={title} 
-                      onChange={(e) => setTitle(e.target.value)} 
-                      className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-foreground">Description</label>
-                    <textarea 
-                      required 
-                      value={description} 
-                      onChange={(e) => setDescription(e.target.value)} 
-                      className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary min-h-[100px]"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-foreground">Price ($)</label>
-                    <input 
-                      type="number" 
-                      min="0" 
-                      step="0.01" 
-                      required 
-                      value={price} 
-                      onChange={(e) => setPrice(e.target.value)} 
-                      className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
-                    />
-                  </div>
-                  <div className="flex justify-end gap-3 pt-4">
-                    <Button type="button" variant="outline" onClick={() => { setShowCreateForm(false); setEditingCourse(null); setTitle(""); setDescription(""); setPrice(""); }}>
-                      Cancel
-                    </Button>
-                    <Button type="submit" className="bg-brand-primary text-white hover:bg-brand-primary/90">
-                      {editingCourse ? "Save Changes" : "Create Course"}
-                    </Button>
-                  </div>
-                </form>
-              </CardContent>
-            </Card>
-          </motion.div>
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="w-full max-w-lg"
+            >
+              <Card className="border-brand-primary/50 shadow-2xl relative overflow-hidden bg-background">
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-brand-primary to-brand-accent"></div>
+                <CardHeader>
+                  <CardTitle>{editingCourse ? "Edit Course" : "Create a New Course"}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={editingCourse ? handleEditCourse : handleCreateCourse} className="space-y-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-foreground">Course Title</label>
+                      <input 
+                        type="text" 
+                        required 
+                        value={title} 
+                        onChange={(e) => setTitle(e.target.value)} 
+                        className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-foreground">Description</label>
+                      <textarea 
+                        required 
+                        value={description} 
+                        onChange={(e) => setDescription(e.target.value)} 
+                        className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary min-h-[100px]"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-foreground">Price ($)</label>
+                      <input 
+                        type="number" 
+                        min="0" 
+                        step="0.01" 
+                        required 
+                        value={price} 
+                        onChange={(e) => setPrice(e.target.value)} 
+                        className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                      />
+                    </div>
+                    <div className="flex justify-end gap-3 pt-4">
+                      <Button type="button" variant="outline" onClick={() => { setShowCreateForm(false); setEditingCourse(null); setTitle(""); setDescription(""); setPrice(""); }}>
+                        Cancel
+                      </Button>
+                      <Button type="submit" className="bg-brand-primary text-white hover:bg-brand-primary/90">
+                        {editingCourse ? "Save Changes" : "Create Course"}
+                      </Button>
+                    </div>
+                  </form>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </div>
         )}
 
         {/* Main Content Split */}
