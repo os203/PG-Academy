@@ -83,7 +83,7 @@ export default function AboutPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
         >
-          <h1 className="text-5xl md:text-7xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-white/70 drop-shadow-sm">
+          <h1 className="text-5xl md:text-7xl font-bold tracking-tight bg-clip-text text-transparent bg-linear-to-r from-white to-white/70 drop-shadow-sm">
             Our Story
           </h1>
           <p className="text-xl md:text-2xl font-medium text-brand-accent/90">
@@ -152,7 +152,7 @@ export default function AboutPage() {
                 </div>
                 <h3 className="text-3xl font-bold">Our Mission</h3>
                 <p className="text-muted-foreground leading-relaxed text-lg">
-                  At PG Studios, we're passionate storytellers on a mission to bring the magic of video to every corner of the globe, with a special spotlight on the beauty of the Arabic language. Through our vibrant brands and stories that touch the heart, we aim to stand out and make a mark. We're all about crafting animated adventures that not only wow audiences around the world but also inspire our young viewers to dream big.
+                  At PG Studios, we&apos;re passionate storytellers on a mission to bring the magic of video to every corner of the globe, with a special spotlight on the beauty of the Arabic language. Through our vibrant brands and stories that touch the heart, we aim to stand out and make a mark. We&apos;re all about crafting animated adventures that not only wow audiences around the world but also inspire our young viewers to dream big.
                 </p>
               </CardContent>
             </Card>
@@ -168,7 +168,7 @@ export default function AboutPage() {
                 </div>
                 <h3 className="text-3xl font-bold">Our Vision</h3>
                 <p className="text-muted-foreground leading-relaxed text-lg">
-                  To be the Walt Disney of the Arab world! We see a horizon filled with tales that echo the laughter and wisdom of our vibrant culture, touching every young heart. With each story we craft, our vision is to guide, inspire, and light up the path for our youngsters. As we shape their today with tales of wonder, we're also dreaming and building a brighter, hopeful tomorrow for our entire region.
+                  To be the Walt Disney of the Arab world! We see a horizon filled with tales that echo the laughter and wisdom of our vibrant culture, touching every young heart. With each story we craft, our vision is to guide, inspire, and light up the path for our youngsters. As we shape their today with tales of wonder, we&apos;re also dreaming and building a brighter, hopeful tomorrow for our entire region.
                 </p>
               </CardContent>
             </Card>
