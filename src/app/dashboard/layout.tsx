@@ -8,15 +8,20 @@ export default function DashboardLayout({ children }: Readonly<{ children: React
     const [open, setOpen] = useState(false);
 
     return (
-        <div className="h-full flex">
+        <div className="flex h-screen overflow-hidden">
             <Sidebar />
-            <div className="flex-1">
-                <DashboardNavbar />
-                <div className="flex-1 bg-green-500">
+
+            <div className="flex flex-col flex-1">
+
+                <div className="sticky top-0 z-30">
+                    <DashboardNavbar />
+                </div>
+                <div className="flex-1 overflow-y-auto bg-foreground">
                     {children}
                 </div>
+
+            </div>
             </div>
 
-        </div>
-    )
+            )
 }
