@@ -60,6 +60,17 @@ export async function GET() {
                         watchedPercent: true,
                       },
                     },
+                    quizzes: {
+                      include: {
+                        attempts: {
+                          where: { userId: currentUser.id },
+                          orderBy: { createdAt: "desc" },
+                          select: {
+                            passed: true,
+                          },
+                        },
+                      },
+                    },
                   },
                 },
               },
@@ -82,11 +93,11 @@ export async function GET() {
         const totalLessons = allLessons.length;
 
         const completedLessons = allLessons.filter((lesson) => {
-          const lessonProgress = lesson.progress[0];
-          return (
-            (lessonProgress?.watchedPercent ?? 0) >=
-            LESSON_COMPLETE_THRESHOLD
-          );
+          const watchedPercent = lesson.progress[0]?.watchedPercent ?? 0;
+          const quiz = lesson.quizzes[0];
+          const quizPassed = quiz ? quiz.attempts.some((a) => a.passed) : true;
+
+          return watchedPercent >= LESSON_COMPLETE_THRESHOLD && quizPassed;
         }).length;
 
         const progressPercentage =

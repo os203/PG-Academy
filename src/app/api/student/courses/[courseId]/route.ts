@@ -15,6 +15,11 @@ interface StudentLessonResponse {
   lastPosition: number;
   isCompleted: boolean;
   isUnlocked: boolean;
+  quizId: string | null;
+  hasQuiz: boolean;
+  quizPassed: boolean;
+  attemptCount: number;
+  latestScore: number | null;
 }
 
 interface StudentModuleResponse {
@@ -87,6 +92,19 @@ export async function GET(
                     lastPosition: true,
                   },
                 },
+                quizzes: {
+                  orderBy: { createdAt: "desc" },
+                  include: {
+                    attempts: {
+                      where: { userId: currentUser.id },
+                      orderBy: { createdAt: "desc" },
+                      select: {
+                        score: true,
+                        passed: true,
+                      },
+                    },
+                  },
+                },
               },
             },
           },
@@ -98,7 +116,7 @@ export async function GET(
       return NextResponse.json({ error: "Course not found" }, { status: 404 });
     }
 
-    let previousLessonCompleted = true;
+    let previousLessonSatisfied = true;
     let completedLessons = 0;
     let totalLessons = 0;
 
@@ -107,10 +125,19 @@ export async function GET(
         const lessonProgress = lesson.progress[0];
         const watchedPercent = lessonProgress?.watchedPercent ?? 0;
         const lastPosition = lessonProgress?.lastPosition ?? 0;
-        const isCompleted = watchedPercent >= LESSON_COMPLETE_THRESHOLD;
+
+        const quiz = lesson.quizzes[0] ?? null;
+        const hasQuiz = Boolean(quiz);
+        const quizPassed = quiz ? quiz.attempts.some((a) => a.passed) : false;
+        const attemptCount = quiz ? quiz.attempts.length : 0;
+        const latestScore = quiz?.attempts[0]?.score ?? null;
+
+        const isCompleted =
+          watchedPercent >= LESSON_COMPLETE_THRESHOLD &&
+          (!hasQuiz || quizPassed);
 
         const isFirstLessonInCourse = totalLessons === 0 && index === 0;
-        const isUnlocked = isFirstLessonInCourse ? true : previousLessonCompleted;
+        const isUnlocked = isFirstLessonInCourse ? true : previousLessonSatisfied;
 
         totalLessons += 1;
 
@@ -118,7 +145,7 @@ export async function GET(
           completedLessons += 1;
         }
 
-        previousLessonCompleted = isCompleted;
+        previousLessonSatisfied = isCompleted;
 
         return {
           id: lesson.id,
@@ -130,6 +157,11 @@ export async function GET(
           lastPosition,
           isCompleted,
           isUnlocked,
+          quizId: quiz?.id ?? null,
+          hasQuiz,
+          quizPassed,
+          attemptCount,
+          latestScore,
         };
       });
 

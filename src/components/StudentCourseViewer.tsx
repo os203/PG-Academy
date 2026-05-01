@@ -9,6 +9,7 @@ import {
   PlayCircle,
   Save,
 } from "lucide-react";
+import StudentQuizPanel from "@/components/StudentQuizPanel";
 
 interface StudentLesson {
   id: string;
@@ -20,6 +21,11 @@ interface StudentLesson {
   lastPosition: number;
   isCompleted: boolean;
   isUnlocked: boolean;
+  quizId: string | null;
+  hasQuiz: boolean;
+  quizPassed: boolean;
+  attemptCount: number;
+  latestScore: number | null;
 }
 
 interface StudentModule {
@@ -36,11 +42,6 @@ interface StudentCourseResponse {
   overallProgress?: number;
   modules?: StudentModule[];
   error?: string;
-}
-
-interface ApiMessageResponse {
-  error?: string;
-  message?: string;
 }
 
 interface ProgressSaveResponse {
@@ -128,14 +129,12 @@ export default function StudentCourseViewer({
 
       const stillExists = allLessons.some((lesson) => lesson.id === selectedLessonId);
 
-      if (stillExists) {
-        return;
+      if (!stillExists) {
+        const firstUnlockedLesson =
+          allLessons.find((lesson) => lesson.isUnlocked) || allLessons[0];
+
+        setSelectedLessonId(firstUnlockedLesson.id);
       }
-
-      const firstUnlockedLesson =
-        allLessons.find((lesson) => lesson.isUnlocked) || allLessons[0];
-
-      setSelectedLessonId(firstUnlockedLesson.id);
     } catch (error) {
       console.error(error);
       setCourse(null);
@@ -274,9 +273,20 @@ export default function StudentCourseViewer({
                               <p className="font-semibold text-sm truncate">
                                 {lessonIndex + 1}. {lesson.title}
                               </p>
-                              <p className="text-xs text-gray-500 mt-1">
-                                التقدم: {lesson.watchedPercent}%
-                              </p>
+
+                              <div className="text-xs text-gray-500 mt-1 space-y-1">
+                                <p>التقدم: {lesson.watchedPercent}%</p>
+                                {lesson.hasQuiz && (
+                                  <p>
+                                    الاختبار:{" "}
+                                    {lesson.quizPassed
+                                      ? "تم النجاح"
+                                      : lesson.attemptCount > 0
+                                      ? `آخر نتيجة ${lesson.latestScore ?? 0}%`
+                                      : "لم يُحل بعد"}
+                                  </p>
+                                )}
+                              </div>
                             </div>
 
                             <div className="shrink-0">
@@ -306,111 +316,127 @@ export default function StudentCourseViewer({
 
       <div className="lg:col-span-2">
         {selectedLesson ? (
-          <div className="bg-white border rounded-2xl p-6 shadow-sm space-y-6">
-            <div className="flex items-start justify-between gap-4 flex-wrap">
-              <div>
-                <h2 className="text-2xl font-black mb-2">{selectedLesson.title}</h2>
-                <div className="flex items-center gap-3 text-sm">
-                  <span className="px-3 py-1 rounded-full bg-indigo-50 text-indigo-600 font-bold">
-                    {selectedLesson.watchedPercent}% تقدم
-                  </span>
+          <div className="space-y-6">
+            <div className="bg-white border rounded-2xl p-6 shadow-sm space-y-6">
+              <div className="flex items-start justify-between gap-4 flex-wrap">
+                <div>
+                  <h2 className="text-2xl font-black mb-2">{selectedLesson.title}</h2>
+                  <div className="flex items-center gap-3 text-sm flex-wrap">
+                    <span className="px-3 py-1 rounded-full bg-indigo-50 text-indigo-600 font-bold">
+                      {selectedLesson.watchedPercent}% تقدم
+                    </span>
 
-                  {selectedLesson.isCompleted ? (
-                    <span className="px-3 py-1 rounded-full bg-green-50 text-green-600 font-bold inline-flex items-center gap-1">
-                      <CheckCircle2 size={14} />
-                      مكتمل
-                    </span>
+                    {selectedLesson.isCompleted ? (
+                      <span className="px-3 py-1 rounded-full bg-green-50 text-green-600 font-bold inline-flex items-center gap-1">
+                        <CheckCircle2 size={14} />
+                        مكتمل
+                      </span>
+                    ) : (
+                      <span className="px-3 py-1 rounded-full bg-gray-100 text-gray-600 font-bold inline-flex items-center gap-1">
+                        <CircleDashed size={14} />
+                        غير مكتمل
+                      </span>
+                    )}
+
+                    {selectedLesson.hasQuiz && (
+                      <span className="px-3 py-1 rounded-full bg-amber-50 text-amber-700 font-bold">
+                        {selectedLesson.quizPassed
+                          ? "الاختبار: ناجح"
+                          : "الاختبار: مطلوب"}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="border rounded-2xl bg-gray-50 p-6 space-y-4">
+                <h3 className="font-bold text-gray-800">واجهة الدرس</h3>
+
+                <div className="border-2 border-dashed rounded-2xl p-8 bg-white text-center text-gray-500">
+                  {selectedLesson.videoPath ? (
+                    <div className="space-y-2">
+                      <p className="font-semibold text-gray-700">
+                        مسار / رابط الفيديو الحالي:
+                      </p>
+                      <p className="text-sm break-all">{selectedLesson.videoPath}</p>
+                    </div>
                   ) : (
-                    <span className="px-3 py-1 rounded-full bg-gray-100 text-gray-600 font-bold inline-flex items-center gap-1">
-                      <CircleDashed size={14} />
-                      غير مكتمل
-                    </span>
+                    <p>لا يوجد فيديو مرفوع لهذا الدرس بعد.</p>
                   )}
                 </div>
-              </div>
-            </div>
 
-            <div className="border rounded-2xl bg-gray-50 p-6 space-y-4">
-              <h3 className="font-bold text-gray-800">واجهة الدرس</h3>
-
-              <div className="border-2 border-dashed rounded-2xl p-8 bg-white text-center text-gray-500">
-                {selectedLesson.videoPath ? (
-                  <div className="space-y-2">
-                    <p className="font-semibold text-gray-700">
-                      مسار / رابط الفيديو الحالي:
-                    </p>
-                    <p className="text-sm break-all">{selectedLesson.videoPath}</p>
+                <div>
+                  <h4 className="font-bold mb-2">ملاحظات الدرس</h4>
+                  <div className="bg-white border rounded-xl p-4 text-gray-700 min-h-[120px]">
+                    {selectedLesson.notes || "لا توجد ملاحظات لهذا الدرس."}
                   </div>
-                ) : (
-                  <p>لا يوجد فيديو مرفوع لهذا الدرس بعد.</p>
-                )}
-              </div>
-
-              <div>
-                <h4 className="font-bold mb-2">ملاحظات الدرس</h4>
-                <div className="bg-white border rounded-xl p-4 text-gray-700 min-h-[120px]">
-                  {selectedLesson.notes || "لا توجد ملاحظات لهذا الدرس."}
-                </div>
-              </div>
-            </div>
-
-            <div className="border rounded-2xl p-6 space-y-4">
-              <h3 className="font-bold text-gray-800">حفظ التقدم</h3>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  نسبة المشاهدة / الإنجاز
-                </label>
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  value={watchedPercentDraft}
-                  onChange={(e) => setWatchedPercentDraft(Number(e.target.value))}
-                  className="w-full"
-                />
-                <div className="text-sm text-gray-500 mt-2">
-                  القيمة الحالية: {watchedPercentDraft}%
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  آخر موضع (ثانية)
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  value={lastPositionDraft}
-                  onChange={(e) => setLastPositionDraft(Number(e.target.value))}
-                  className="w-full border rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500"
-                />
+              <div className="border rounded-2xl p-6 space-y-4">
+                <h3 className="font-bold text-gray-800">حفظ التقدم</h3>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    نسبة المشاهدة / الإنجاز
+                  </label>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={watchedPercentDraft}
+                    onChange={(e) => setWatchedPercentDraft(Number(e.target.value))}
+                    className="w-full"
+                  />
+                  <div className="text-sm text-gray-500 mt-2">
+                    القيمة الحالية: {watchedPercentDraft}%
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    آخر موضع (ثانية)
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={lastPositionDraft}
+                    onChange={(e) => setLastPositionDraft(Number(e.target.value))}
+                    className="w-full border rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+
+                <button
+                  onClick={() => void saveProgress()}
+                  disabled={savingProgress}
+                  className="inline-flex items-center gap-2 bg-indigo-600 text-white px-5 py-3 rounded-xl font-bold hover:bg-indigo-700 transition disabled:opacity-70"
+                >
+                  {savingProgress ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" />
+                      جاري الحفظ...
+                    </>
+                  ) : (
+                    <>
+                      <Save size={16} />
+                      حفظ التقدم
+                    </>
+                  )}
+                </button>
+
+                <p className="text-xs text-gray-500">
+                  لإكمال هذا الدرس: يجب رفع نسبة التقدم إلى 80% على الأقل، وإذا كان
+                  هناك اختبار فيجب النجاح فيه أيضًا حتى يُفتح الدرس التالي.
+                </p>
               </div>
-
-              <button
-                onClick={() => void saveProgress()}
-                disabled={savingProgress}
-                className="inline-flex items-center gap-2 bg-indigo-600 text-white px-5 py-3 rounded-xl font-bold hover:bg-indigo-700 transition disabled:opacity-70"
-              >
-                {savingProgress ? (
-                  <>
-                    <Loader2 size={16} className="animate-spin" />
-                    جاري الحفظ...
-                  </>
-                ) : (
-                  <>
-                    <Save size={16} />
-                    حفظ التقدم
-                  </>
-                )}
-              </button>
-
-              <p className="text-xs text-gray-500">
-                ملاحظة: في هذه المرحلة، الدرس التالي يفتح عندما يصل الدرس الحالي إلى
-                80% أو أكثر. سنربط هذا لاحقًا مع الاختبارات ومنطق الـ progression
-                الكامل.
-              </p>
             </div>
+
+            {selectedLesson.hasQuiz && (
+              <StudentQuizPanel
+                lessonId={selectedLesson.id}
+                onSubmitted={fetchCourse}
+              />
+            )}
           </div>
         ) : (
           <div className="bg-white border rounded-2xl p-10 text-center text-gray-500">
