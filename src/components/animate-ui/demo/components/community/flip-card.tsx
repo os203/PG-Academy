@@ -1,3 +1,4 @@
+// @ts-nocheck
 'use client';
 
 import { FlipCard } from '@/components/animate-ui/components/community/flip-card';

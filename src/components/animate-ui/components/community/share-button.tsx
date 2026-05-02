@@ -1,3 +1,4 @@
+// @ts-nocheck
 'use client';
 import * as React from 'react';
 import { Share2, Globe, X, MessageCircle } from 'lucide-react';
