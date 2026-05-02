@@ -129,26 +129,26 @@ export default function CoursesPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50/50">
-        <Loader2 className="animate-spin text-indigo-600" size={40} />
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="animate-spin text-primary" size={40} />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50/50 py-10" dir="rtl">
+    <div className="min-h-screen bg-background py-10" dir="rtl">
       <div className="max-w-6xl mx-auto px-6">
         <div className="mb-10 flex items-center justify-between gap-4 flex-wrap">
           <div>
-            <h1 className="text-3xl font-black mb-2">الكورسات المتاحة</h1>
-            <p className="text-gray-500">
+            <h1 className="text-3xl font-black mb-2 text-foreground">الكورسات المتاحة</h1>
+            <p className="text-muted-foreground">
               تصفح الكورسات المنشورة وسجّل فيها كطالب
             </p>
           </div>
 
           <Link
             href="/"
-            className="inline-flex items-center gap-2 text-gray-500 hover:text-indigo-600 font-medium transition-colors"
+            className="inline-flex items-center gap-2 text-muted-foreground hover:text-primary font-medium transition-colors"
           >
             <Home size={18} />
             العودة للرئيسية
@@ -157,7 +157,7 @@ export default function CoursesPage() {
         </div>
 
         {courses.length === 0 ? (
-          <div className="bg-white border rounded-2xl p-12 text-center text-gray-500">
+          <div className="bg-card border border-border rounded-2xl p-12 text-center text-muted-foreground">
             لا توجد كورسات منشورة حاليًا.
           </div>
         ) : (
@@ -168,44 +168,44 @@ export default function CoursesPage() {
               return (
                 <div
                   key={course.id}
-                  className="bg-white border rounded-2xl shadow-sm hover:shadow-lg transition p-6 space-y-5"
+                  className="bg-card border border-border rounded-2xl shadow-sm hover:shadow-lg transition p-6 space-y-5"
                 >
                   <div className="flex items-start justify-between gap-4">
-                    <div className="bg-indigo-50 text-indigo-600 p-3 rounded-xl">
+                    <div className="bg-primary/10 text-primary p-3 rounded-xl">
                       <BookOpen size={22} />
                     </div>
 
-                    <span className="text-sm font-bold text-green-700 bg-green-50 px-3 py-1 rounded-full">
+                    <span className="text-sm font-bold text-green-500 bg-green-500/10 px-3 py-1 rounded-full">
                       منشور
                     </span>
                   </div>
 
                   <div>
-                    <h2 className="text-xl font-bold mb-2">{course.title}</h2>
-                    <p className="text-sm text-gray-500 line-clamp-3 min-h-[60px]">
+                    <h2 className="text-xl font-bold mb-2 text-foreground">{course.title}</h2>
+                    <p className="text-sm text-muted-foreground line-clamp-3 min-h-[60px]">
                       {course.description || "لا يوجد وصف لهذا الكورس"}
                     </p>
                   </div>
 
-                  <div className="space-y-2 text-sm text-gray-600">
+                  <div className="space-y-2 text-sm text-muted-foreground">
                     <div className="flex items-center gap-2">
-                      <UserRound size={16} className="text-indigo-600" />
+                      <UserRound size={16} className="text-primary" />
                       <span>المدرب: {course.instructorName}</span>
                     </div>
 
                     <div className="flex items-center gap-2">
-                      <Layers3 size={16} className="text-indigo-600" />
+                      <Layers3 size={16} className="text-primary" />
                       <span>عدد الوحدات: {course.modulesCount}</span>
                     </div>
 
                     <div className="flex items-center gap-2">
-                      <PlayCircle size={16} className="text-indigo-600" />
+                      <PlayCircle size={16} className="text-primary" />
                       <span>عدد الدروس: {course.lessonsCount}</span>
                     </div>
                   </div>
 
                   <div className="flex items-center justify-between text-sm pt-2">
-                    <span className="font-bold text-indigo-600 text-lg">
+                    <span className="font-bold text-primary text-lg">
                       {Number(course.price).toFixed(2)}$
                     </span>
                   </div>
@@ -215,8 +215,8 @@ export default function CoursesPage() {
                     disabled={enrollingCourseId === course.id || isEnrolled}
                     className={`w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-bold transition ${
                       isEnrolled
-                        ? "bg-green-50 text-green-700 cursor-default"
-                        : "bg-indigo-600 text-white hover:bg-indigo-700"
+                        ? "bg-green-500/10 text-green-500 cursor-default"
+                        : "bg-primary text-primary-foreground hover:bg-primary/90"
                     } disabled:opacity-70`}
                   >
                     {enrollingCourseId === course.id ? (
