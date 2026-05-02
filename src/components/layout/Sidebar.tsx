@@ -1,0 +1,173 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { PanelRightClose, UserRoundPen, PanelLeftClose, House, BellRing, Settings, LogOut, GraduationCap, BrickWallShield, BookSearch, ListTodo    } from 'lucide-react';
+import Link from "next/link"
+import { useAuth } from '@/context/AuthContext';
+import { Button } from "@base-ui/react";
+
+export default function Sidebar() {
+    const [open, setOpen] = useState(false);
+    const { user, logout } = useAuth();
+    const [isMobile, setIsMobile] = useState(false);
+
+    const menuItems = [
+        {
+            label: "Dashboard",
+            href: user?.role ? `/dashboard/${user.role.toLowerCase()}` : "/",
+            icon: <House />,
+            roles: ["admin", "student", "instructor"],
+        },
+        {
+            label: "My Courses",
+            href: `/myCourses`,
+            icon: <GraduationCap />,
+            roles: ["admin", "student", "instructor"],
+        },
+        {
+            label: "Browse Courses",
+            href: `/dashboard/searchPage`,
+            icon: <BookSearch  />,
+            roles: ["admin", "student", "instructor"],
+        },
+        {
+            label: "Wishlist",
+            href: `/myCourses`,
+            icon: <ListTodo   />,
+            roles: ["admin", "student", "instructor"],
+        },
+        {
+            label: "Notifications",
+            href: `/notifications`,
+            icon: <BellRing />,
+            roles: ["admin", "student", "instructor"],
+        },
+        {
+            label: "Profile",
+            href: `/profile`,
+            icon: <UserRoundPen />,
+            roles: ["admin", "student", "instructor"],
+        },
+        {
+            label: "Certificates",
+            href: "",
+            icon: <BrickWallShield  />,
+            roles: ["student"],
+        },
+        {
+            label: "Sittings",
+            href: "/sittings",
+            icon: <Settings />,
+            roles: ["admin", "student", "instructor"],
+        },
+        
+        {
+            label: "Student",
+            href: "",
+            icon: <GraduationCap />,
+            roles: ["student"],
+        },
+        
+        {
+            label: "Instructor ",
+            href: "",
+            icon: <GraduationCap />,
+            roles: ["instructor"],
+        },
+        {
+            label: "Admin ",
+            href: "",
+            icon: <GraduationCap />,
+            roles: ["Admin"],
+        },
+    ];
+
+    const filteredItems = menuItems.filter(item =>
+   user?.role ? item.roles.includes(user.role.toLowerCase()) : false
+);
+
+    // Detect screen
+    useEffect(() => {
+        const handleResize = () => {
+            setIsMobile(window.innerWidth < 768);
+        };
+        handleResize();
+        window.addEventListener("resize", handleResize);
+        return () => window.removeEventListener("resize", handleResize);
+    }, []);
+
+
+    //Preventing Scroll on Mobile
+    useEffect(() => {
+        if (isMobile) {
+            document.body.style.overflow = open ? "hidden" : "auto";
+        }
+    }, [open]);
+
+    // close when click ESC  
+    useEffect(() => {
+        const handleEsc = (e: KeyboardEvent) => {
+            if (e.key === "Escape") setOpen(false);
+        };
+        window.addEventListener("keydown", handleEsc);
+        return () => window.removeEventListener("keydown", handleEsc);
+    }, []);
+
+
+    return (
+        <div className={` ${!isMobile && "flex min-h-screen min-w-14 bg-background flex-col items-center justify-center border-r-[1px] border-gray-700 pl-4"}${!open ? "w-14  flex flex-col items-center " : "sm:w-64 md:w-72 w-64 md:block"}`}>
+            <button
+                onClick={() => setOpen(!open)}
+                className={`fixed top-4 transition-all duration-300  ${open ? "right-6 md:left-60 top-6" : "md:static pt-6 py-2 left-4"} ${isMobile && "-translate-y-4"} z-100  cursor-pointer hover:text-brand-accent transition-colors  rounded-md hover:-translate-y-0.5 `}
+            >
+                {open ? <PanelLeftClose /> : <PanelRightClose />}
+            </button>
+
+            {/* Mobile Overlay */}
+            {open && (
+                <div
+                    className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 md:hidden"
+                    onClick={() => setOpen(false)}
+                />
+            )}
+
+            {/* Sidebar */}
+            <aside
+                className={`bg-background text-foreground/80 h-screen z-50 transition-all duration-300 ease-in-out border-r-[1px] border-gray-700
+                fixed top-0 left-0 ${open ? "translate-x-0 " : "w-14 -translate-x-full"} md:static md:translate-x-0  max-w-xs  ${isMobile && "-translate-y-9 top-8"} 
+                `}>
+                {open && (<div className=" flex items-center gap-2 p-5 text-lg font-bold border-b border-gray-700">
+
+                    <div className="w-9 h-9 rounded-xl bg-linear-to-br from-brand-accent to-brand-primary flex items-center justify-center text-white font-bold text-l shadow-lg shadow-brand-accent/20">
+                        PG
+                    </div>
+                    <div className="flex flex-col font-bold text-xs tracking-tight text-foreground pr-2">
+                        <span>PG Academy</span>
+                        <span className="font-normal text-[9px]">{user?.role}</span>
+                    </div>
+
+                </div>
+                )}
+                <nav className="flex flex-col gap-3 p-4">
+
+                    {filteredItems.map((item, i) => (
+                    <Link key={i} 
+                    href={item.href} 
+                    className="flex items-center hover:text-brand-accent transition-colors pt-2  rounded ">
+                        <span className={`${!open && "hover:-translate-y-0.5"}`}>{item.icon}</span>
+                        {open && <span className="ml-2">{item.label}</span>}
+                    </Link>
+                    ))}
+
+                    <div className="flex items-center pt-4 text-red-600 transition-all duration-300 hover:text-brand-accent">
+                        <span className={`${!open && "hover:-translate-y-0.5"}`}><LogOut /></span>
+                        <Button onClick={logout} className="  ">
+                            {open && <span className="ml-2">Logout</span>}
+                        </Button>
+                    </div>
+
+                </nav>
+            </aside>
+        </div>
+    );
+}
