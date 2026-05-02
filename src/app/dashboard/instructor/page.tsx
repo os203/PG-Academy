@@ -8,7 +8,7 @@ import AnimatedTabs from "@/components/forgeui/animated-tabs";
 import { NotificationList, NotificationItem } from "@/components/animate-ui/components/community/notification-list";
 import StripedRowsTable, { Course } from "@/components/ui/StripedRowsTable";
 import { RevenueChart } from "@/components/ui/RevenueChart";
-import { Users, BookOpen, Wallet, Activity, Plus, Megaphone, AlertCircle, MessageSquare, CheckSquare, ArrowRight } from "lucide-react";
+import { Users, BookOpen, Wallet, Activity, Plus, Megaphone, AlertCircle, MessageSquare, CheckSquare, ArrowRight, LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -53,7 +53,7 @@ const instructorNotifications: NotificationItem[] = [
 ];
 
 export default function InstructorDashboard() {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, logout } = useAuth();
   const router = useRouter();
   
   const [courses, setCourses] = useState<Course[]>([]);
@@ -190,6 +190,9 @@ export default function InstructorDashboard() {
             </p>
           </div>
           <div className="flex items-center gap-3 w-full md:w-auto">
+            <Button variant="outline" onClick={logout} className="hidden sm:flex items-center gap-2 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 border-red-200 dark:border-red-900/30">
+              <LogOut className="h-4 w-4" /> Log out
+            </Button>
             <Button variant="outline" className="hidden sm:flex items-center gap-2">
               <Megaphone className="h-4 w-4" /> Announce
             </Button>
