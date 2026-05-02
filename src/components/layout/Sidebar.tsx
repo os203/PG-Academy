@@ -26,7 +26,7 @@ export default function Sidebar() {
         },
         {
             label: "Browse Courses",
-            href: `/myCourses`,
+            href: `/dashboard/searchPage`,
             icon: <BookSearch  />,
             roles: ["admin", "student", "instructor"],
         },
