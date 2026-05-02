@@ -5,9 +5,10 @@ import { verifyToken } from "@/lib/auth";
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const cookieStore = await cookies();
     const token = cookieStore.get("token")?.value;
     
@@ -29,7 +30,7 @@ export async function PATCH(
     }
 
     const updatedCourse = await db.course.update({
-      where: { id: params.id },
+      where: { id },
       data: { status }
     });
 

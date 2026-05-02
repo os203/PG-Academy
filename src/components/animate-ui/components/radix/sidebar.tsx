@@ -24,7 +24,7 @@ import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from '@/components/animate-ui/components/animate/tooltip';
+} from '@/components/animate-ui/primitives/animate/tooltip';
 import {
   Highlight,
   HighlightItem,

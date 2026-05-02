@@ -62,6 +62,7 @@ function IconButton({
   const [key, setKey] = React.useState(0);
 
   return (
+    // @ts-expect-error -- animate-ui Particles API mismatch with render prop
     <Particles animate={isActive} key={key} render={<ButtonPrimitive data-slot="icon-button" className={cn(buttonVariants({ variant, size, className }))} onClick={(e) => {
                 setKey((prev) => prev + 1);
                 setIsActive(true);

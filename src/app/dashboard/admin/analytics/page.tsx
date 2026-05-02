@@ -243,8 +243,8 @@ export default function AdminAnalyticsPage() {
                     <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11 }} />
                     <Tooltip
                       contentStyle={{ backgroundColor: "hsl(var(--background))", borderColor: "hsl(var(--border))", borderRadius: "8px" }}
-                      formatter={(value: number, name: string) =>
-                        name === "revenue" ? [`$${value.toFixed(2)}`, "Est. Revenue"] : [value, "Enrollments"]
+                      formatter={(value: any, name: any) =>
+                        name === "revenue" ? [`$${Number(value).toFixed(2)}`, "Est. Revenue"] : [value, "Enrollments"]
                       }
                     />
                     <Bar dataKey="enrollments" radius={[6, 6, 0, 0]}>
@@ -293,7 +293,7 @@ export default function AdminAnalyticsPage() {
                     </Pie>
                     <Tooltip
                       contentStyle={{ backgroundColor: "hsl(var(--background))", borderColor: "hsl(var(--border))", borderRadius: "8px" }}
-                      formatter={(value: number) => [`$${value.toFixed(2)}`, "Revenue"]}
+                      formatter={(value: any) => [`$${Number(value).toFixed(2)}`, "Revenue"]}
                     />
                   </PieChart>
                 </ResponsiveContainer>
