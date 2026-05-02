@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { PanelRightClose, UserRoundPen, PanelLeftClose, House, BellRing, Settings, LogOut, GraduationCap } from 'lucide-react';
+import { PanelRightClose, UserRoundPen, PanelLeftClose, House, BellRing, Settings, LogOut, GraduationCap, BrickWallShield, BookSearch, ListTodo    } from 'lucide-react';
 import Link from "next/link"
 import { useAuth } from '@/context/AuthContext';
 import { Button } from "@base-ui/react";
@@ -25,6 +25,18 @@ export default function Sidebar() {
             roles: ["admin", "student", "instructor"],
         },
         {
+            label: "Browse Courses",
+            href: `/myCourses`,
+            icon: <BookSearch  />,
+            roles: ["admin", "student", "instructor"],
+        },
+        {
+            label: "Wishlist",
+            href: `/myCourses`,
+            icon: <ListTodo   />,
+            roles: ["admin", "student", "instructor"],
+        },
+        {
             label: "Notifications",
             href: `/notifications`,
             icon: <BellRing />,
@@ -37,17 +49,25 @@ export default function Sidebar() {
             roles: ["admin", "student", "instructor"],
         },
         {
+            label: "Certificates",
+            href: "",
+            icon: <BrickWallShield  />,
+            roles: ["student"],
+        },
+        {
             label: "Sittings",
             href: "/sittings",
             icon: <Settings />,
             roles: ["admin", "student", "instructor"],
         },
+        
         {
             label: "Student",
             href: "",
             icon: <GraduationCap />,
             roles: ["student"],
         },
+        
         {
             label: "Instructor ",
             href: "",
@@ -94,8 +114,6 @@ export default function Sidebar() {
     }, []);
 
 
-console.log("userRole:", user?.role.toLowerCase());
-console.log("filteredItems:", filteredItems);
     return (
         <div className={` ${!isMobile && "flex min-h-screen min-w-14 bg-background flex-col items-center justify-center border-r-[1px] border-gray-700 pl-4"}${!open ? "w-14  flex flex-col items-center " : "sm:w-64 md:w-72 w-64 md:block"}`}>
             <button

@@ -1,37 +1,67 @@
 "use client";
 
+import DashCard from "@/components/ui/dashCard";
+import MyCourseCard from "@/components/ui/myCouaseCard";
 import { useAuth } from "@/context/AuthContext";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { BookOpen, Clock4, Medal, ChartNoAxesCombined } from 'lucide-react';
+
+
 
 export default function StudentDashboard() {
-  const { user, logout, isLoading } = useAuth();
+  const { user, isLoading } = useAuth();
 
   if (isLoading) {
     return <div className="min-h-screen flex items-center justify-center p-4"><p className="text-muted-foreground animate-pulse">Loading study dashboard...</p></div>;
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50/50 dark:bg-background/95 p-4">
-      <Card className="max-w-md w-full border-blue-500/30 shadow-lg shadow-blue-500/5">
-        <CardHeader>
-          <CardTitle className="text-2xl font-bold text-blue-600 dark:text-blue-400">Student Dashboard</CardTitle>
-          <CardDescription>My Courses & Progress</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="space-y-2 p-4 bg-blue-500/10 rounded-lg">
-            <h3 className="font-semibold text-lg text-foreground">Welcome back, {user?.name}</h3>
-            <p className="text-sm text-muted-foreground">Logged in as: <span className="font-mono text-blue-600 dark:text-blue-400 font-bold">{user?.role}</span></p>
-            <p className="text-sm text-muted-foreground">{user?.email}</p>
-          </div>
-          
-          <div className="pt-4 border-t border-border/50">
-            <Button onClick={logout} variant="outline" className="w-full text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950/30">
-              Secure Logout
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+    <div className="min-h-screen flex flex-col  bg-background/95  p-4">
+      <div className="w-ful h-32 p-8 " >
+        <div className="font-bold text- text-2xl mb-2 tracking-tight">
+          Welcome back! 👋
+        </div>
+        <div className="text-muted-foreground">
+          Continue your learning journey
+        </div>
+      </div>
+      <div className="flex gap-6  justify-around flex-wrap">
+        <DashCard icon={<BookOpen size={30} />} title="Enrolled Courses" number={5} />
+        <DashCard icon={<Clock4 size={30} />} title="Hours Learned" number={5} />
+        <DashCard icon={<Medal size={30} />} title="Certificates" number={5} />
+        <DashCard icon={<ChartNoAxesCombined size={30} />} title="Streak Days" number={5} />
+
+      </div>
+        <span className="pt-16 text-2xl">Continue Learning</span>
+      <div className="grid gap-6 gap-y-8 justify-items-center pt-12" style={{"gridTemplateColumns":"repeat(auto-fill, minmax(350px, 1fr))"}}>
+        <MyCourseCard
+          thumbnail="/taco3.jpg"
+          courseName="React for Beginners"
+          instructor="John Doe"
+          progress={26}
+          onContinue={() => console.log("Start course")}
+        />
+        <MyCourseCard
+          thumbnail="/profile.jpg"
+          courseName="React for Beginners"
+          instructor="John Doe"
+          progress={0}
+          onContinue={() => console.log("Start course")}
+        />
+        <MyCourseCard
+          thumbnail="/profile.jpg"
+          courseName="React for Beginners"
+          instructor="John Doe"
+          progress={26}
+          onContinue={() => console.log("Start course")}
+        />
+        <MyCourseCard
+          thumbnail="/profile.jpg"
+          courseName="React for Beginners"
+          instructor="John Doe"
+          progress={26}
+          onContinue={() => console.log("Start course")}
+        />
+      </div>
     </div>
   );
 }
