@@ -12,6 +12,7 @@ import {
   Save,
   X,
 } from "lucide-react";
+import LessonQuizManager, { QuizMeta } from "@/components/LessonQuizManager";
 
 interface Lesson {
   id: string;
@@ -19,6 +20,7 @@ interface Lesson {
   notes: string | null;
   videoPath: string | null;
   order: number;
+  quizzes: QuizMeta[];
 }
 
 interface Module {
@@ -41,12 +43,21 @@ interface LessonFormState {
   videoPath: string;
 }
 
+interface ApiQuiz {
+  id?: string;
+  title?: string;
+  passingScore?: number;
+  maxAttempts?: number | null;
+  lessonId?: string;
+}
+
 interface ApiLesson {
   id?: string;
   title?: string;
   notes?: string | null;
   videoPath?: string | null;
   order?: number;
+  quizzes?: ApiQuiz[];
 }
 
 interface ApiModule {
@@ -74,13 +85,8 @@ async function readJsonSafely<T>(res: Response): Promise<T | null> {
   const contentType = res.headers.get("content-type") || "";
   const text = await res.text();
 
-  if (!text.trim()) {
-    return null;
-  }
-
-  if (!contentType.includes("application/json")) {
-    return null;
-  }
+  if (!text.trim()) return null;
+  if (!contentType.includes("application/json")) return null;
 
   try {
     return JSON.parse(text) as T;
@@ -149,6 +155,21 @@ export default function InstructorCourseManager({
                     notes: lesson.notes ?? null,
                     videoPath: lesson.videoPath ?? null,
                     order: typeof lesson.order === "number" ? lesson.order : 0,
+                    quizzes: Array.isArray(lesson.quizzes)
+                      ? lesson.quizzes.map((quiz): QuizMeta => ({
+                          id: quiz.id ?? "",
+                          title: quiz.title ?? "",
+                          passingScore:
+                            typeof quiz.passingScore === "number"
+                              ? quiz.passingScore
+                              : 50,
+                          maxAttempts:
+                            typeof quiz.maxAttempts === "number"
+                              ? quiz.maxAttempts
+                              : null,
+                          lessonId: quiz.lessonId ?? (lesson.id ?? ""),
+                        }))
+                      : [],
                   }))
                 : [],
             }))
@@ -233,7 +254,7 @@ export default function InstructorCourseManager({
 
   const startEditModule = (module: Module): void => {
     setEditingModuleId(module.id);
-    setModuleDrafts((prev) => ({
+    setModuleDrafts((prev: Record<string, string>) => ({
       ...prev,
       [module.id]: module.title,
     }));
@@ -286,7 +307,7 @@ export default function InstructorCourseManager({
     field: keyof LessonFormState,
     value: string
   ): void => {
-    setNewLessonInputs((prev) => ({
+    setNewLessonInputs((prev: Record<string, LessonFormState>) => ({
       ...prev,
       [moduleId]: {
         title: prev[moduleId]?.title || "",
@@ -334,7 +355,7 @@ export default function InstructorCourseManager({
         return;
       }
 
-      setNewLessonInputs((prev) => ({
+      setNewLessonInputs((prev: Record<string, LessonFormState>) => ({
         ...prev,
         [moduleId]: {
           title: "",
@@ -354,7 +375,7 @@ export default function InstructorCourseManager({
 
   const startEditLesson = (lesson: Lesson): void => {
     setEditingLessonId(lesson.id);
-    setLessonEditInputs((prev) => ({
+    setLessonEditInputs((prev: Record<string, LessonFormState>) => ({
       ...prev,
       [lesson.id]: {
         title: lesson.title,
@@ -373,7 +394,7 @@ export default function InstructorCourseManager({
     field: keyof LessonFormState,
     value: string
   ): void => {
-    setLessonEditInputs((prev) => ({
+    setLessonEditInputs((prev: Record<string, LessonFormState>) => ({
       ...prev,
       [lessonId]: {
         title: prev[lessonId]?.title || "",
@@ -563,7 +584,7 @@ export default function InstructorCourseManager({
                             <input
                               value={moduleDrafts[module.id] || ""}
                               onChange={(e) =>
-                                setModuleDrafts((prev) => ({
+                                setModuleDrafts((prev: Record<string, string>) => ({
                                   ...prev,
                                   [module.id]: e.target.value,
                                 }))
@@ -580,10 +601,7 @@ export default function InstructorCourseManager({
                               >
                                 {savingModuleId === module.id ? (
                                   <>
-                                    <Loader2
-                                      size={16}
-                                      className="animate-spin"
-                                    />
+                                    <Loader2 size={16} className="animate-spin" />
                                     جاري الحفظ...
                                   </>
                                 ) : (
@@ -650,7 +668,7 @@ export default function InstructorCourseManager({
                         return (
                           <div
                             key={lesson.id}
-                            className="border rounded-xl p-4 bg-gray-50"
+                            className="border rounded-xl p-4 bg-gray-50 space-y-4"
                           >
                             {lessonIsEditing ? (
                               <div className="space-y-3">
@@ -704,10 +722,7 @@ export default function InstructorCourseManager({
                                   >
                                     {savingLessonId === lesson.id ? (
                                       <>
-                                        <Loader2
-                                          size={16}
-                                          className="animate-spin"
-                                        />
+                                        <Loader2 size={16} className="animate-spin" />
                                         جاري الحفظ...
                                       </>
                                     ) : (
@@ -766,10 +781,7 @@ export default function InstructorCourseManager({
                                       title="حذف الدرس"
                                     >
                                       {deletingLessonId === lesson.id ? (
-                                        <Loader2
-                                          size={16}
-                                          className="animate-spin"
-                                        />
+                                        <Loader2 size={16} className="animate-spin" />
                                       ) : (
                                         <Trash2 size={16} />
                                       )}
@@ -784,6 +796,14 @@ export default function InstructorCourseManager({
                                 )}
                               </>
                             )}
+
+                            <LessonQuizManager
+                              courseId={courseId}
+                              moduleId={module.id}
+                              lessonId={lesson.id}
+                              initialQuiz={lesson.quizzes[0] ?? null}
+                              onChanged={fetchCourseData}
+                            />
                           </div>
                         );
                       })

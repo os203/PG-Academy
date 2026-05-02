@@ -93,15 +93,17 @@ model Progress {
 }
 
 model Quiz {
-  id           String        @id @default(uuid())
+  id           String         @id @default(uuid())
   title        String
-  passingScore Int           @default(50)
+  passingScore Int            @default(50)
   maxAttempts  Int?
   lessonId     String
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  lesson       Lesson        @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  lesson       Lesson         @relation(fields: [lessonId], references: [id], onDelete: Cascade)
   attempts     QuizAttempt[]
+  questions    QuizQuestion[]
 }
 
 model QuizAttempt {
@@ -113,6 +115,37 @@ model QuizAttempt {
   createdAt DateTime @default(now())
   quiz      Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+enum QuestionType {
+  MULTIPLE_CHOICE
+  TRUE_FALSE
+}
+
+model QuizQuestion {
+  id               String         @id @default(uuid())
+  quizId           String
+  questionText     String
+  type             QuestionType
+  order            Int
+  correctTrueFalse Boolean?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  quiz             Quiz           @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  options          QuizOption[]
+}
+
+model QuizOption {
+  id          String        @id @default(uuid())
+  questionId  String
+  optionText  String
+  isCorrect   Boolean       @default(false)
+  order       Int
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  question    QuizQuestion  @relation(fields: [questionId], references: [id], onDelete: Cascade)
 }
 
 model Certificate {
