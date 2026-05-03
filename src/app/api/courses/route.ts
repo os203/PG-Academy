@@ -3,6 +3,12 @@ import { cookies } from "next/headers";
 import { db } from "@/lib/db";
 import { verifyToken } from "@/lib/auth";
 
+type CourseStatusValue = "DRAFT" | "PUBLISHED";
+
+function isCourseStatus(value: string): value is CourseStatusValue {
+  return value === "DRAFT" || value === "PUBLISHED";
+}
+
 export async function GET() {
   try {
     const cookieStore = await cookies();
@@ -14,28 +20,39 @@ export async function GET() {
 
     const decoded = await verifyToken(token);
 
-    if (!decoded?.userId) {
+    if (!decoded?.userId || !decoded?.role) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    if (decoded.role !== "ADMIN" && decoded.role !== "INSTRUCTOR") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
     const courses = await db.course.findMany({
-      where: { instructorId: decoded.userId },
-      orderBy: { createdAt: "desc" },
-      include: {
-        modules: {
-          orderBy: { order: "asc" },
-          include: {
-            lessons: {
-              orderBy: { order: "asc" },
+      where:
+        decoded.role === "ADMIN"
+          ? {}
+          : {
+              instructorId: decoded.userId,
             },
-          },
-        },
+      orderBy: {
+        createdAt: "desc",
+      },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        price: true,
+        thumbnail: true,
+        status: true,
+        createdAt: true,
+        updatedAt: true,
       },
     });
 
     return NextResponse.json({ courses });
   } catch (error) {
-    console.error("[COURSES_GET_ERROR]:", error);
+    console.error("[COURSES_GET_ERROR]", error);
     return NextResponse.json({ error: "Internal Error" }, { status: 500 });
   }
 }
@@ -51,18 +68,31 @@ export async function POST(req: NextRequest) {
 
     const decoded = await verifyToken(token);
 
-    if (!decoded?.userId) {
+    if (!decoded?.userId || !decoded?.role) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    if (decoded.role !== "ADMIN" && decoded.role !== "INSTRUCTOR") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
     const body = await req.json();
-    const title = typeof body.title === "string" ? body.title.trim() : "";
+
+    const title =
+      typeof body.title === "string" ? body.title.trim() : "";
     const description =
       typeof body.description === "string" ? body.description.trim() : "";
     const price =
-      body.price !== undefined && body.price !== null && body.price !== ""
-        ? Number(body.price)
+      typeof body.price === "number" && Number.isFinite(body.price)
+        ? body.price
         : 0;
+
+    const statusRaw =
+      typeof body.status === "string" ? body.status.trim() : "DRAFT";
+
+    const status: CourseStatusValue = isCourseStatus(statusRaw)
+      ? statusRaw
+      : "DRAFT";
 
     if (!title) {
       return NextResponse.json(
@@ -71,25 +101,26 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (Number.isNaN(price) || price < 0) {
+    if (!description) {
       return NextResponse.json(
-        { error: "Price must be a valid number" },
+        { error: "Course description is required" },
         { status: 400 }
       );
     }
 
     const course = await db.course.create({
       data: {
-        instructorId: decoded.userId,
         title,
         description,
         price,
+        status,
+        instructorId: decoded.userId,
       },
     });
 
     return NextResponse.json(course, { status: 201 });
   } catch (error) {
-    console.error("[COURSE_CREATE_ERROR]:", error);
+    console.error("[COURSE_CREATE_ERROR]", error);
     return NextResponse.json({ error: "Internal Error" }, { status: 500 });
   }
 }

@@ -11,6 +11,7 @@ import {
   Layers3,
   PlayCircle,
   Home,
+  ArrowLeft,
 } from "lucide-react";
 
 interface PublicCourse {
@@ -35,6 +36,16 @@ interface EnrollResponse {
   error?: string;
   details?: string;
   alreadyEnrolled?: boolean;
+}
+
+interface StudentEnrolledCourse {
+  id: string;
+  title: string;
+}
+
+interface StudentCoursesResponse {
+  courses?: StudentEnrolledCourse[];
+  error?: string;
 }
 
 async function readJsonSafely<T>(res: Response): Promise<T | null> {
@@ -87,8 +98,33 @@ export default function CoursesPage() {
     }
   };
 
+  const fetchEnrolledCourses = async (): Promise<void> => {
+    try {
+      const res = await fetch("/api/student/courses", {
+        cache: "no-store",
+      });
+
+      if (!res.ok) {
+        setEnrolledCourseIds([]);
+        return;
+      }
+
+      const data = await readJsonSafely<StudentCoursesResponse>(res);
+
+      const ids = Array.isArray(data?.courses)
+        ? data.courses.map((course) => course.id)
+        : [];
+
+      setEnrolledCourseIds(ids);
+    } catch (error) {
+      console.error(error);
+      setEnrolledCourseIds([]);
+    }
+  };
+
   useEffect(() => {
     void fetchCourses();
+    void fetchEnrolledCourses();
   }, []);
 
   const enrollInCourse = async (courseId: string): Promise<void> => {
@@ -140,7 +176,9 @@ export default function CoursesPage() {
       <div className="max-w-6xl mx-auto px-6">
         <div className="mb-10 flex items-center justify-between gap-4 flex-wrap">
           <div>
-            <h1 className="text-3xl font-black mb-2 text-foreground">الكورسات المتاحة</h1>
+            <h1 className="text-3xl font-black mb-2 text-foreground">
+              الكورسات المتاحة
+            </h1>
             <p className="text-muted-foreground">
               تصفح الكورسات المنشورة وسجّل فيها كطالب
             </p>
@@ -181,7 +219,9 @@ export default function CoursesPage() {
                   </div>
 
                   <div>
-                    <h2 className="text-xl font-bold mb-2 text-foreground">{course.title}</h2>
+                    <h2 className="text-xl font-bold mb-2 text-foreground">
+                      {course.title}
+                    </h2>
                     <p className="text-sm text-muted-foreground line-clamp-3 min-h-[60px]">
                       {course.description || "لا يوجد وصف لهذا الكورس"}
                     </p>
@@ -210,32 +250,37 @@ export default function CoursesPage() {
                     </span>
                   </div>
 
-                  <button
-                    onClick={() => void enrollInCourse(course.id)}
-                    disabled={enrollingCourseId === course.id || isEnrolled}
-                    className={`w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-bold transition ${
-                      isEnrolled
-                        ? "bg-green-500/10 text-green-500 cursor-default"
-                        : "bg-primary text-primary-foreground hover:bg-primary/90"
-                    } disabled:opacity-70`}
-                  >
-                    {enrollingCourseId === course.id ? (
-                      <>
-                        <Loader2 size={16} className="animate-spin" />
-                        جاري التسجيل...
-                      </>
-                    ) : isEnrolled ? (
-                      <>
-                        <CheckCircle2 size={16} />
-                        تم التسجيل
-                      </>
-                    ) : (
-                      <>
-                        <BookOpen size={16} />
-                        التسجيل في الكورس
-                      </>
-                    )}
-                  </button>
+           <div className="pt-2">
+  {isEnrolled ? (
+    <Link
+      href={`/dashboard/student/${course.id}`}
+      className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-bold transition bg-green-600 text-white hover:bg-green-700 min-h-[48px]"
+    >
+      <CheckCircle2 size={16} />
+      الدخول إلى الكورس
+      <ArrowLeft size={16} />
+    </Link>
+  ) : (
+    <button
+      type="button"
+      onClick={() => void enrollInCourse(course.id)}
+      disabled={enrollingCourseId === course.id}
+      className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-bold transition bg-indigo-600 text-white hover:bg-indigo-700 min-h-[48px] disabled:opacity-70"
+    >
+      {enrollingCourseId === course.id ? (
+        <>
+          <Loader2 size={16} className="animate-spin" />
+          جاري التسجيل...
+        </>
+      ) : (
+        <>
+          <BookOpen size={16} />
+          التسجيل في الكورس
+        </>
+      )}
+    </button>
+  )}
+</div>
                 </div>
               );
             })}

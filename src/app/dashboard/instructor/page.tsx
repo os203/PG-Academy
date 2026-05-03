@@ -5,12 +5,33 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { motion, Variants } from "framer-motion";
 import AnimatedTabs from "@/components/forgeui/animated-tabs";
-import { NotificationList, NotificationItem } from "@/components/animate-ui/components/community/notification-list";
+import {
+  NotificationList,
+  NotificationItem,
+} from "@/components/animate-ui/components/community/notification-list";
 import StripedRowsTable, { Course } from "@/components/ui/StripedRowsTable";
 import { RevenueChart } from "@/components/ui/RevenueChart";
-import { Users, BookOpen, Wallet, Activity, Plus, Megaphone, AlertCircle, MessageSquare, CheckSquare, ArrowRight, LogOut } from "lucide-react";
+import {
+  Users,
+  BookOpen,
+  Wallet,
+  Activity,
+  Plus,
+  Megaphone,
+  AlertCircle,
+  MessageSquare,
+  CheckSquare,
+  ArrowRight,
+  LogOut,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+
+type CourseStatus = "DRAFT" | "PUBLISHED";
+
+type DashboardCourse = Course & {
+  status?: CourseStatus;
+};
 
 const containerVariants: Variants = {
   hidden: { opacity: 0 },
@@ -34,43 +55,69 @@ const itemVariants: Variants = {
 const instructorNotifications: NotificationItem[] = [
   {
     id: 1,
-    title: 'New Student',
-    subtitle: 'Sarah enrolled in Admin Masterclass',
-    time: 'just now',
+    title: "New Student",
+    subtitle: "Sarah enrolled in Admin Masterclass",
+    time: "just now",
   },
   {
     id: 2,
-    title: '5-Star Review!',
-    subtitle: 'David left a review on Designer Masterclass',
-    time: '2 hours ago',
+    title: "5-Star Review!",
+    subtitle: "David left a review on Designer Masterclass",
+    time: "2 hours ago",
   },
   {
     id: 3,
-    title: 'Payout Initiated',
-    subtitle: 'Stripe payout of $1,200 is on the way',
-    time: 'yesterday',
+    title: "Payout Initiated",
+    subtitle: "Stripe payout of $1,200 is on the way",
+    time: "yesterday",
   },
 ];
 
 export default function InstructorDashboard() {
   const { user, isLoading, logout } = useAuth();
   const router = useRouter();
-  
-  const [courses, setCourses] = useState<Course[]>([]);
+
+  const [courses, setCourses] = useState<DashboardCourse[]>([]);
   const [loadingCourses, setLoadingCourses] = useState(true);
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const [editingCourse, setEditingCourse] = useState<Course | null>(null);
+  const [editingCourse, setEditingCourse] = useState<DashboardCourse | null>(null);
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
+  const [status, setStatus] = useState<CourseStatus>("DRAFT");
 
-  const fetchCourses = async () => {
+  const resetForm = (): void => {
+    setTitle("");
+    setDescription("");
+    setPrice("");
+    setStatus("DRAFT");
+    setEditingCourse(null);
+    setShowCreateForm(false);
+  };
+
+  const fetchCourses = async (): Promise<void> => {
     try {
+      setLoadingCourses(true);
+
       const res = await fetch("/api/courses", { cache: "no-store" });
+
       if (res.ok) {
         const data = await res.json();
-        setCourses(Array.isArray(data?.courses) ? data.courses : []);
+
+        const normalizedCourses: DashboardCourse[] = Array.isArray(data?.courses)
+          ? data.courses.map((course: DashboardCourse) => ({
+              ...course,
+              status:
+                course.status === "PUBLISHED" || course.status === "DRAFT"
+                  ? course.status
+                  : "DRAFT",
+            }))
+          : [];
+
+        setCourses(normalizedCourses);
+      } else {
+        setCourses([]);
       }
     } catch (error) {
       console.error(error);
@@ -82,7 +129,7 @@ export default function InstructorDashboard() {
 
   useEffect(() => {
     if (!isLoading && !user) {
-      router.push('/login');
+      router.push("/login");
     }
   }, [user, isLoading, router]);
 
@@ -92,76 +139,113 @@ export default function InstructorDashboard() {
     }
   }, [user]);
 
-  const handleCreateCourse = async (e: React.FormEvent) => {
+  const handleCreateCourse = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
+
     try {
       const res = await fetch("/api/courses", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, description, price: parseFloat(price) || 0 }),
+        body: JSON.stringify({
+          title,
+          description,
+          price: parseFloat(price) || 0,
+          status,
+        }),
       });
+
       if (res.ok) {
-        setShowCreateForm(false);
-        setTitle("");
-        setDescription("");
-        setPrice("");
+        resetForm();
         await fetchCourses();
+      } else {
+        const data = await res.json().catch(() => null);
+        alert(data?.error || "Failed to create course");
       }
     } catch (error) {
       console.error(error);
+      alert("حدث خطأ أثناء إنشاء الكورس");
     }
   };
 
-  const handleEditCourse = async (e: React.FormEvent) => {
+  const handleEditCourse = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
     if (!editingCourse) return;
+
     try {
       const res = await fetch(`/api/courses/${editingCourse.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, description, price: parseFloat(price) || 0 }),
+        body: JSON.stringify({
+          title,
+          description,
+          price: parseFloat(price) || 0,
+          status,
+        }),
       });
+
       if (res.ok) {
-        setEditingCourse(null);
-        setTitle("");
-        setDescription("");
-        setPrice("");
+        resetForm();
         await fetchCourses();
+      } else {
+        const data = await res.json().catch(() => null);
+        alert(data?.error || "Failed to update course");
       }
     } catch (error) {
       console.error(error);
+      alert("حدث خطأ أثناء تعديل الكورس");
     }
   };
 
-  const deleteCourse = async (id: string) => {
-    const confirmed = window.confirm("Are you sure you want to delete this course?");
+  const deleteCourse = async (id: string): Promise<void> => {
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this course?"
+    );
     if (!confirmed) return;
+
     try {
       const res = await fetch(`/api/courses/${id}`, { method: "DELETE" });
-      if (res.ok) await fetchCourses();
+      if (res.ok) {
+        await fetchCourses();
+      } else {
+        const data = await res.json().catch(() => null);
+        alert(data?.error || "Failed to delete course");
+      }
     } catch (error) {
       console.error(error);
+      alert("حدث خطأ أثناء حذف الكورس");
     }
   };
 
-  const openEditModal = (course: Course) => {
+  const openCreateModal = (): void => {
+    setEditingCourse(null);
+    setShowCreateForm(true);
+    setTitle("");
+    setDescription("");
+    setPrice("");
+    setStatus("DRAFT");
+  };
+
+  const openEditModal = (course: DashboardCourse): void => {
     setEditingCourse(course);
     setTitle(course.title);
     setDescription(course.description);
     setPrice(course.price.toString());
+    setStatus(course.status === "PUBLISHED" ? "PUBLISHED" : "DRAFT");
     setShowCreateForm(false);
   };
 
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
-        <p className="text-muted-foreground animate-pulse">Loading teaching dashboard...</p>
+        <p className="text-muted-foreground animate-pulse">
+          Loading teaching dashboard...
+        </p>
       </div>
     );
   }
 
   if (!user) {
-    return null; // Will redirect in useEffect
+    return null;
   }
 
   const stats = [
@@ -180,7 +264,10 @@ export default function InstructorDashboard() {
         className="max-w-7xl mx-auto space-y-8"
       >
         {/* Header Section with CTAs */}
-        <motion.div variants={itemVariants} className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <motion.div
+          variants={itemVariants}
+          className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4"
+        >
           <div>
             <h1 className="text-3xl font-bold tracking-tight text-foreground">
               Welcome back, {user?.name || "Instructor"}
@@ -189,14 +276,27 @@ export default function InstructorDashboard() {
               Here is what&apos;s happening with your courses today.
             </p>
           </div>
+
           <div className="flex items-center gap-3 w-full md:w-auto">
-            <Button variant="outline" onClick={logout} className="hidden sm:flex items-center gap-2 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 border-red-200 dark:border-red-900/30">
+            <Button
+              variant="outline"
+              onClick={logout}
+              className="hidden sm:flex items-center gap-2 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 border-red-200 dark:border-red-900/30"
+            >
               <LogOut className="h-4 w-4" /> Log out
             </Button>
-            <Button variant="outline" className="hidden sm:flex items-center gap-2">
+
+            <Button
+              variant="outline"
+              className="hidden sm:flex items-center gap-2"
+            >
               <Megaphone className="h-4 w-4" /> Announce
             </Button>
-            <Button onClick={() => { setShowCreateForm(true); setEditingCourse(null); setTitle(""); setDescription(""); setPrice(""); }} className="flex items-center gap-2 bg-brand-primary hover:bg-brand-primary/90 text-white w-full sm:w-auto">
+
+            <Button
+              onClick={openCreateModal}
+              className="flex items-center gap-2 bg-brand-primary hover:bg-brand-primary/90 text-white w-full sm:w-auto"
+            >
               <Plus className="h-4 w-4" /> Create Course
             </Button>
           </div>
@@ -204,19 +304,19 @@ export default function InstructorDashboard() {
 
         {/* Needs Attention / To-Do Section */}
         <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div 
-            onClick={() => router.push('/dashboard/instructor/qa')}
+          <div
+            onClick={() => router.push("/dashboard/instructor/qa")}
             className="flex items-center justify-between p-4 rounded-xl border border-amber-500/20 bg-amber-500/10 text-amber-600 dark:text-amber-400 cursor-pointer hover:bg-amber-500/20 transition-colors group"
           >
             <div className="flex items-center gap-3">
               <MessageSquare className="h-5 w-5 shrink-0" />
-              <div className="text-sm font-medium">14 unanswered Q&A</div>
+              <div className="text-sm font-medium">14 unanswered Q&amp;A</div>
             </div>
             <ArrowRight className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity" />
           </div>
-          
-          <div 
-            onClick={() => router.push('/dashboard/instructor/assignments')}
+
+          <div
+            onClick={() => router.push("/dashboard/instructor/assignments")}
             className="flex items-center justify-between p-4 rounded-xl border border-brand-accent/20 bg-brand-accent/10 text-brand-accent cursor-pointer hover:bg-brand-accent/20 transition-colors group"
           >
             <div className="flex items-center gap-3">
@@ -225,9 +325,9 @@ export default function InstructorDashboard() {
             </div>
             <ArrowRight className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity" />
           </div>
-          
-          <div 
-            onClick={() => router.push('/dashboard/instructor/issues')}
+
+          <div
+            onClick={() => router.push("/dashboard/instructor/issues")}
             className="flex items-center justify-between p-4 rounded-xl border border-rose-500/20 bg-rose-500/10 text-rose-600 dark:text-rose-400 cursor-pointer hover:bg-rose-500/20 transition-colors group"
           >
             <div className="flex items-center gap-3">
@@ -239,7 +339,10 @@ export default function InstructorDashboard() {
         </motion.div>
 
         {/* Stats Grid */}
-        <motion.div variants={containerVariants} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <motion.div
+          variants={containerVariants}
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
+        >
           {stats.map((stat, i) => (
             <motion.div key={i} variants={itemVariants}>
               <Card className="border-border shadow-sm hover:shadow-md transition-shadow h-full">
@@ -250,7 +353,9 @@ export default function InstructorDashboard() {
                   <stat.icon className="h-4 w-4 text-brand-accent" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-foreground">{stat.value}</div>
+                  <div className="text-2xl font-bold text-foreground">
+                    {stat.value}
+                  </div>
                   <p className="text-xs text-brand-primary mt-1">
                     {stat.trend}
                   </p>
@@ -260,11 +365,13 @@ export default function InstructorDashboard() {
           ))}
         </motion.div>
 
-        {/* Revenue & Enrollment Chart */}
+        {/* Revenue & Enrollments Chart */}
         <motion.div variants={itemVariants}>
           <Card className="border-border shadow-sm">
             <CardHeader>
-              <CardTitle className="text-lg font-semibold">Revenue & Enrollments (30 Days)</CardTitle>
+              <CardTitle className="text-lg font-semibold">
+                Revenue &amp; Enrollments (30 Days)
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <RevenueChart />
@@ -281,48 +388,86 @@ export default function InstructorDashboard() {
               className="w-full max-w-lg"
             >
               <Card className="border-brand-primary/50 shadow-2xl relative overflow-hidden bg-background">
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-brand-primary to-brand-accent"></div>
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-brand-primary to-brand-accent" />
                 <CardHeader>
-                  <CardTitle>{editingCourse ? "Edit Course" : "Create a New Course"}</CardTitle>
+                  <CardTitle>
+                    {editingCourse ? "Edit Course" : "Create a New Course"}
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <form onSubmit={editingCourse ? handleEditCourse : handleCreateCourse} className="space-y-4">
+                  <form
+                    onSubmit={editingCourse ? handleEditCourse : handleCreateCourse}
+                    className="space-y-4"
+                  >
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-foreground">Course Title</label>
-                      <input 
-                        type="text" 
-                        required 
-                        value={title} 
-                        onChange={(e) => setTitle(e.target.value)} 
+                      <label className="text-sm font-medium text-foreground">
+                        Course Title
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
                         className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
                       />
                     </div>
+
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-foreground">Description</label>
-                      <textarea 
-                        required 
-                        value={description} 
-                        onChange={(e) => setDescription(e.target.value)} 
+                      <label className="text-sm font-medium text-foreground">
+                        Description
+                      </label>
+                      <textarea
+                        required
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
                         className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary min-h-[100px]"
                       />
                     </div>
+
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-foreground">Price ($)</label>
-                      <input 
-                        type="number" 
-                        min="0" 
-                        step="0.01" 
-                        required 
-                        value={price} 
-                        onChange={(e) => setPrice(e.target.value)} 
+                      <label className="text-sm font-medium text-foreground">
+                        Price ($)
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        required
+                        value={price}
+                        onChange={(e) => setPrice(e.target.value)}
                         className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
                       />
                     </div>
+
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-foreground">
+                        Status
+                      </label>
+                      <select
+                        value={status}
+                        onChange={(e) =>
+                          setStatus(e.target.value as CourseStatus)
+                        }
+                        className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                      >
+                        <option value="DRAFT">Draft</option>
+                        <option value="PUBLISHED">Published</option>
+                      </select>
+                    </div>
+
                     <div className="flex justify-end gap-3 pt-4">
-                      <Button type="button" variant="outline" onClick={() => { setShowCreateForm(false); setEditingCourse(null); setTitle(""); setDescription(""); setPrice(""); }}>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={resetForm}
+                      >
                         Cancel
                       </Button>
-                      <Button type="submit" className="bg-brand-primary text-white hover:bg-brand-primary/90">
+
+                      <Button
+                        type="submit"
+                        className="bg-brand-primary text-white hover:bg-brand-primary/90"
+                      >
                         {editingCourse ? "Save Changes" : "Create Course"}
                       </Button>
                     </div>
@@ -334,40 +479,50 @@ export default function InstructorDashboard() {
         )}
 
         {/* Main Content Split */}
-        <motion.div variants={itemVariants} className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-          
+        <motion.div
+          variants={itemVariants}
+          className="grid grid-cols-1 xl:grid-cols-3 gap-8"
+        >
           {/* Left Column: Courses Table */}
           <div className="xl:col-span-2 space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <h2 className="text-xl font-semibold text-foreground">Your Courses</h2>
-              <AnimatedTabs 
-                tabs={["All Courses", "Published", "Drafts"]} 
+              <h2 className="text-xl font-semibold text-foreground">
+                Your Courses
+              </h2>
+              <AnimatedTabs
+                tabs={["All Courses", "Published", "Drafts"]}
                 variant="default"
               />
             </div>
-            
+
             <div className="bg-background rounded-xl shadow-sm overflow-hidden">
               {loadingCourses ? (
-                <div className="p-8 text-center text-muted-foreground animate-pulse">Loading courses...</div>
+                <div className="p-8 text-center text-muted-foreground animate-pulse">
+                  Loading courses...
+                </div>
               ) : (
-                <StripedRowsTable courses={courses} onEdit={openEditModal} onDelete={deleteCourse} />
+                <StripedRowsTable
+                  courses={courses}
+                  onEdit={openEditModal}
+                  onDelete={deleteCourse}
+                />
               )}
             </div>
           </div>
 
           {/* Right Column: Recent Activity */}
           <div className="space-y-6">
-            <h2 className="text-xl font-semibold text-foreground">Recent Activity</h2>
+            <h2 className="text-xl font-semibold text-foreground">
+              Recent Activity
+            </h2>
             <div className="flex justify-start">
-               <NotificationList 
-                  notifications={instructorNotifications} 
-                  onViewAll={() => router.push('/dashboard/instructor/notifications')}
-               />
+              <NotificationList
+                notifications={instructorNotifications}
+                onViewAll={() => router.push("/dashboard/instructor/notifications")}
+              />
             </div>
           </div>
-          
         </motion.div>
-
       </motion.div>
     </div>
   );
