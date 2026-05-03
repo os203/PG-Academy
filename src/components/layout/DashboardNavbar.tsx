@@ -21,7 +21,7 @@ export default function DashboardNavbar() {
                     <span className="text-[9px] text-muted-foreground text-right pt-2">{user?.email} </span>
                 </div>
                 <div className="w-7 h-7 rounded-full bg-brand-primary flex items-center justify-center text-white text-xs font-bold cursor-pointer">
-                    {user?.name.charAt(0).toUpperCase()}
+                    {user?.name ? user.name.charAt(0).toUpperCase() : "U"}
                 </div>
             </div>
 

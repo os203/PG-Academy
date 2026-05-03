@@ -3,10 +3,17 @@
 import { useAuth } from "@/context/AuthContext";
 import { User, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
-import Sidebar from "@/components/layout/Sidebar";
-import DashboardNavbar from "@/components/layout/DashboardNavbar";
-import Footer from "@/components/layout/Footer";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { AdminSidebar } from "@/components/layout/AdminSidebar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+  DropdownMenuGroup,
+} from "@/components/ui/dropdown-menu";
 
 export default function AdminLayout({
   children,
@@ -35,25 +42,67 @@ export default function AdminLayout({
   }
 
   return (
-    <div className="flex min-h-screen">
-
-      <div className="sticky top-0 z-50 h-screen">
-        <Sidebar />
+    <SidebarProvider>
+      <AdminSidebar />
+      <div className="flex-1 flex flex-col min-h-screen overflow-hidden bg-muted/20">
+        <header className="h-16 border-b border-border bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 flex items-center justify-between px-4 sticky top-0 z-10">
+          <div className="flex items-center gap-2">
+            <SidebarTrigger />
+            <h1 className="text-lg font-semibold tracking-tight ml-2">Command Center</h1>
+          </div>
+          <div className="flex items-center gap-4">
+            <DropdownMenu>
+              <DropdownMenuTrigger className="relative h-10 w-10 inline-flex items-center justify-center rounded-md hover:bg-accent hover:text-accent-foreground text-muted-foreground">
+                <Bell className="h-5 w-5" />
+                <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full"></span>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-80" align="end">
+                <DropdownMenuGroup>
+                  <DropdownMenuLabel className="font-semibold">Notifications</DropdownMenuLabel>
+                  <div className="max-h-[300px] overflow-y-auto">
+                    <DropdownMenuItem className="flex flex-col items-start gap-1 cursor-pointer p-3">
+                      <span className="font-medium">New instructor account created</span>
+                      <span className="text-xs text-muted-foreground">2 hours ago</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem className="flex flex-col items-start gap-1 cursor-pointer p-3">
+                      <span className="font-medium">Course &apos;Advanced Node.js&apos; published</span>
+                      <span className="text-xs text-muted-foreground">4 hours ago</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem className="flex flex-col items-start gap-1 cursor-pointer p-3">
+                      <span className="font-medium">Stripe payout processed successfully</span>
+                      <span className="text-xs text-muted-foreground">1 day ago</span>
+                    </DropdownMenuItem>
+                  </div>
+                </DropdownMenuGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <DropdownMenu>
+              <DropdownMenuTrigger className="relative h-8 w-8 rounded-full bg-brand-primary/10 hover:bg-brand-primary/20 text-brand-primary flex items-center justify-center">
+                  <User className="h-4 w-4" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56" align="end">
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none">{user?.name}</p>
+                    <p className="text-xs leading-none text-muted-foreground">{user?.email}</p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="text-red-600 focus:text-red-600 cursor-pointer" onSelect={() => logout()}>
+                  Log out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </header>
+        <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
+          <div className="max-w-7xl mx-auto">
+            {children}
+          </div>
+        </main>
       </div>
-
-      <div className="flex flex-col flex-1">
-
-        <div className="sticky top-0 z-30">
-          <DashboardNavbar />
-        </div>
-
-        <div className="flex-1 bg-background p-8 py-12">
-          {children}
-        </div>
-
-        <Footer />
-
-      </div>
-    </div>
+    </SidebarProvider>
   );
 }

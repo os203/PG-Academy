@@ -1,6 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import { cn } from "@/lib/utils";
 
 import Link from "next/link";
 import {
@@ -23,6 +24,7 @@ import {
   SidebarMenuItem,
   SidebarRail,
   SidebarSeparator,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@base-ui/react";
@@ -71,6 +73,7 @@ const systemNavigation = [
 export function AdminSidebar() {
   const pathname = usePathname();
   const { logout } = useAuth();
+  const { open } = useSidebar();
 
   return (
     <Sidebar className="border-r border-border">
@@ -78,7 +81,7 @@ export function AdminSidebar() {
         <SidebarMenu>
           <div className="px-2 pb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
             <ShieldAlert size={14} className="text-red-500" />
-            Admin Controls
+            {open && "Admin Controls"}
           </div>
 
           {adminNavigation.map((item) => (
@@ -87,6 +90,7 @@ export function AdminSidebar() {
                 onClick={() => window.location.href = item.url}
                 isActive={pathname === item.url}
                 className={pathname === item.url ? "bg-brand-primary/10 text-brand-primary font-medium flex items-center gap-3 py-2" : "text-muted-foreground flex items-center gap-3 py-2"}
+                tooltip={item.title}
               >
                 <item.icon className="h-5 w-5" />
                 <span>{item.title}</span>
@@ -100,7 +104,7 @@ export function AdminSidebar() {
         <SidebarMenu>
           <div className="px-2 pb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
             <Settings size={14} className="text-muted-foreground" />
-            System
+            {open && "System"}
           </div>
 
           {systemNavigation.map((item) => (
@@ -109,6 +113,7 @@ export function AdminSidebar() {
                 onClick={() => window.location.href = item.url}
                 isActive={pathname === item.url}
                 className={pathname === item.url ? "bg-brand-primary/10 text-brand-primary font-medium flex items-center gap-3 py-2" : "text-muted-foreground flex items-center gap-3 py-2"}
+                tooltip={item.title}
               >
                 <item.icon className="h-5 w-5" />
                 <span>{item.title}</span>
@@ -119,10 +124,10 @@ export function AdminSidebar() {
         </SidebarMenu>
       </SidebarContent>
       <SidebarRail />
-      <div className="flex items-center pt-4 text-red-600 transition-all duration-300 hover:text-brand-accent">
-        <span className={`${!open && "hover:-translate-y-0.5"}`}><LogOut /></span>
-        <Button onClick={() => logout()} className="  ">
-          {<span className="ml-2">Logout</span>}
+      <div className="flex items-center p-4 text-red-600 transition-all duration-300 hover:text-brand-accent">
+        <Button onClick={() => logout()} className="flex items-center gap-3">
+          <LogOut className={cn("h-5 w-5", !open && "mx-auto")} />
+          {open && <span>Logout</span>}
         </Button>
       </div>
     </Sidebar>

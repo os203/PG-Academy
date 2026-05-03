@@ -29,7 +29,7 @@ export default function Navbar() {
               <div className="flex items-center space-x-4">
                 <Link href="/dashboard" className="text-brand-primary hover:text-brand-accent transition-colors font-medium flex items-center gap-2 bg-brand-primary/10 px-4 py-2 rounded-full">
                   <div className="w-6 h-6 rounded-full bg-brand-primary flex items-center justify-center text-white text-xs font-bold">
-                    {user.name.charAt(0).toUpperCase()}
+                    {user?.name ? user.name.charAt(0).toUpperCase() : "U"}
                   </div>
                   <span>Dashboard</span>
                 </Link>
