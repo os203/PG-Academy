@@ -1,16 +1,17 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+
 import Link from "next/link";
-import { 
-  LayoutDashboard, 
-  Users, 
-  Library, 
-  CreditCard, 
+import {
+  LayoutDashboard,
+  Users,
+  Library,
+  CreditCard,
   Settings,
   ShieldAlert,
   BarChart3,
-  ScrollText,
+  ScrollText, LogOut
 } from "lucide-react";
 import {
   Sidebar,
@@ -23,6 +24,8 @@ import {
   SidebarRail,
   SidebarSeparator,
 } from "@/components/ui/sidebar";
+import { useAuth } from "@/context/AuthContext";
+import { Button } from "@base-ui/react";
 
 const adminNavigation = [
   {
@@ -67,6 +70,7 @@ const systemNavigation = [
 
 export function AdminSidebar() {
   const pathname = usePathname();
+  const { logout } = useAuth();
 
   return (
     <Sidebar className="border-r border-border">
@@ -76,10 +80,10 @@ export function AdminSidebar() {
             <ShieldAlert size={14} className="text-red-500" />
             Admin Controls
           </div>
-          
+
           {adminNavigation.map((item) => (
             <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton 
+              <SidebarMenuButton
                 onClick={() => window.location.href = item.url}
                 isActive={pathname === item.url}
                 className={pathname === item.url ? "bg-brand-primary/10 text-brand-primary font-medium flex items-center gap-3 py-2" : "text-muted-foreground flex items-center gap-3 py-2"}
@@ -98,10 +102,10 @@ export function AdminSidebar() {
             <Settings size={14} className="text-muted-foreground" />
             System
           </div>
-          
+
           {systemNavigation.map((item) => (
             <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton 
+              <SidebarMenuButton
                 onClick={() => window.location.href = item.url}
                 isActive={pathname === item.url}
                 className={pathname === item.url ? "bg-brand-primary/10 text-brand-primary font-medium flex items-center gap-3 py-2" : "text-muted-foreground flex items-center gap-3 py-2"}
@@ -110,10 +114,17 @@ export function AdminSidebar() {
                 <span>{item.title}</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
+
           ))}
         </SidebarMenu>
       </SidebarContent>
       <SidebarRail />
+      <div className="flex items-center pt-4 text-red-600 transition-all duration-300 hover:text-brand-accent">
+        <span className={`${!open && "hover:-translate-y-0.5"}`}><LogOut /></span>
+        <Button onClick={() => logout()} className="  ">
+          {<span className="ml-2">Logout</span>}
+        </Button>
+      </div>
     </Sidebar>
   );
 }

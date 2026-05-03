@@ -99,10 +99,16 @@ export default function Sidebar() {
 
     //Preventing Scroll on Mobile
     useEffect(() => {
-        if (isMobile) {
-            document.body.style.overflow = open ? "hidden" : "auto";
-        }
-    }, [open]);
+    if (isMobile && open) {
+        document.body.style.overflow = "hidden";
+    } else {
+        document.body.style.overflow = "auto";
+    }
+
+    return () => {
+        document.body.style.overflow = "auto";
+    };
+}, [open, isMobile]);
 
     // close when click ESC  
     useEffect(() => {
@@ -118,7 +124,7 @@ export default function Sidebar() {
         <div className={` ${!isMobile && "flex min-h-screen min-w-14 bg-background flex-col items-center justify-center border-r-[1px] border-gray-700 pl-4"}${!open ? "w-14  flex flex-col items-center " : "sm:w-64 md:w-72 w-64 md:block"}`}>
             <button
                 onClick={() => setOpen(!open)}
-                className={`fixed top-4 transition-all duration-300  ${open ? "right-6 md:left-60 top-6" : "md:static pt-6 py-2 left-4"} ${isMobile && "-translate-y-4"} z-100  cursor-pointer hover:text-brand-accent transition-colors  rounded-md hover:-translate-y-0.5 `}
+                className={`fixed top-4 transition-transform duration-300 ${open && isMobile && "right-6"}  ${open ? "md:left-60 top-6" : "md:static pt-6 py-2 left-4"} ${isMobile && "-translate-y-4"} z-100 focus:outline-none focus:ring-0 cursor-pointer hover:text-brand-accent hover:scale-110`}
             >
                 {open ? <PanelLeftClose /> : <PanelRightClose />}
             </button>
@@ -154,14 +160,14 @@ export default function Sidebar() {
                     <Link key={i} 
                     href={item.href} 
                     className="flex items-center hover:text-brand-accent transition-colors pt-2  rounded ">
-                        <span className={`${!open && "hover:-translate-y-0.5"}`}>{item.icon}</span>
+                        <span className={`${!open && "transition-all duration-300 hover:scale-110"}`}>{item.icon}</span>
                         {open && <span className="ml-2">{item.label}</span>}
                     </Link>
                     ))}
 
-                    <div className="flex items-center pt-4 text-red-600 transition-all duration-300 hover:text-brand-accent">
-                        <span className={`${!open && "hover:-translate-y-0.5"}`}><LogOut /></span>
-                        <Button onClick={logout} className="  ">
+                    <div className=" pt-4 text-red-600 transition-all duration-300 hover:text-brand-accent">
+                        <Button onClick={logout} className="flex items-center  ">
+                            <span className={`${!open && "hover:scale-110 transition-all duration-300"}`}><LogOut /></span>
                             {open && <span className="ml-2">Logout</span>}
                         </Button>
                     </div>

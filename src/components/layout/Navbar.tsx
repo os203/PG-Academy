@@ -44,7 +44,7 @@ export default function Navbar() {
             )}
             <ThemeToggle />
           </div>
-            <MobileMenu />
+          <MobileMenu />
         </div>
       </div>
     </nav>
