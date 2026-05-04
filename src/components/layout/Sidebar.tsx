@@ -121,10 +121,11 @@ export default function Sidebar() {
 
 
     return (
-        <div className={` ${!isMobile && "flex min-h-screen min-w-14 bg-background flex-col items-center justify-center border-r-[1px] border-gray-700 pl-4"}${!open ? "w-14  flex flex-col items-center " : "sm:w-64 md:w-72 w-64 md:block"}`}>
+        <div className={` ${!isMobile && "flex min-h-screen min-w-14 bg-background flex-col items-center justify-center border-r-[2px] border-gray-700 pl-4"}${!open ? "w-14  flex flex-col items-center " : "sm:w-64 md:w-72 w-64 md:block"} ${isMobile && open && "fixed"}`}>
             <button
                 onClick={() => setOpen(!open)}
-                className={`fixed top-4 transition-transform duration-300 ${open && isMobile && "right-6"}  ${open ? "md:left-60 top-6" : "md:static pt-6 py-2 left-4"} ${isMobile && "-translate-y-4"} z-100 focus:outline-none focus:ring-0 cursor-pointer hover:text-brand-accent hover:scale-110`}
+                className={`fixed top-4 transition-transform duration-300 ${open && isMobile && "translate-x-50 translate-y-0.5"} 
+                ${open ? "md:left-60 top-6" : "md:static pt-6 py-2 left-4"} ${isMobile && "-translate-y-4"} z-50 focus:outline-none focus:ring-0 cursor-pointer hover:text-brand-accent hover:scale-110`}
             >
                 {open ? <PanelLeftClose /> : <PanelRightClose />}
             </button>
@@ -139,7 +140,7 @@ export default function Sidebar() {
 
             {/* Sidebar */}
             <aside
-                className={`bg-background text-foreground/80 h-screen z-50 transition-all duration-300 ease-in-out border-r-[1px] border-gray-700
+                className={`bg-background text-foreground/80 h-screen z-50 transition-all duration-300 ease-in-out
                 fixed top-0 left-0 ${open ? "translate-x-0 " : "w-14 -translate-x-full"} md:static md:translate-x-0  max-w-xs  ${isMobile && "-translate-y-9 top-8"} 
                 `}>
                 {open && (<div className=" flex items-center gap-2 p-5 text-lg font-bold border-b border-gray-700">
