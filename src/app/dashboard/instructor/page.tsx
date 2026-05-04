@@ -23,6 +23,10 @@ import {
   CheckSquare,
   ArrowRight,
   LogOut,
+  Loader2,
+  Upload,
+  Image as ImageIcon,
+  X,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -31,7 +35,21 @@ type CourseStatus = "DRAFT" | "PUBLISHED";
 
 type DashboardCourse = Course & {
   status?: CourseStatus;
+  category?: string | null;
+  thumbnail?: string | null;
 };
+
+interface UploadResponse {
+  message?: string;
+  file?: {
+    storageKey: string;
+    url: string;
+    contentType: string;
+    size: number;
+    filename: string;
+  };
+  error?: string;
+}
 
 const containerVariants: Variants = {
   hidden: { opacity: 0 },
@@ -86,12 +104,18 @@ export default function InstructorDashboard() {
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
   const [status, setStatus] = useState<CourseStatus>("DRAFT");
+  const [category, setCategory] = useState("");
+  const [thumbnail, setThumbnail] = useState<string>("");
+
+  const [uploadingThumbnail, setUploadingThumbnail] = useState(false);
 
   const resetForm = (): void => {
     setTitle("");
     setDescription("");
     setPrice("");
     setStatus("DRAFT");
+    setCategory("");
+    setThumbnail("");
     setEditingCourse(null);
     setShowCreateForm(false);
   };
@@ -112,6 +136,8 @@ export default function InstructorDashboard() {
                 course.status === "PUBLISHED" || course.status === "DRAFT"
                   ? course.status
                   : "DRAFT",
+              category: typeof course.category === "string" ? course.category : null,
+              thumbnail: typeof course.thumbnail === "string" ? course.thumbnail : null,
             }))
           : [];
 
@@ -139,6 +165,46 @@ export default function InstructorDashboard() {
     }
   }, [user]);
 
+  const handleThumbnailUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ): Promise<void> => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingThumbnail(true);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("/api/uploads/course-thumbnail", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data: UploadResponse | null = await res.json().catch(() => null);
+
+      if (!res.ok) {
+        alert(data?.error || "Failed to upload thumbnail");
+        return;
+      }
+
+      if (data?.file?.url) {
+        setThumbnail(data.file.url);
+      }
+    } catch (error) {
+      console.error(error);
+      alert("حدث خطأ أثناء رفع صورة الكورس");
+    } finally {
+      setUploadingThumbnail(false);
+      e.target.value = "";
+    }
+  };
+
+  const removeThumbnail = (): void => {
+    setThumbnail("");
+  };
+
   const handleCreateCourse = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
 
@@ -151,6 +217,8 @@ export default function InstructorDashboard() {
           description,
           price: parseFloat(price) || 0,
           status,
+          category: category.trim() || null,
+          thumbnail: thumbnail.trim() || null,
         }),
       });
 
@@ -180,6 +248,8 @@ export default function InstructorDashboard() {
           description,
           price: parseFloat(price) || 0,
           status,
+          category: category.trim() || null,
+          thumbnail: thumbnail.trim() || null,
         }),
       });
 
@@ -223,6 +293,8 @@ export default function InstructorDashboard() {
     setDescription("");
     setPrice("");
     setStatus("DRAFT");
+    setCategory("");
+    setThumbnail("");
   };
 
   const openEditModal = (course: DashboardCourse): void => {
@@ -231,6 +303,8 @@ export default function InstructorDashboard() {
     setDescription(course.description);
     setPrice(course.price.toString());
     setStatus(course.status === "PUBLISHED" ? "PUBLISHED" : "DRAFT");
+    setCategory(course.category || "");
+    setThumbnail(course.thumbnail || "");
     setShowCreateForm(false);
   };
 
@@ -385,7 +459,7 @@ export default function InstructorDashboard() {
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="w-full max-w-lg"
+              className="w-full max-w-xl"
             >
               <Card className="border-brand-primary/50 shadow-2xl relative overflow-hidden bg-background">
                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-brand-primary to-brand-accent" />
@@ -424,19 +498,34 @@ export default function InstructorDashboard() {
                       />
                     </div>
 
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-foreground">
-                        Price ($)
-                      </label>
-                      <input
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        required
-                        value={price}
-                        onChange={(e) => setPrice(e.target.value)}
-                        className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
-                      />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-foreground">
+                          Price ($)
+                        </label>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          required
+                          value={price}
+                          onChange={(e) => setPrice(e.target.value)}
+                          className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-foreground">
+                          Category
+                        </label>
+                        <input
+                          type="text"
+                          value={category}
+                          onChange={(e) => setCategory(e.target.value)}
+                          placeholder="e.g. Programming, Design..."
+                          className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                        />
+                      </div>
                     </div>
 
                     <div className="space-y-2">
@@ -453,6 +542,70 @@ export default function InstructorDashboard() {
                         <option value="DRAFT">Draft</option>
                         <option value="PUBLISHED">Published</option>
                       </select>
+                    </div>
+
+                    <div className="space-y-3">
+                      <label className="text-sm font-medium text-foreground">
+                        Course Thumbnail
+                      </label>
+
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <label className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-muted hover:bg-muted/80 cursor-pointer transition text-sm font-medium">
+                          {uploadingThumbnail ? (
+                            <>
+                              <Loader2 size={16} className="animate-spin" />
+                              Uploading...
+                            </>
+                          ) : (
+                            <>
+                              <Upload size={16} />
+                              Upload Image
+                            </>
+                          )}
+                          <input
+                            type="file"
+                            accept="image/png,image/jpeg,image/jpg,image/webp"
+                            className="hidden"
+                            onChange={(e) => void handleThumbnailUpload(e)}
+                            disabled={uploadingThumbnail}
+                          />
+                        </label>
+
+                        {thumbnail && (
+                          <button
+                            type="button"
+                            onClick={removeThumbnail}
+                            className="inline-flex items-center gap-2 px-3 py-2 rounded-md border border-rose-200 text-rose-600 hover:bg-rose-50 text-sm"
+                          >
+                            <X size={16} />
+                            Remove
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="w-full rounded-lg border border-dashed border-border bg-muted/20 p-4">
+                        {thumbnail ? (
+                          <div className="flex items-center gap-4">
+                            <div className="w-24 h-24 rounded-lg overflow-hidden border bg-background shrink-0">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={thumbnail}
+                                alt="Course thumbnail"
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+
+                            <div className="text-sm text-muted-foreground break-all">
+                              {thumbnail}
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <ImageIcon size={18} />
+                            No thumbnail uploaded yet.
+                          </div>
+                        )}
+                      </div>
                     </div>
 
                     <div className="flex justify-end gap-3 pt-4">

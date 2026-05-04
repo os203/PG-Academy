@@ -44,6 +44,7 @@ export async function GET() {
         description: true,
         price: true,
         thumbnail: true,
+        category: true,
         status: true,
         createdAt: true,
         updatedAt: true,
@@ -80,8 +81,10 @@ export async function POST(req: NextRequest) {
 
     const title =
       typeof body.title === "string" ? body.title.trim() : "";
+
     const description =
       typeof body.description === "string" ? body.description.trim() : "";
+
     const price =
       typeof body.price === "number" && Number.isFinite(body.price)
         ? body.price
@@ -93,6 +96,12 @@ export async function POST(req: NextRequest) {
     const status: CourseStatusValue = isCourseStatus(statusRaw)
       ? statusRaw
       : "DRAFT";
+
+    const thumbnail =
+      typeof body.thumbnail === "string" ? body.thumbnail.trim() : null;
+
+    const category =
+      typeof body.category === "string" ? body.category.trim() : null;
 
     if (!title) {
       return NextResponse.json(
@@ -114,6 +123,8 @@ export async function POST(req: NextRequest) {
         description,
         price,
         status,
+        thumbnail,
+        category,
         instructorId: decoded.userId,
       },
     });

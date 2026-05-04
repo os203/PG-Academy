@@ -49,7 +49,10 @@ async function getAuthorizedCourse(courseId: string) {
   if (!course) {
     return {
       ok: false as const,
-      response: NextResponse.json({ error: "Course not found" }, { status: 404 }),
+      response: NextResponse.json(
+        { error: "Course not found" },
+        { status: 404 }
+      ),
     };
   }
 
@@ -118,7 +121,9 @@ export async function PATCH(
     const body = await req.json();
 
     const title =
-      typeof body.title === "string" ? body.title.trim() : authResult.course.title;
+      typeof body.title === "string"
+        ? body.title.trim()
+        : authResult.course.title;
 
     const description =
       typeof body.description === "string"
@@ -138,6 +143,16 @@ export async function PATCH(
     const status: CourseStatusValue = isCourseStatus(statusRaw)
       ? statusRaw
       : authResult.course.status;
+
+    const thumbnail =
+      typeof body.thumbnail === "string"
+        ? body.thumbnail.trim()
+        : authResult.course.thumbnail;
+
+    const category =
+      typeof body.category === "string"
+        ? body.category.trim()
+        : authResult.course.category;
 
     if (!title) {
       return NextResponse.json(
@@ -162,6 +177,8 @@ export async function PATCH(
         description,
         price,
         status,
+        thumbnail,
+        category,
       },
     });
 

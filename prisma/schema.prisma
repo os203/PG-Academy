@@ -32,6 +32,7 @@ model Course {
   description  String
   thumbnail    String?
   price        Float         @default(0)
+  category     String?
   status       CourseStatus  @default(DRAFT)
   instructorId String
   createdAt    DateTime      @default(now())
@@ -42,6 +43,7 @@ model Course {
   modules      Module[]
   reviews      Review[]
 }
+
 
 model Module {
   id        String   @id @default(uuid())
