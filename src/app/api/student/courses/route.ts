@@ -15,6 +15,7 @@ interface CourseSummaryResponse {
   totalLessons: number;
   completedLessons: number;
   progressPercentage: number;
+  instructorName: string;
 }
 
 export async function GET() {
@@ -48,6 +49,7 @@ export async function GET() {
       include: {
         course: {
           include: {
+            instructor: { select: { name: true } },
             modules: {
               orderBy: { order: "asc" },
               include: {
@@ -115,6 +117,7 @@ export async function GET() {
           totalLessons,
           completedLessons,
           progressPercentage,
+          instructorName: enrollment.course.instructor.name,
         };
       });
 

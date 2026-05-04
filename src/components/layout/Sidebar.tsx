@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { PanelRightClose, UserRoundPen, PanelLeftClose, House, BellRing, Settings, LogOut, GraduationCap, BrickWallShield, BookSearch, ListTodo    } from 'lucide-react';
+import { PanelRightClose, UserRoundPen, PanelLeftClose, House, BellRing, Settings, LogOut, GraduationCap, BrickWallShield, BookSearch, ListTodo, Globe } from 'lucide-react';
 import Link from "next/link"
 import { useAuth } from '@/context/AuthContext';
 import { Button } from "@base-ui/react";
@@ -12,6 +12,12 @@ export default function Sidebar() {
     const [isMobile, setIsMobile] = useState(false);
 
     const menuItems = [
+        {
+            label: "Main Page",
+            href: "/",
+            icon: <Globe />,
+            roles: ["admin", "student", "instructor"],
+        },
         {
             label: "Dashboard",
             href: user?.role ? `/dashboard/${user.role.toLowerCase()}` : "/",

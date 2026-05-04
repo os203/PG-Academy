@@ -61,11 +61,14 @@ export default function AdminCoursesPage() {
         body: JSON.stringify({ status: "PUBLISHED" })
       });
       if (res.ok) {
-        // Refresh local state to show it published
         setCourses(prev => prev.map(c => c.id === id ? { ...c, status: "PUBLISHED" } : c));
+        // Optional: show a success toast if you have a toast system, for now we will just let it visually update.
+      } else {
+        alert("Failed to approve course.");
       }
     } catch (err) {
       console.error("Failed to approve course", err);
+      alert("An error occurred while approving the course.");
     }
   };
 
@@ -77,11 +80,13 @@ export default function AdminCoursesPage() {
         body: JSON.stringify({ status: "DRAFT" })
       });
       if (res.ok) {
-        // Refresh local state
         setCourses(prev => prev.map(c => c.id === id ? { ...c, status: "DRAFT" } : c));
+      } else {
+        alert("Failed to unpublish course.");
       }
     } catch (err) {
       console.error("Failed to unpublish course", err);
+      alert("An error occurred while unpublishing the course.");
     }
   };
 
@@ -162,11 +167,11 @@ export default function AdminCoursesPage() {
                             <DropdownMenuGroup>
                               <DropdownMenuLabel>Moderation</DropdownMenuLabel>
                               {c.status === "DRAFT" ? (
-                                <DropdownMenuItem className="cursor-pointer text-emerald-500 focus:text-emerald-600" onSelect={() => handleApprove(c.id)}>
+                                <DropdownMenuItem className="cursor-pointer text-emerald-500 focus:text-emerald-600" onClick={() => handleApprove(c.id)}>
                                   <CheckCircle className="mr-2 h-4 w-4" /> Approve & Publish
                                 </DropdownMenuItem>
                               ) : (
-                                <DropdownMenuItem className="cursor-pointer text-amber-500 focus:text-amber-600" onSelect={() => handleUnpublish(c.id)}>
+                                <DropdownMenuItem className="cursor-pointer text-amber-500 focus:text-amber-600" onClick={() => handleUnpublish(c.id)}>
                                   <XCircle className="mr-2 h-4 w-4" /> Revert to Draft
                                 </DropdownMenuItem>
                               )}
@@ -194,3 +199,4 @@ export default function AdminCoursesPage() {
     </div>
   );
 }
+

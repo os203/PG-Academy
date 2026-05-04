@@ -12,7 +12,9 @@ import {
   Settings,
   ShieldAlert,
   BarChart3,
-  ScrollText, LogOut
+  ScrollText,
+  LogOut,
+  Home
 } from "lucide-react";
 import {
   Sidebar,
@@ -78,6 +80,21 @@ export function AdminSidebar() {
   return (
     <Sidebar className="border-r border-border">
       <SidebarContent className="px-2 py-4">
+        <SidebarMenu className="mb-4">
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              onClick={() => window.location.href = "/"}
+              className="text-muted-foreground hover:bg-accent hover:text-foreground flex items-center gap-3 py-2 font-medium"
+              tooltip="Go to Main Page"
+            >
+              <Home className="h-5 w-5" />
+              <span>Go to Main Page</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+
+        <SidebarSeparator className="my-3" />
+
         <SidebarMenu>
           <div className="px-2 pb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
             <ShieldAlert size={14} className="text-red-500" />
