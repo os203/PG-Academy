@@ -4,7 +4,12 @@ import { useEffect, useState } from "react";
 import DashCard from "@/components/ui/dashCard";
 import MyCourseCard from "@/components/ui/myCouaseCard";
 import { useAuth } from "@/context/AuthContext";
-import { BookOpen, Clock4, Medal, ChartNoAxesCombined } from 'lucide-react';
+import {
+  BookOpen,
+  Clock4,
+  Medal,
+  ChartNoAxesCombined,
+} from "lucide-react";
 
 interface EnrolledCourse {
   id: string;
@@ -28,45 +33,64 @@ export default function StudentDashboard() {
     const fetchCourses = async () => {
       try {
         const res = await fetch("/api/student/courses");
+
         if (res.ok) {
           const data = await res.json();
-          setCourses(data.courses);
+          setCourses(Array.isArray(data?.courses) ? data.courses : []);
+        } else {
+          setCourses([]);
         }
       } catch (err) {
         console.error("Failed to fetch courses", err);
+        setCourses([]);
       } finally {
         setIsCoursesLoading(false);
       }
     };
 
     if (!isAuthLoading && user) {
-      fetchCourses();
+      void fetchCourses();
     }
   }, [isAuthLoading, user]);
 
   if (isAuthLoading) {
-    return <div className="min-h-screen flex items-center justify-center p-4"><p className="text-muted-foreground animate-pulse">Loading study dashboard...</p></div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <p className="text-muted-foreground animate-pulse">
+          Loading study dashboard...
+        </p>
+      </div>
+    );
   }
 
   return (
-    <div className="min-h-screen flex flex-col  bg-background/95  p-4">
-      <div className="w-ful h-32 p-8 " >
-        <div className="font-bold text- text-2xl mb-2 tracking-tight">
+    <div className="min-h-screen flex flex-col bg-background/95 p-4">
+      <div className="w-full h-32 p-8">
+        <div className="font-bold text-2xl mb-2 tracking-tight">
           Welcome back! 👋
         </div>
         <div className="text-muted-foreground">
           Continue your learning journey
         </div>
       </div>
-      <div className="flex gap-6  justify-around flex-wrap">
-        <DashCard icon={<BookOpen size={30} />} title="Enrolled Courses" number={courses.length} />
+
+      <div className="flex gap-6 justify-around flex-wrap">
+        <DashCard
+          icon={<BookOpen size={30} />}
+          title="Enrolled Courses"
+          number={courses.length}
+        />
         <DashCard icon={<Clock4 size={30} />} title="Hours Learned" number={5} />
         <DashCard icon={<Medal size={30} />} title="Certificates" number={5} />
-        <DashCard icon={<ChartNoAxesCombined size={30} />} title="Streak Days" number={5} />
-
+        <DashCard
+          icon={<ChartNoAxesCombined size={30} />}
+          title="Streak Days"
+          number={5}
+        />
       </div>
-        <span className="pt-16 text-2xl">Continue Learning</span>
-      
+
+      <span className="pt-16 text-2xl">Continue Learning</span>
+
       {isCoursesLoading ? (
         <div className="flex justify-center p-12 text-muted-foreground">
           <p className="animate-pulse">Loading your courses...</p>
@@ -76,15 +100,20 @@ export default function StudentDashboard() {
           You haven&apos;t enrolled in any courses yet.
         </div>
       ) : (
-        <div className="grid gap-6 gap-y-8 justify-items-center pt-12" style={{"gridTemplateColumns":"repeat(auto-fill, minmax(350px, 1fr))"}}>
+        <div
+          className="grid gap-6 gap-y-8 justify-items-center pt-12"
+          style={{ gridTemplateColumns: "repeat(auto-fill, minmax(350px, 1fr))" }}
+        >
           {courses.map((course) => (
             <MyCourseCard
               key={course.id}
-              thumbnail={course.thumbnail || "/taco3.jpg"} // Fallback image
+              thumbnail={course.thumbnail || "/taco3.jpg"}
               courseName={course.title}
               instructor={course.instructorName}
               progress={course.progressPercentage}
-              onContinue={() => window.location.href = `/dashboard/student/courses/${course.id}`}
+              onContinue={() =>
+                (window.location.href = `/dashboard/student/${course.id}`)
+              }
             />
           ))}
         </div>
