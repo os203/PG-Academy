@@ -19,7 +19,7 @@ export default function MyCourseCard({
     const isNotStarted = progress === 0;
 
     return (
-        <div className="min-w-[350px] w-full h-106 max-w-md bg-background/25 rounded-2xl shadow-md overflow-hidden flex flex-col glass hover:-translate-y-4 duration-300">
+        <div className="min-w-[350px] w-full h-106 max-w-md bg-gray-100 dark:bg-gray-900 shadow-md dark:shadow-brand-accent/20 overflow-hidden flex flex-col hover:-translate-y-4 duration-300">
 
             <img
                 src={thumbnail}
@@ -52,7 +52,7 @@ export default function MyCourseCard({
                 {/* Button */}
                 <button
                     onClick={onContinue}
-                    className={`mt-auto w-full py-2 rounded-lg font-medium transition-all shadow-brand-primary/25
+                    className={`mt-auto w-full py-2 font-medium transition-all shadow-brand-primary/25
             ${isNotStarted
                             ? "bg-green-500 hover:bg-green-600 text-white"
                             : "bg-brand-primary hover:bg-brand-hover text-white"
