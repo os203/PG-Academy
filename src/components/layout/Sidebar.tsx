@@ -33,13 +33,13 @@ export default function Sidebar() {
         {
             label: "Browse Courses",
             href: `/dashboard/searchPage`,
-            icon: <BookSearch  />,
+            icon: <BookSearch />,
             roles: ["admin", "student", "instructor"],
         },
         {
             label: "Wishlist",
-            href: `/myCourses`,
-            icon: <ListTodo   />,
+            href: `/dashboard/wishlist`,
+            icon: <ListTodo />,
             roles: ["student", "instructor"],
         },
         {
@@ -57,7 +57,7 @@ export default function Sidebar() {
         {
             label: "Certificates",
             href: "",
-            icon: <BrickWallShield  />,
+            icon: <BrickWallShield />,
             roles: ["student"],
         },
         {
@@ -111,8 +111,8 @@ export default function Sidebar() {
     ];
 
     const filteredItems = menuItems.filter(item =>
-   user?.role ? item.roles.includes(user.role.toLowerCase()) : false
-);
+        user?.role ? item.roles.includes(user.role.toLowerCase()) : false
+    );
 
     // Detect screen
     useEffect(() => {
@@ -127,16 +127,16 @@ export default function Sidebar() {
 
     //Preventing Scroll on Mobile
     useEffect(() => {
-    if (isMobile && open) {
-        document.body.style.overflow = "hidden";
-    } else {
-        document.body.style.overflow = "auto";
-    }
+        if (isMobile && open) {
+            document.body.style.overflow = "hidden";
+        } else {
+            document.body.style.overflow = "auto";
+        }
 
-    return () => {
-        document.body.style.overflow = "auto";
-    };
-}, [open, isMobile]);
+        return () => {
+            document.body.style.overflow = "auto";
+        };
+    }, [open, isMobile]);
 
     // close when click ESC  
     useEffect(() => {
@@ -186,6 +186,7 @@ export default function Sidebar() {
                 <div className="flex-1 overflow-y-auto overflow-x-hidden pb-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                     <nav className="flex flex-col gap-3 p-4">
 
+<<<<<<< HEAD
                         {filteredItems.map((item, i) => (
                         <Link key={i} 
                         href={item.href} 
@@ -194,6 +195,16 @@ export default function Sidebar() {
                             {open && <span className="ml-2 whitespace-nowrap">{item.label}</span>}
                         </Link>
                         ))}
+=======
+                    {filteredItems.map((item, i) => (
+                        <Link key={i}
+                            href={item.href}
+                            className="flex items-center hover:text-brand-accent transition-colors pt-2  rounded ">
+                            <span className={`${!open && "transition-all duration-300 hover:scale-110"}`}>{item.icon}</span>
+                            {open && <span className="ml-2">{item.label}</span>}
+                        </Link>
+                    ))}
+>>>>>>> origin/searchPage
 
                         <div className=" pt-4 text-red-600 transition-all duration-300 hover:text-brand-accent">
                             <Button onClick={logout} className="flex items-center  ">
