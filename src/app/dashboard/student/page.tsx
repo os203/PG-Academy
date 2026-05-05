@@ -19,6 +19,7 @@ interface EnrolledCourse {
   completedLessons: number;
   progressPercentage: number;
   instructorName: string;
+  category?: string;
 }
 
 export default function StudentDashboard() {
@@ -112,6 +113,7 @@ export default function StudentDashboard() {
               thumbnail={course.thumbnail || "/taco3.jpg"} // Fallback image
               courseName={course.title}
               instructor={course.instructorName}
+              category={course.category || "General"}
               progress={course.progressPercentage}
               onContinue={() => window.location.href = `/dashboard/student/courses/${course.id}`}
             />

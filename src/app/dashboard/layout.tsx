@@ -3,7 +3,6 @@
 import { usePathname } from "next/navigation";
 import DashboardNavbar from "@/components/layout/DashboardNavbar";
 import Sidebar from "@/components/layout/Sidebar";
-import Footer from "@/components/layout/Footer";
 
 export default function DashboardLayout({ children }: Readonly<{ children: React.ReactNode }>) {
     return (
@@ -21,8 +20,6 @@ export default function DashboardLayout({ children }: Readonly<{ children: React
                 <div className="flex-1 bg-background p-8 py-12">
                     {children}
                 </div>
-
-                <Footer />
 
             </div>
         </div>

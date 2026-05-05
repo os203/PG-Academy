@@ -186,7 +186,6 @@ export default function Sidebar() {
                 <div className="flex-1 overflow-y-auto overflow-x-hidden pb-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                     <nav className="flex flex-col gap-3 p-4">
 
-<<<<<<< HEAD
                         {filteredItems.map((item, i) => (
                         <Link key={i} 
                         href={item.href} 
@@ -195,16 +194,6 @@ export default function Sidebar() {
                             {open && <span className="ml-2 whitespace-nowrap">{item.label}</span>}
                         </Link>
                         ))}
-=======
-                    {filteredItems.map((item, i) => (
-                        <Link key={i}
-                            href={item.href}
-                            className="flex items-center hover:text-brand-accent transition-colors pt-2  rounded ">
-                            <span className={`${!open && "transition-all duration-300 hover:scale-110"}`}>{item.icon}</span>
-                            {open && <span className="ml-2">{item.label}</span>}
-                        </Link>
-                    ))}
->>>>>>> origin/searchPage
 
                         <div className=" pt-4 text-red-600 transition-all duration-300 hover:text-brand-accent">
                             <Button onClick={logout} className="flex items-center  ">
