@@ -3,6 +3,7 @@
 
 type MyCourseCardProps = {
     thumbnail: string;
+    category: string;
     courseName: string;
     instructor: string;
     progress: number; 
@@ -11,6 +12,7 @@ type MyCourseCardProps = {
 
 export default function MyCourseCard({
     thumbnail,
+    category,
     courseName,
     instructor,
     progress,
@@ -24,11 +26,13 @@ export default function MyCourseCard({
             <img
                 src={thumbnail}
                 alt={courseName}
-                className="w-full h-60 object-cover"
+                className="w-full h-56 object-cover"
             />
 
-            <div className="p-4 flex flex-col gap-3 flex-grow">
-
+            <div className="p-4 flex flex-col gap-2 flex-grow">
+                <span className="text-xs text-brand-accent font-medium p-1 px-3 rounded-xl bg-brand-accent/20 dark:bg-brand-accent/10 w-fit">
+                    {category ?? "Don't work"}
+                </span>
                 <div>
                     <h2 className="text-lg font-semibold">{courseName}</h2>
                     <p className="text-sm text-gray-500">{instructor}</p>
