@@ -11,6 +11,9 @@ interface PublicCourseResponse {
   instructorName: string;
   modulesCount: number;
   lessonsCount: number;
+  studentsCount: number;
+  rating: number;
+  category: string;
 }
 
 export async function GET() {
@@ -37,6 +40,16 @@ export async function GET() {
             order: "asc",
           },
         },
+        _count: {
+          select: {
+            enrollments: true,
+          },
+        },
+        reviews: {
+          select: {
+            rating: true,
+          },
+        },
       },
       orderBy: {
         createdAt: "desc",
@@ -48,6 +61,27 @@ export async function GET() {
         return total + module.lessons.length;
       }, 0);
 
+      const reviewCount = course.reviews.length;
+      const averageRating = reviewCount
+        ? course.reviews.reduce((sum, review) => sum + review.rating, 0) /
+          reviewCount
+        : 0;
+
+      const combinedText =
+        `${course.title} ${course.description}`.toLowerCase();
+      const category = combinedText.includes("3d")
+        ? "3D"
+        : combinedText.includes("2d")
+          ? "2D"
+          : combinedText.includes("animation")
+            ? "Animation"
+            : combinedText.includes("design") ||
+                combinedText.includes("ui") ||
+                combinedText.includes("ux") ||
+                combinedText.includes("graphic")
+              ? "Design"
+              : "General";
+
       return {
         id: course.id,
         title: course.title,
@@ -58,6 +92,9 @@ export async function GET() {
         instructorName: course.instructor.name,
         modulesCount: course.modules.length,
         lessonsCount,
+        studentsCount: course._count.enrollments,
+        rating: Number(averageRating.toFixed(1)),
+        category,
       };
     });
 

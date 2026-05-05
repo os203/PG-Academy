@@ -362,6 +362,7 @@ export default function InstructorDashboard() {
 
             <Button
               variant="outline"
+              onClick={() => router.push("/dashboard/instructor/send-notification")}
               className="hidden sm:flex items-center gap-2"
             >
               <Megaphone className="h-4 w-4" /> Announce

@@ -3,7 +3,7 @@
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
-import Link from "next/link";
+
 import {
   LayoutDashboard,
   Users,
@@ -14,13 +14,12 @@ import {
   BarChart3,
   ScrollText,
   LogOut,
-  Home
+  Home,
+  Send
 } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
-  SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -56,6 +55,11 @@ const adminNavigation = [
     title: "Analytics",
     url: "/dashboard/admin/analytics",
     icon: BarChart3,
+  },
+  {
+    title: "Send Notifications",
+    url: "/dashboard/admin/notifications",
+    icon: Send,
   },
 ];
 

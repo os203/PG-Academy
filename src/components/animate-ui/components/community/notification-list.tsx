@@ -1,4 +1,3 @@
-// @ts-nocheck
 'use client';
 
 import * as React from 'react';
@@ -80,32 +79,38 @@ function NotificationList({ notifications = defaultNotifications, onViewAll }: N
       whileHover="expanded"
     >
       <div>
-        {notifications.map((notification, i) => (
-          <motion.div
-            key={notification.id}
-            className="bg-neutral-100 dark:bg-neutral-800 rounded-xl px-4 py-2 shadow-sm hover:shadow-lg transition-shadow duration-200 relative"
-            variants={getCardVariants(i)}
-            transition={transition}
-            style={{
-              zIndex: notifications.length - i,
-            }}
-          >
-            <div className="flex justify-between items-center">
-              <h1 className="text-sm font-medium">{notification.title}</h1>
-              {notification.count && (
-               <div className="flex items-center text-xs gap-0.5 font-medium text-neutral-500 dark:text-neutral-300">
-                  <RotateCcw className="size-3" />
-                  <span>{notification.count}</span>
-                </div>
-              )}
-            </div>
-            <div className="text-xs text-neutral-500 font-medium">
-              <span>{notification.time}</span>
-              &nbsp;•&nbsp;
-              <span>{notification.subtitle}</span>
-            </div>
-          </motion.div>
-        ))}
+        {notifications.length === 0 ? (
+          <div className="bg-neutral-100 dark:bg-neutral-800 rounded-xl px-4 py-3 text-center">
+            <p className="text-xs text-neutral-500 font-medium">All caught up! 🎉</p>
+          </div>
+        ) : (
+          notifications.map((notification, i) => (
+            <motion.div
+              key={notification.id}
+              className="bg-neutral-100 dark:bg-neutral-800 rounded-xl px-4 py-2 shadow-sm hover:shadow-lg transition-shadow duration-200 relative"
+              variants={getCardVariants(i)}
+              transition={transition}
+              style={{
+                zIndex: notifications.length - i,
+              }}
+            >
+              <div className="flex justify-between items-center">
+                <h1 className="text-sm font-medium">{notification.title}</h1>
+                {notification.count && (
+                 <div className="flex items-center text-xs gap-0.5 font-medium text-neutral-500 dark:text-neutral-300">
+                    <RotateCcw className="size-3" />
+                    <span>{notification.count}</span>
+                  </div>
+                )}
+              </div>
+              <div className="text-xs text-neutral-500 font-medium">
+                <span>{notification.time}</span>
+                &nbsp;•&nbsp;
+                <span>{notification.subtitle}</span>
+              </div>
+            </motion.div>
+          ))
+        )}
       </div>
 
       <div className="flex items-center gap-2">

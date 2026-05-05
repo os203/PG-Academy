@@ -1,7 +1,8 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Loader2, Search } from "lucide-react";
+import Link from "next/link";
+import { Loader2, Heart } from "lucide-react";
 import CourseCardForSale from "@/components/ui/CourseCardForSale";
 import { useWishlist } from "@/hooks/use-wishlist";
 
@@ -9,37 +10,14 @@ interface PublicCourse {
     id: string;
     title: string;
     category: string;
-    thumbnail: string | null;
-    rating: number; // من 5
+    thumbnail: string;
+    rating: number;
     studentsCount: number;
     price: number;
     instructorName: string;
     modulesCount: number;
     lessonsCount: number;
 }
-
-interface EnrollResponse {
-    message?: string;
-    error?: string;
-    alreadyEnrolled?: boolean;
-}
-
-
-const filterCategories = [
-    { key: "all", label: "All" },
-    { key: "2d", label: "2D" },
-    { key: "3d", label: "3D" },
-    { key: "animation", label: "Animation" },
-    { key: "design", label: "Design" },
-];
-
-const categoryTags: Record<string, string[]> = {
-    "2d": ["2d", "2d animation"],
-    "3d": ["3d", "3d modeling", "3d animation"],
-    animation: ["animation", "animated", "motion"],
-    design: ["design", "ui", "ux", "graphic"],
-    all: [],
-};
 
 async function readJsonSafely<T>(res: Response): Promise<T | null> {
     const contentType = res.headers.get("content-type") || "";
@@ -56,16 +34,14 @@ async function readJsonSafely<T>(res: Response): Promise<T | null> {
     }
 }
 
-export default function SearchPage() {
+export default function WishlistPage() {
     const [courses, setCourses] = useState<PublicCourse[]>([]);
-    const [query, setQuery] = useState("");
-    const [activeFilter, setActiveFilter] = useState("all");
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [enrollingCourseId, setEnrollingCourseId] = useState<string | null>(null);
     const [enrolledCourseIds, setEnrolledCourseIds] = useState<string[]>([]);
     const [enrollError, setEnrollError] = useState<string | null>(null);
-    const { toggleWishlist, isWishlisted } = useWishlist();
+    const { wishlistIds, toggleWishlist, isWishlisted } = useWishlist();
 
     useEffect(() => {
         const fetchCourses = async () => {
@@ -77,15 +53,13 @@ export default function SearchPage() {
                 const data = await readJsonSafely<{ courses?: PublicCourse[]; error?: string }>(res);
 
                 if (!res.ok) {
-                    setError(data?.error || "Failed to load published courses.");
-                    setCourses([]);
+                    setError(data?.error || "Unable to load wishlist courses.");
                     return;
                 }
 
                 setCourses(Array.isArray(data?.courses) ? data.courses : []);
             } catch {
-                setError("Unable to load courses. Please try again later.");
-                setCourses([]);
+                setError("Unable to load wishlist courses. Please try again later.");
             } finally {
                 setLoading(false);
             }
@@ -104,8 +78,7 @@ export default function SearchPage() {
             }
         };
 
-        void fetchCourses();
-        void fetchEnrolledCourses();
+        void Promise.all([fetchCourses(), fetchEnrolledCourses()]);
     }, []);
 
     const enrollInCourse = async (courseId: string) => {
@@ -121,7 +94,7 @@ export default function SearchPage() {
                 body: JSON.stringify({ courseId }),
             });
 
-            const data = await readJsonSafely<EnrollResponse>(res);
+            const data = await readJsonSafely<{ message?: string; error?: string; alreadyEnrolled?: boolean }>(res);
 
             if (!res.ok) {
                 setEnrollError(data?.error || "Unable to enroll in this course.");
@@ -140,96 +113,43 @@ export default function SearchPage() {
         }
     };
 
-    const filteredCourses = useMemo(() => {
-        const normalizedQuery = query.trim().toLowerCase();
-
-        return courses.filter((course) => {
-            const searchText = `${course.title} ${course.category} ${course.instructorName}`.toLowerCase();
-            const matchesQuery =
-                !normalizedQuery || searchText.includes(normalizedQuery);
-
-            if (!matchesQuery) {
-                return false;
-            }
-
-            if (activeFilter === "all") {
-                return true;
-            }
-
-            return categoryTags[activeFilter]?.some((tag) =>
-                searchText.includes(tag)
-            );
-        });
-    }, [courses, query, activeFilter]);
+    const wishlistCourses = useMemo(
+        () => courses.filter((course) => wishlistIds.includes(course.id)),
+        [courses, wishlistIds]
+    );
 
     return (
         <div className="min-h-screen bg-background">
-            <div className="max-w-7xl mx-auto">
+            <div className="max-w-7xl mx-auto py-10">
                 <div className="mb-10">
                     <h1 className="text-3xl font-black mb-3 text-foreground">
-                        Browse Courses
+                        My Wishlist
                     </h1>
                     <p className="text-muted-foreground max-w-2xl mb-1">
-                        Discover your next learning adventure
-                    </p>
-                    <p className="text-muted-foreground max-w-2xl text-xs">
-                        Use the search to filter courses. Type a name, description or Author name, then choose one of the categories.
+                        Save courses here for later and enroll when you’re ready.
                     </p>
                 </div>
-
-                <div className="shadow-md dark:shadow-brand-accent/20 dark:bg-gray-900 rounded-2xl p-8 mb-12">
-                    <div className="space-y-3">
-                        <label htmlFor="course-search" className="text-sm font-semibold  text-foreground pl-1">
-                            Search for a course
-                        </label>
-                        <div className="flex items-center gap-2 rounded-2xl border border-border bg-card mt-2 px-4 shadow-sm focus-within:border-primary">
-                            <Search className="h-5 w-5 text-foreground " />
-                            <input
-                                id="course-search"
-                                type="search"
-                                value={query}
-                                onChange={(event) => setQuery(event.target.value)}
-                                placeholder="Search ....."
-                                className="w-full rounded-2xl border-none bg-transparent pr-12 py-4 text-base text-foreground outline-none placeholder:text-muted-foreground"
-                            />
-                        </div>
-                        <div className="flex flex-wrap gap-4">
-                            {filterCategories.map((filter) => {
-                                const isActive = activeFilter === filter.key;
-                                return (
-                                    <button
-                                        key={filter.key}
-                                        type="button"
-                                        onClick={() => setActiveFilter(filter.key)}
-                                        className={`rounded-xl border px-4 py-2 text-sm font-medium text-brand-accent transition ${isActive
-                                            ? " bg-primary "
-                                            : "border-border bg-card text-foreground hover:text-brand-accent"
-                                            }`}
-                                    >
-                                        {filter.label}
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    </div>
-                </div>
-
-                <p className="text-sm text-muted-foreground font-bold pb-8">
-                    {filteredCourses.length} course{filteredCourses.length === 1 ? "" : "s"} found
-                </p>
 
                 {loading ? (
                     <div className="rounded-3xl border border-border bg-card p-12 text-center text-foreground">
                         <Loader2 className="mx-auto mb-4 h-8 w-8 animate-spin text-primary" />
-                        Loading courses...
+                        Loading wishlist...
                     </div>
                 ) : error ? (
                     <div className="rounded-3xl border border-red-200 bg-red-50 p-8 text-center text-red-700">
                         {error}
                     </div>
-                ) : filteredCourses.length === 0 ? (
+                ) : wishlistCourses.length === 0 ? (
                     <div className="rounded-3xl border border-border bg-card p-12 text-center text-muted-foreground">
-                        No courses match the search or filter.
+                        <Heart className="mx-auto mb-4 h-10 w-10 text-brand-primary" />
+                        <p className="text-xl font-semibold text-foreground mb-2">Your wishlist is empty.</p>
+                        <p className="mb-6">Browse courses and tap the heart to save them here.</p>
+                        <Link
+                            href="/dashboard/searchPage"
+                            className="inline-flex items-center justify-center rounded-xl bg-brand-primary px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-hover"
+                        >
+                            Browse Courses
+                        </Link>
                     </div>
                 ) : (
                     <>
@@ -239,7 +159,7 @@ export default function SearchPage() {
                             </div>
                         ) : null}
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {filteredCourses.map((course) => (
+                            {wishlistCourses.map((course) => (
                                 <CourseCardForSale
                                     key={course.id}
                                     thumbnail={course.thumbnail ?? "taco3.jpg"}
@@ -262,6 +182,4 @@ export default function SearchPage() {
             </div>
         </div>
     );
-
-
 }

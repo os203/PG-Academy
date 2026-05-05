@@ -95,17 +95,17 @@ model Progress {
 }
 
 model Quiz {
-  id           String         @id @default(uuid())
+  id           String   @id @default(uuid())
   title        String
-  passingScore Int            @default(50)
+  passingScore Int      @default(50)
   maxAttempts  Int?
   lessonId     String
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
-  lesson       Lesson         @relation(fields: [lessonId], references: [id], onDelete: Cascade)
-  attempts     QuizAttempt[]
-  questions    QuizQuestion[]
+  lesson    Lesson         @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  attempts  QuizAttempt[]
+  questions QuizQuestion[]
 }
 
 model QuizAttempt {
@@ -125,29 +125,29 @@ enum QuestionType {
 }
 
 model QuizQuestion {
-  id               String         @id @default(uuid())
+  id               String       @id @default(uuid())
   quizId           String
   questionText     String
   type             QuestionType
   order            Int
   correctTrueFalse Boolean?
-  createdAt        DateTime       @default(now())
-  updatedAt        DateTime       @updatedAt
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
 
-  quiz             Quiz           @relation(fields: [quizId], references: [id], onDelete: Cascade)
-  options          QuizOption[]
+  quiz    Quiz         @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  options QuizOption[]
 }
 
 model QuizOption {
-  id          String        @id @default(uuid())
-  questionId  String
-  optionText  String
-  isCorrect   Boolean       @default(false)
-  order       Int
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  id         String   @id @default(uuid())
+  questionId String
+  optionText String
+  isCorrect  Boolean  @default(false)
+  order      Int
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
-  question    QuizQuestion  @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  question QuizQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
 }
 
 model Certificate {
