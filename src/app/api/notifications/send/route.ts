@@ -1,0 +1,111 @@
+import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
+import { db } from "@/lib/db";
+import { verifyToken } from "@/lib/auth";
+
+export async function POST(request: Request) {
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get("token")?.value;
+
+    if (!token) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const decoded = await verifyToken(token);
+
+    if (!decoded?.userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Verify user is an admin or instructor
+    const sender = await db.user.findUnique({
+      where: { id: decoded.userId },
+      select: { role: true },
+    });
+
+    if (!sender || (sender.role !== "ADMIN" && sender.role !== "INSTRUCTOR")) {
+      return NextResponse.json({ error: "Forbidden: Insufficient permissions" }, { status: 403 });
+    }
+
+    const body = await request.json();
+    const { message, type, targetRole, courseId } = body;
+
+    if (!message || !type || !targetRole) {
+      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    }
+
+    // Security check for Instructors
+    if (sender.role === "INSTRUCTOR") {
+      if (targetRole !== "ENROLLED_STUDENTS") {
+        return NextResponse.json({ error: "Forbidden: Instructors can only message enrolled students" }, { status: 403 });
+      }
+
+      if (courseId) {
+        const course = await db.course.findUnique({
+          where: { id: courseId },
+          select: { instructorId: true }
+        });
+        if (!course || course.instructorId !== decoded.userId) {
+          return NextResponse.json({ error: "Forbidden: You do not teach this course" }, { status: 403 });
+        }
+      }
+    }
+
+    // Determine target users
+    let targetUsers: { id: string }[] = [];
+
+    if (targetRole === "ENROLLED_STUDENTS") {
+      const enrollments = await db.enrollment.findMany({
+        where: {
+          course: {
+            instructorId: decoded.userId,
+            ...(courseId ? { id: courseId } : {})
+          }
+        },
+        select: { userId: true },
+        distinct: ['userId']
+      });
+      targetUsers = enrollments.map((e) => ({ id: e.userId }));
+    } else {
+      let usersQuery = {};
+      if (targetRole !== "ALL") {
+        usersQuery = { role: targetRole };
+      }
+
+      targetUsers = await db.user.findMany({
+        where: usersQuery,
+        select: { id: true },
+      });
+    }
+
+    if (targetUsers.length === 0) {
+      return NextResponse.json({ error: "No users found for the selected audience" }, { status: 404 });
+    }
+
+    // Create notifications in bulk
+    const notificationsToCreate = targetUsers.map((user) => ({
+      userId: user.id,
+      message,
+      type,
+      isRead: false,
+    }));
+
+    const result = await db.notification.createMany({
+      data: notificationsToCreate,
+    });
+
+    return NextResponse.json({ 
+      success: true, 
+      count: result.count,
+      message: `Successfully sent ${result.count} notifications.` 
+    });
+
+  } catch (error) {
+    console.error("Error sending notifications:", error);
+    return NextResponse.json(
+      { error: "Failed to send notifications" },
+      { status: 500 }
+    );
+  }
+}
