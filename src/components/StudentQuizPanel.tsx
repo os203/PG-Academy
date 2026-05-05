@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { CheckCircle2, Loader2, Send } from "lucide-react";
 
 type QuestionTypeValue = "MULTIPLE_CHOICE" | "TRUE_FALSE";
@@ -79,7 +79,7 @@ export default function StudentQuizPanel({
   const [answers, setAnswers] = useState<AnswersState>({});
   const [result, setResult] = useState<SubmitQuizResponse | null>(null);
 
-  const fetchQuiz = async (): Promise<void> => {
+  const fetchQuiz = useCallback(async (): Promise<void> => {
     try {
       setLoading(true);
       setResult(null);
@@ -105,11 +105,11 @@ export default function StudentQuizPanel({
     } finally {
       setLoading(false);
     }
-  };
+  }, [lessonId]);
 
   useEffect(() => {
     void fetchQuiz();
-  }, [lessonId]);
+  }, [fetchQuiz]);
 
   const questionCount = useMemo(() => quiz?.questions.length ?? 0, [quiz]);
 
@@ -141,7 +141,7 @@ export default function StudentQuizPanel({
       const data = await readJsonSafely<SubmitQuizResponse>(res);
 
       if (!res.ok) {
-        alert(data?.error || "فشل إرسال الاختبار");
+        alert(data?.error || "Failed to submit quiz");
         return;
       }
 
@@ -149,7 +149,7 @@ export default function StudentQuizPanel({
       await onSubmitted();
     } catch (error) {
       console.error(error);
-      alert("حدث خطأ أثناء إرسال الاختبار");
+      alert("An error occurred while submitting the quiz");
     } finally {
       setSubmitting(false);
     }
@@ -172,9 +172,9 @@ export default function StudentQuizPanel({
       <div>
         <h3 className="text-xl font-black mb-2">{quiz.title}</h3>
         <p className="text-sm text-gray-500">
-          درجة النجاح المطلوبة: {quiz.passingScore}%
+          Required passing score: {quiz.passingScore}%
           {quiz.maxAttempts !== null &&
-            ` — الحد الأقصى للمحاولات: ${quiz.maxAttempts}`}
+            ` — Max attempts: ${quiz.maxAttempts}`}
         </p>
       </div>
 
@@ -190,8 +190,8 @@ export default function StudentQuizPanel({
               </p>
               <p className="text-xs text-gray-500 mt-1">
                 {question.type === "TRUE_FALSE"
-                  ? "صح / خطأ"
-                  : "اختيار من متعدد"}
+                  ? "True / False"
+                  : "Multiple Choice"}
               </p>
             </div>
 
@@ -211,7 +211,7 @@ export default function StudentQuizPanel({
                       : "bg-white text-gray-700 border-gray-200"
                   }`}
                 >
-                  صح
+                  True
                 </button>
 
                 <button
@@ -228,7 +228,7 @@ export default function StudentQuizPanel({
                       : "bg-white text-gray-700 border-gray-200"
                   }`}
                 >
-                  خطأ
+                  False
                 </button>
               </div>
             ) : (
@@ -243,7 +243,7 @@ export default function StudentQuizPanel({
                         [question.id]: { selectedOptionId: option.id },
                       }))
                     }
-                    className={`w-full text-right px-4 py-3 rounded-xl border ${
+                    className={`w-full text-left px-4 py-3 rounded-xl border ${
                       answers[question.id]?.selectedOptionId === option.id
                         ? "bg-indigo-600 text-white border-indigo-600"
                         : "bg-white text-gray-700 border-gray-200"
@@ -266,12 +266,12 @@ export default function StudentQuizPanel({
         {submitting ? (
           <>
             <Loader2 size={16} className="animate-spin" />
-            جاري الإرسال...
+            Submitting...
           </>
         ) : (
           <>
             <Send size={16} />
-            إرسال الاختبار
+            Submit Quiz
           </>
         )}
       </button>
@@ -286,17 +286,17 @@ export default function StudentQuizPanel({
         >
           <div className="flex items-center gap-2 font-bold mb-2">
             <CheckCircle2 size={18} />
-            النتيجة
+            Result
           </div>
 
-          <p>الدرجة: {result.score}%</p>
+          <p>Score: {result.score}%</p>
           <p>
-            الإجابات الصحيحة: {result.correctAnswers} / {result.totalQuestions}
+            Correct answers: {result.correctAnswers} / {result.totalQuestions}
           </p>
-          <p>{result.passed ? "تم النجاح 🎉" : "لم يتم النجاح بعد"}</p>
+          <p>{result.passed ? "Passed 🎉" : "Not passed yet"}</p>
 
           {typeof result.remainingAttempts === "number" && (
-            <p>المحاولات المتبقية: {result.remainingAttempts}</p>
+            <p>Remaining attempts: {result.remainingAttempts}</p>
           )}
         </div>
       )}

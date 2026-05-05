@@ -148,7 +148,7 @@ export default function LessonQuizManager({
 
   const saveQuiz = async (): Promise<void> => {
     if (!form.title.trim()) {
-      alert("عنوان الاختبار مطلوب");
+      alert("Quiz title is required");
       return;
     }
 
@@ -176,7 +176,7 @@ export default function LessonQuizManager({
       const data = await readJsonSafely<QuizMutationResponse>(res);
 
       if (!res.ok) {
-        alert(data?.details || data?.error || "فشل حفظ الاختبار");
+        alert(data?.details || data?.error || "Failed to save quiz");
         return;
       }
 
@@ -186,7 +186,7 @@ export default function LessonQuizManager({
       await onChanged();
     } catch (error) {
       console.error(error);
-      alert("حدث خطأ أثناء حفظ الاختبار");
+      alert("An error occurred while saving the quiz");
     } finally {
       setSaving(false);
     }
@@ -195,7 +195,7 @@ export default function LessonQuizManager({
   const deleteQuiz = async (): Promise<void> => {
     if (!quiz) return;
 
-    const confirmed = window.confirm("هل أنت متأكد من حذف هذا الاختبار؟");
+    const confirmed = window.confirm("Are you sure you want to delete this quiz?");
     if (!confirmed) return;
 
     setDeleting(true);
@@ -211,7 +211,7 @@ export default function LessonQuizManager({
       const data = await readJsonSafely<ApiMessageResponse>(res);
 
       if (!res.ok) {
-        alert(data?.details || data?.error || "فشل حذف الاختبار");
+        alert(data?.details || data?.error || "Failed to delete quiz");
         return;
       }
 
@@ -220,7 +220,7 @@ export default function LessonQuizManager({
       await onChanged();
     } catch (error) {
       console.error(error);
-      alert("حدث خطأ أثناء حذف الاختبار");
+      alert("An error occurred while deleting the quiz");
     } finally {
       setDeleting(false);
     }
@@ -232,7 +232,7 @@ export default function LessonQuizManager({
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-2 text-indigo-600 font-bold">
             <BookOpen size={18} />
-            اختبار الدرس
+            Lesson Quiz
           </div>
 
           {quiz && !isEditing && (
@@ -240,7 +240,7 @@ export default function LessonQuizManager({
               <button
                 onClick={startEdit}
                 className="p-2 text-gray-400 hover:text-indigo-600 transition"
-                title="تعديل الاختبار"
+                title="Edit Quiz"
               >
                 <Pencil size={16} />
               </button>
@@ -249,7 +249,7 @@ export default function LessonQuizManager({
                 onClick={() => void deleteQuiz()}
                 disabled={deleting}
                 className="p-2 text-gray-400 hover:text-red-600 transition disabled:opacity-50"
-                title="حذف الاختبار"
+                title="Delete Quiz"
               >
                 {deleting ? (
                   <Loader2 size={16} className="animate-spin" />
@@ -268,7 +268,7 @@ export default function LessonQuizManager({
               onChange={(e) =>
                 setForm((prev) => ({ ...prev, title: e.target.value }))
               }
-              placeholder="عنوان الاختبار"
+              placeholder="Quiz title"
               className="w-full border rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500"
             />
 
@@ -277,7 +277,7 @@ export default function LessonQuizManager({
               onChange={(e) =>
                 setForm((prev) => ({ ...prev, passingScore: e.target.value }))
               }
-              placeholder="درجة النجاح"
+              placeholder="Passing score"
               className="w-full border rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500"
             />
 
@@ -286,7 +286,7 @@ export default function LessonQuizManager({
               onChange={(e) =>
                 setForm((prev) => ({ ...prev, maxAttempts: e.target.value }))
               }
-              placeholder="عدد المحاولات (اختياري)"
+              placeholder="Max attempts (optional)"
               className="w-full border rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500"
             />
 
@@ -299,12 +299,12 @@ export default function LessonQuizManager({
                 {saving ? (
                   <>
                     <Loader2 size={16} className="animate-spin" />
-                    جاري الحفظ...
+                    Saving...
                   </>
                 ) : (
                   <>
                     <Save size={16} />
-                    حفظ الاختبار
+                    Save Quiz
                   </>
                 )}
               </button>
@@ -314,26 +314,26 @@ export default function LessonQuizManager({
                 className="inline-flex items-center gap-2 bg-gray-100 text-gray-700 px-4 py-2 rounded-xl font-bold hover:bg-gray-200 transition"
               >
                 <X size={16} />
-                إلغاء
+                Cancel
               </button>
             </div>
           </>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
             <div>
-              <p className="text-gray-400 mb-1">عنوان الاختبار</p>
+              <p className="text-gray-400 mb-1">Quiz Title</p>
               <p className="font-bold text-gray-800">{quiz.title}</p>
             </div>
 
             <div>
-              <p className="text-gray-400 mb-1">درجة النجاح</p>
+              <p className="text-gray-400 mb-1">Passing Score</p>
               <p className="font-bold text-gray-800">{quiz.passingScore}%</p>
             </div>
 
             <div>
-              <p className="text-gray-400 mb-1">عدد المحاولات</p>
+              <p className="text-gray-400 mb-1">Max Attempts</p>
               <p className="font-bold text-gray-800">
-                {quiz.maxAttempts ?? "غير محدود"}
+                {quiz.maxAttempts ?? "Unlimited"}
               </p>
             </div>
           </div>

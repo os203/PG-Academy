@@ -5,37 +5,40 @@ import { verifyToken } from "@/lib/auth";
 
 const LESSON_COMPLETE_THRESHOLD = 80;
 
-interface StudentLessonResponse {
+interface StudentCourseResponse {
   id: string;
   title: string;
-  notes: string | null;
-  videoPath: string | null;
-  order: number;
-  watchedPercent: number;
-  lastPosition: number;
-  isCompleted: boolean;
-  isUnlocked: boolean;
-  quizId: string | null;
-  hasQuiz: boolean;
-  quizPassed: boolean;
-  attemptCount: number;
-  latestScore: number | null;
-}
-
-interface StudentModuleResponse {
-  id: string;
-  title: string;
-  order: number;
-  lessons: StudentLessonResponse[];
+  description: string;
+  overallProgress: number;
+  modules: Array<{
+    id: string;
+    title: string;
+    order: number;
+    lessons: Array<{
+      id: string;
+      title: string;
+      notes: string | null;
+      videoPath: string | null;
+      order: number;
+      watchedPercent: number;
+      lastPosition: number;
+      isCompleted: boolean;
+      isUnlocked: boolean;
+      quizId: string | null;
+      hasQuiz: boolean;
+      quizPassed: boolean;
+      attemptCount: number;
+      latestScore: number | null;
+    }>;
+  }>;
 }
 
 export async function GET(
-  _req: Request,
+  req: Request,
   { params }: { params: Promise<{ courseId: string }> }
 ) {
   try {
     const { courseId } = await params;
-
     const cookieStore = await cookies();
     const token = cookieStore.get("token")?.value;
 
@@ -58,49 +61,31 @@ export async function GET(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    // Check if student is enrolled in this course and it's published
     const enrollment = await db.enrollment.findFirst({
       where: {
         userId: currentUser.id,
-        courseId,
-      },
-      select: { id: true },
-    });
-
-    if (!enrollment) {
-      return NextResponse.json(
-        { error: "You are not enrolled in this course" },
-        { status: 403 }
-      );
-    }
-
-    const course = await db.course.findFirst({
-      where: {
-        id: courseId,
-        status: "PUBLISHED",
+        courseId: courseId,
       },
       include: {
-        modules: {
-          orderBy: { order: "asc" },
+        course: {
           include: {
-            lessons: {
+            modules: {
               orderBy: { order: "asc" },
               include: {
-                progress: {
-                  where: { userId: currentUser.id },
-                  select: {
-                    watchedPercent: true,
-                    lastPosition: true,
-                  },
-                },
-                quizzes: {
-                  orderBy: { createdAt: "desc" },
+                lessons: {
+                  orderBy: { order: "asc" },
                   include: {
-                    attempts: {
+                    progress: {
                       where: { userId: currentUser.id },
-                      orderBy: { createdAt: "desc" },
-                      select: {
-                        score: true,
-                        passed: true,
+                    },
+                    quizzes: {
+                      include: {
+                        attempts: {
+                          where: { userId: currentUser.id },
+                          orderBy: { createdAt: "desc" },
+                          take: 1,
+                        },
                       },
                     },
                   },
@@ -112,79 +97,79 @@ export async function GET(
       },
     });
 
-    if (!course) {
-      return NextResponse.json({ error: "Course not found" }, { status: 404 });
+    if (!enrollment) {
+      return NextResponse.json(
+        { error: "Course not found or not enrolled" },
+        { status: 404 }
+      );
     }
 
-    let previousLessonSatisfied = true;
-    let completedLessons = 0;
-    let totalLessons = 0;
+    // Ensure course is published
+    if (enrollment.course.status !== "PUBLISHED") {
+      return NextResponse.json(
+        { error: "Course is not available" },
+        { status: 403 }
+      );
+    }
 
-    const modules: StudentModuleResponse[] = course.modules.map((module) => {
-      const lessons: StudentLessonResponse[] = module.lessons.map((lesson, index) => {
-        const lessonProgress = lesson.progress[0];
-        const watchedPercent = lessonProgress?.watchedPercent ?? 0;
-        const lastPosition = lessonProgress?.lastPosition ?? 0;
+    const course = enrollment.course;
+    const allLessons = course.modules.flatMap((module) => module.lessons);
 
-        const quiz = lesson.quizzes[0] ?? null;
-        const hasQuiz = Boolean(quiz);
-        const quizPassed = quiz ? quiz.attempts.some((a) => a.passed) : false;
-        const attemptCount = quiz ? quiz.attempts.length : 0;
-        const latestScore = quiz?.attempts[0]?.score ?? null;
+    // Calculate overall progress
+    const completedLessons = allLessons.filter((lesson) => {
+      const watchedPercent = lesson.progress[0]?.watchedPercent ?? 0;
+      const quiz = lesson.quizzes[0];
+      const quizPassed = quiz && quiz.attempts.length > 0 ? quiz.attempts[0].passed : true;
 
-        const isCompleted =
-          watchedPercent >= LESSON_COMPLETE_THRESHOLD &&
-          (!hasQuiz || quizPassed);
-
-        const isFirstLessonInCourse = totalLessons === 0 && index === 0;
-        const isUnlocked = isFirstLessonInCourse ? true : previousLessonSatisfied;
-
-        totalLessons += 1;
-
-        if (isCompleted) {
-          completedLessons += 1;
-        }
-
-        previousLessonSatisfied = isCompleted;
-
-        return {
-          id: lesson.id,
-          title: lesson.title,
-          notes: lesson.notes ?? null,
-          videoPath: lesson.videoPath ?? null,
-          order: lesson.order,
-          watchedPercent,
-          lastPosition,
-          isCompleted,
-          isUnlocked,
-          quizId: quiz?.id ?? null,
-          hasQuiz,
-          quizPassed,
-          attemptCount,
-          latestScore,
-        };
-      });
-
-      return {
-        id: module.id,
-        title: module.title,
-        order: module.order,
-        lessons,
-      };
-    });
+      return watchedPercent >= LESSON_COMPLETE_THRESHOLD && quizPassed;
+    }).length;
 
     const overallProgress =
-      totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
+      allLessons.length > 0
+        ? Math.round((completedLessons / allLessons.length) * 100)
+        : 0;
 
-    return NextResponse.json({
+    const response: StudentCourseResponse = {
       id: course.id,
       title: course.title,
       description: course.description,
       overallProgress,
-      modules,
-    });
+      modules: course.modules.map((module) => ({
+        id: module.id,
+        title: module.title,
+        order: module.order,
+        lessons: module.lessons.map((lesson) => {
+          const progressRecord = lesson.progress[0];
+          const quiz = lesson.quizzes[0];
+          const latestAttempt = quiz?.attempts[0];
+          const watchedPercent = progressRecord?.watchedPercent ?? 0;
+          const isCompleted =
+            watchedPercent >= LESSON_COMPLETE_THRESHOLD &&
+            (latestAttempt ? latestAttempt.passed : true);
+
+          return {
+            id: lesson.id,
+            title: lesson.title,
+            notes: lesson.notes,
+            videoPath: lesson.videoPath,
+            order: lesson.order,
+            watchedPercent,
+            lastPosition: progressRecord?.lastPosition ?? 0,
+            isCompleted,
+            isUnlocked: true,
+            quizId: quiz?.id ?? null,
+            hasQuiz: lesson.quizzes.length > 0,
+            quizPassed: latestAttempt ? latestAttempt.passed : false,
+            attemptCount: quiz?.attempts.length ?? 0,
+            latestScore: latestAttempt?.score ?? null,
+          };
+        }),
+      })),
+    };
+
+    return NextResponse.json(response);
   } catch (error) {
-    console.error("[STUDENT_COURSE_DETAIL_GET_ERROR]", error);
+    console.error("[STUDENT_COURSE_GET_ERROR]", error);
     return NextResponse.json({ error: "Internal Error" }, { status: 500 });
   }
 }

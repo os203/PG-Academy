@@ -15,13 +15,12 @@ export default async function CourseManagePage({
         <Link
           href="/dashboard/instructor"
           className="inline-flex items-center gap-2 text-gray-500 hover:text-indigo-600 font-medium transition-colors mb-4 group"
-          dir="rtl"
         >
           <ArrowRight
             size={18}
             className="group-hover:translate-x-1 transition-transform"
           />
-          العودة للوحة التحكم
+          Back to Dashboard
         </Link>
       </div>
 

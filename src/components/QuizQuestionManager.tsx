@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Loader2, Plus, Trash2 } from "lucide-react";
 
 type QuestionTypeValue = "MULTIPLE_CHOICE" | "TRUE_FALSE";
@@ -77,7 +77,7 @@ export default function QuizQuestionManager({
 
   const endpoint = `/api/courses/${courseId}/modules/${moduleId}/lessons/${lessonId}/quiz/${quizId}/questions`;
 
-  const fetchQuestions = async (): Promise<void> => {
+  const fetchQuestions = useCallback(async (): Promise<void> => {
     try {
       setLoading(true);
 
@@ -101,15 +101,15 @@ export default function QuizQuestionManager({
     } finally {
       setLoading(false);
     }
-  };
+  }, [endpoint]);
 
   useEffect(() => {
     void fetchQuestions();
-  }, [endpoint]);
+  }, [fetchQuestions]);
 
   const addQuestion = async (): Promise<void> => {
     if (!questionText.trim()) {
-      alert("نص السؤال مطلوب");
+      alert("Question text is required");
       return;
     }
 
@@ -131,7 +131,7 @@ export default function QuizQuestionManager({
           .filter(Boolean);
 
         if (optionLines.length < 2) {
-          alert("أضف خيارين على الأقل لسؤال الاختيار من متعدد");
+          alert("Please add at least two options for a multiple choice question");
           return;
         }
 
@@ -142,7 +142,7 @@ export default function QuizQuestionManager({
           correctIndex < 1 ||
           correctIndex > optionLines.length
         ) {
-          alert("رقم الخيار الصحيح غير صحيح");
+          alert("Invalid correct option number");
           return;
         }
 
@@ -168,7 +168,7 @@ export default function QuizQuestionManager({
       const data = await readJsonSafely<CreateQuestionResponse>(res);
 
       if (!res.ok) {
-        alert(data?.details || data?.error || "فشل إنشاء السؤال");
+        alert(data?.details || data?.error || "Failed to create question");
         return;
       }
 
@@ -181,14 +181,14 @@ export default function QuizQuestionManager({
       await fetchQuestions();
     } catch (error) {
       console.error(error);
-      alert("حدث خطأ أثناء إنشاء السؤال");
+      alert("An error occurred while creating the question");
     } finally {
       setSaving(false);
     }
   };
 
   const deleteQuestion = async (questionId: string): Promise<void> => {
-    const confirmed = window.confirm("هل أنت متأكد من حذف هذا السؤال؟");
+    const confirmed = window.confirm("Are you sure you want to delete this question?");
     if (!confirmed) return;
 
     setDeletingId(questionId);
@@ -201,14 +201,14 @@ export default function QuizQuestionManager({
       const data = await readJsonSafely<ApiMessageResponse>(res);
 
       if (!res.ok) {
-        alert(data?.details || data?.error || "فشل حذف السؤال");
+        alert(data?.details || data?.error || "Failed to delete question");
         return;
       }
 
       await fetchQuestions();
     } catch (error) {
       console.error(error);
-      alert("حدث خطأ أثناء حذف السؤال");
+      alert("An error occurred while deleting the question");
     } finally {
       setDeletingId(null);
     }
@@ -216,13 +216,13 @@ export default function QuizQuestionManager({
 
   return (
     <div className="border rounded-2xl p-4 bg-white space-y-4">
-      <h4 className="font-bold text-gray-800">أسئلة الاختبار</h4>
+      <h4 className="font-bold text-gray-800">Quiz Questions</h4>
 
       <div className="space-y-3">
         <input
           value={questionText}
           onChange={(e) => setQuestionText(e.target.value)}
-          placeholder="نص السؤال"
+          placeholder="Question text"
           className="w-full border rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500"
         />
 
@@ -231,8 +231,8 @@ export default function QuizQuestionManager({
           onChange={(e) => setType(e.target.value as QuestionTypeValue)}
           className="w-full border rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
         >
-          <option value="TRUE_FALSE">صح / خطأ</option>
-          <option value="MULTIPLE_CHOICE">اختيار من متعدد</option>
+          <option value="TRUE_FALSE">True / False</option>
+          <option value="MULTIPLE_CHOICE">Multiple Choice</option>
         </select>
 
         {type === "TRUE_FALSE" ? (
@@ -242,14 +242,14 @@ export default function QuizQuestionManager({
               checked={correctTrueFalse}
               onChange={(e) => setCorrectTrueFalse(e.target.checked)}
             />
-            الإجابة الصحيحة = صح
+            Correct answer = True
           </label>
         ) : (
           <div className="space-y-3">
             <textarea
               value={mcqOptionsText}
               onChange={(e) => setMcqOptionsText(e.target.value)}
-              placeholder={"اكتب كل خيار في سطر\nخيار 1\nخيار 2\nخيار 3"}
+              placeholder={"Write each option on a new line\nOption 1\nOption 2\nOption 3"}
               rows={4}
               className="w-full border rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
             />
@@ -259,7 +259,7 @@ export default function QuizQuestionManager({
               min="1"
               value={correctOptionIndex}
               onChange={(e) => setCorrectOptionIndex(e.target.value)}
-              placeholder="رقم الخيار الصحيح"
+              placeholder="Correct option number"
               className="w-full border rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500"
             />
           </div>
@@ -273,12 +273,12 @@ export default function QuizQuestionManager({
           {saving ? (
             <>
               <Loader2 size={16} className="animate-spin" />
-              جاري الحفظ...
+              Saving...
             </>
           ) : (
             <>
               <Plus size={16} />
-              إضافة سؤال
+              Add Question
             </>
           )}
         </button>
@@ -291,7 +291,7 @@ export default function QuizQuestionManager({
           </div>
         ) : questions.length === 0 ? (
           <div className="text-sm text-gray-400 border border-dashed rounded-2xl p-4 text-center">
-            لا توجد أسئلة بعد.
+            No questions yet.
           </div>
         ) : (
           questions.map((question) => (
@@ -303,10 +303,10 @@ export default function QuizQuestionManager({
                 <div>
                   <p className="font-bold text-gray-800">{question.questionText}</p>
                   <p className="text-xs text-gray-500 mt-1">
-                    النوع:{" "}
+                    Type:{" "}
                     {question.type === "TRUE_FALSE"
-                      ? "صح / خطأ"
-                      : "اختيار من متعدد"}
+                      ? "True / False"
+                      : "Multiple Choice"}
                   </p>
                 </div>
 
@@ -314,7 +314,7 @@ export default function QuizQuestionManager({
                   onClick={() => void deleteQuestion(question.id)}
                   disabled={deletingId === question.id}
                   className="p-2 text-gray-400 hover:text-red-600 transition disabled:opacity-50"
-                  title="حذف السؤال"
+                  title="Delete Question"
                 >
                   {deletingId === question.id ? (
                     <Loader2 size={16} className="animate-spin" />
@@ -326,9 +326,9 @@ export default function QuizQuestionManager({
 
               {question.type === "TRUE_FALSE" ? (
                 <p className="text-sm text-gray-600">
-                  الإجابة الصحيحة:{" "}
+                  Correct answer:{" "}
                   <span className="font-bold">
-                    {question.correctTrueFalse ? "صح" : "خطأ"}
+                    {question.correctTrueFalse ? "True" : "False"}
                   </span>
                 </p>
               ) : (

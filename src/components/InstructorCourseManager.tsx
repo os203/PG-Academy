@@ -191,7 +191,7 @@ export default function InstructorCourseManager({
 
   const addModule = async (): Promise<void> => {
     if (!newModuleTitle.trim()) {
-      alert("عنوان الوحدة مطلوب");
+      alert("Module title is required");
       return;
     }
 
@@ -211,7 +211,7 @@ export default function InstructorCourseManager({
       const data = await readJsonSafely<ApiMessageResponse>(res);
 
       if (!res.ok) {
-        alert(data?.error || "فشل إنشاء الوحدة");
+        alert(data?.error || "Failed to create module");
         return;
       }
 
@@ -219,14 +219,14 @@ export default function InstructorCourseManager({
       await fetchCourseData();
     } catch (error) {
       console.error(error);
-      alert("حدث خطأ أثناء إنشاء الوحدة");
+      alert("An error occurred while creating the module");
     } finally {
       setAddingModule(false);
     }
   };
 
   const deleteModule = async (moduleId: string): Promise<void> => {
-    const confirmed = window.confirm("هل أنت متأكد من حذف هذه الوحدة؟");
+    const confirmed = window.confirm("Are you sure you want to delete this module?");
     if (!confirmed) return;
 
     try {
@@ -237,7 +237,7 @@ export default function InstructorCourseManager({
       const data = await readJsonSafely<ApiMessageResponse>(res);
 
       if (!res.ok) {
-        alert(data?.details || data?.error || "فشل حذف الوحدة");
+        alert(data?.details || data?.error || "Failed to delete module");
         return;
       }
 
@@ -248,7 +248,7 @@ export default function InstructorCourseManager({
       await fetchCourseData();
     } catch (error) {
       console.error(error);
-      alert("حدث خطأ أثناء حذف الوحدة");
+      alert("An error occurred while deleting the module");
     }
   };
 
@@ -268,7 +268,7 @@ export default function InstructorCourseManager({
     const draftTitle = moduleDrafts[moduleId]?.trim() || "";
 
     if (!draftTitle) {
-      alert("عنوان الوحدة مطلوب");
+      alert("Module title is required");
       return;
     }
 
@@ -288,7 +288,7 @@ export default function InstructorCourseManager({
       const data = await readJsonSafely<ApiMessageResponse>(res);
 
       if (!res.ok) {
-        alert(data?.error || "فشل تعديل الوحدة");
+        alert(data?.error || "Failed to update module");
         return;
       }
 
@@ -296,7 +296,7 @@ export default function InstructorCourseManager({
       await fetchCourseData();
     } catch (error) {
       console.error(error);
-      alert("حدث خطأ أثناء تعديل الوحدة");
+      alert("An error occurred while updating the module");
     } finally {
       setSavingModuleId(null);
     }
@@ -326,7 +326,7 @@ export default function InstructorCourseManager({
     };
 
     if (!current.title.trim()) {
-      alert("عنوان الدرس مطلوب");
+      alert("Lesson title is required");
       return;
     }
 
@@ -351,7 +351,7 @@ export default function InstructorCourseManager({
       const data = await readJsonSafely<ApiMessageResponse>(res);
 
       if (!res.ok) {
-        alert(data?.error || "فشل إنشاء الدرس");
+        alert(data?.error || "Failed to create lesson");
         return;
       }
 
@@ -367,7 +367,7 @@ export default function InstructorCourseManager({
       await fetchCourseData();
     } catch (error) {
       console.error(error);
-      alert("حدث خطأ أثناء إنشاء الدرس");
+      alert("An error occurred while creating the lesson");
     } finally {
       setAddingLessonFor(null);
     }
@@ -412,7 +412,7 @@ export default function InstructorCourseManager({
     const draft = lessonEditInputs[lessonId];
 
     if (!draft || !draft.title.trim()) {
-      alert("عنوان الدرس مطلوب");
+      alert("Lesson title is required");
       return;
     }
 
@@ -437,7 +437,7 @@ export default function InstructorCourseManager({
       const data = await readJsonSafely<ApiMessageResponse>(res);
 
       if (!res.ok) {
-        alert(data?.error || "فشل تعديل الدرس");
+        alert(data?.error || "Failed to update lesson");
         return;
       }
 
@@ -445,7 +445,7 @@ export default function InstructorCourseManager({
       await fetchCourseData();
     } catch (error) {
       console.error(error);
-      alert("حدث خطأ أثناء تعديل الدرس");
+      alert("An error occurred while updating the lesson");
     } finally {
       setSavingLessonId(null);
     }
@@ -455,7 +455,7 @@ export default function InstructorCourseManager({
     moduleId: string,
     lessonId: string
   ): Promise<void> => {
-    const confirmed = window.confirm("هل أنت متأكد من حذف هذا الدرس؟");
+    const confirmed = window.confirm("Are you sure you want to delete this lesson?");
     if (!confirmed) return;
 
     setDeletingLessonId(lessonId);
@@ -471,7 +471,7 @@ export default function InstructorCourseManager({
       const data = await readJsonSafely<ApiMessageResponse>(res);
 
       if (!res.ok) {
-        alert(data?.details || data?.error || "فشل حذف الدرس");
+        alert(data?.details || data?.error || "Failed to delete lesson");
         return;
       }
 
@@ -482,7 +482,7 @@ export default function InstructorCourseManager({
       await fetchCourseData();
     } catch (error) {
       console.error(error);
-      alert("حدث خطأ أثناء حذف الدرس");
+      alert("An error occurred while deleting the lesson");
     } finally {
       setDeletingLessonId(null);
     }
@@ -510,34 +510,34 @@ export default function InstructorCourseManager({
   if (!course) {
     return (
       <div className="p-10 text-center font-bold text-red-500">
-        الكورس غير موجود أو لا تملك صلاحية الوصول إليه
+        Course not found or you do not have permission to access it
       </div>
     );
   }
 
   return (
-    <div className="max-w-5xl mx-auto p-6 space-y-8" dir="rtl">
+    <div className="max-w-5xl mx-auto p-6 space-y-8">
       <div className="bg-gradient-to-r from-indigo-600 to-violet-700 rounded-3xl p-8 text-white shadow-lg relative overflow-hidden">
         <h1 className="text-3xl font-black mb-2">{course.title}</h1>
         <p className="opacity-80 flex items-center gap-2 mb-2">
           <Layers size={16} />
-          إدارة محتوى الكورس
+          Course Content Management
         </p>
         <p className="text-sm opacity-80">
-          {course.description || "لا يوجد وصف لهذا الكورس"}
+          {course.description || "No description for this course"}
         </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-1">
           <div className="bg-white border rounded-2xl p-6 shadow-sm sticky top-6">
-            <h3 className="font-bold mb-4">إضافة وحدة جديدة</h3>
+            <h3 className="font-bold mb-4">Add New Module</h3>
 
             <input
               value={newModuleTitle}
               onChange={(e) => setNewModuleTitle(e.target.value)}
               className="w-full border rounded-xl px-4 py-3 mb-3 outline-none focus:ring-2 focus:ring-indigo-500"
-              placeholder="عنوان الوحدة..."
+              placeholder="Module title..."
             />
 
             <button
@@ -545,7 +545,7 @@ export default function InstructorCourseManager({
               disabled={addingModule}
               className="w-full bg-indigo-600 text-white font-bold py-3 rounded-xl hover:bg-indigo-700 transition-all disabled:opacity-70"
             >
-              {addingModule ? "جاري الحفظ..." : "حفظ الوحدة"}
+              {addingModule ? "Saving..." : "Save Module"}
             </button>
           </div>
         </div>
@@ -553,7 +553,7 @@ export default function InstructorCourseManager({
         <div className="lg:col-span-2 space-y-4">
           <h2 className="text-xl font-bold flex items-center gap-2">
             <LayoutGrid className="text-indigo-600" />
-            هيكلية المنهج
+            Curriculum Structure
           </h2>
 
           {normalizedModules.length > 0 ? (
@@ -590,7 +590,7 @@ export default function InstructorCourseManager({
                                 }))
                               }
                               className="w-full border rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500"
-                              placeholder="عنوان الوحدة"
+                              placeholder="Module title"
                             />
 
                             <div className="flex items-center gap-2">
@@ -602,12 +602,12 @@ export default function InstructorCourseManager({
                                 {savingModuleId === module.id ? (
                                   <>
                                     <Loader2 size={16} className="animate-spin" />
-                                    جاري الحفظ...
+                                    Saving...
                                   </>
                                 ) : (
                                   <>
                                     <Save size={16} />
-                                    حفظ
+                                    Save
                                   </>
                                 )}
                               </button>
@@ -617,7 +617,7 @@ export default function InstructorCourseManager({
                                 className="inline-flex items-center gap-2 bg-gray-100 text-gray-700 px-4 py-2 rounded-xl font-bold hover:bg-gray-200 transition"
                               >
                                 <X size={16} />
-                                إلغاء
+                                Cancel
                               </button>
                             </div>
                           </div>
@@ -627,7 +627,7 @@ export default function InstructorCourseManager({
                               {module.title}
                             </h4>
                             <p className="text-sm text-gray-400">
-                              عدد الدروس: {module.lessons.length}
+                              Lessons: {module.lessons.length}
                             </p>
                           </div>
                         )}
@@ -639,7 +639,7 @@ export default function InstructorCourseManager({
                         <button
                           onClick={() => startEditModule(module)}
                           className="p-2 text-gray-400 hover:text-indigo-600 transition-colors"
-                          title="تعديل الوحدة"
+                          title="Edit Module"
                         >
                           <Pencil size={18} />
                         </button>
@@ -647,7 +647,7 @@ export default function InstructorCourseManager({
                         <button
                           onClick={() => void deleteModule(module.id)}
                           className="p-2 text-gray-400 hover:text-red-500 transition-colors"
-                          title="حذف الوحدة"
+                          title="Delete Module"
                         >
                           <Trash2 size={18} />
                         </button>
@@ -681,7 +681,7 @@ export default function InstructorCourseManager({
                                       e.target.value
                                     )
                                   }
-                                  placeholder="عنوان الدرس"
+                                  placeholder="Lesson title"
                                   className="w-full border rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
                                 />
 
@@ -694,7 +694,7 @@ export default function InstructorCourseManager({
                                       e.target.value
                                     )
                                   }
-                                  placeholder="ملاحظات / وصف الدرس"
+                                  placeholder="Notes / lesson description"
                                   rows={3}
                                   className="w-full border rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500 resize-none bg-white"
                                 />
@@ -708,7 +708,7 @@ export default function InstructorCourseManager({
                                       e.target.value
                                     )
                                   }
-                                  placeholder="مسار الفيديو أو رابطه"
+                                  placeholder="Video path or URL"
                                   className="w-full border rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
                                 />
 
@@ -723,12 +723,12 @@ export default function InstructorCourseManager({
                                     {savingLessonId === lesson.id ? (
                                       <>
                                         <Loader2 size={16} className="animate-spin" />
-                                        جاري الحفظ...
+                                        Saving...
                                       </>
                                     ) : (
                                       <>
                                         <Save size={16} />
-                                        حفظ
+                                        Save
                                       </>
                                     )}
                                   </button>
@@ -738,7 +738,7 @@ export default function InstructorCourseManager({
                                     className="inline-flex items-center gap-2 bg-gray-100 text-gray-700 px-4 py-2 rounded-xl font-bold hover:bg-gray-200 transition"
                                   >
                                     <X size={16} />
-                                    إلغاء
+                                    Cancel
                                   </button>
                                 </div>
                               </div>
@@ -757,7 +757,7 @@ export default function InstructorCourseManager({
 
                                       {lesson.videoPath && (
                                         <p className="text-xs text-gray-500 break-all">
-                                          مسار الفيديو: {lesson.videoPath}
+                                          Video path: {lesson.videoPath}
                                         </p>
                                       )}
                                     </div>
@@ -767,7 +767,7 @@ export default function InstructorCourseManager({
                                     <button
                                       onClick={() => startEditLesson(lesson)}
                                       className="p-2 text-gray-400 hover:text-indigo-600 transition"
-                                      title="تعديل الدرس"
+                                      title="Edit Lesson"
                                     >
                                       <Pencil size={16} />
                                     </button>
@@ -778,7 +778,7 @@ export default function InstructorCourseManager({
                                       }
                                       disabled={deletingLessonId === lesson.id}
                                       className="p-2 text-gray-400 hover:text-red-600 transition disabled:opacity-50"
-                                      title="حذف الدرس"
+                                      title="Delete Lesson"
                                     >
                                       {deletingLessonId === lesson.id ? (
                                         <Loader2 size={16} className="animate-spin" />
@@ -809,7 +809,7 @@ export default function InstructorCourseManager({
                       })
                     ) : (
                       <div className="text-center py-6 bg-gray-50 border-2 border-dashed rounded-2xl text-gray-400">
-                        لا توجد دروس داخل هذه الوحدة بعد.
+                        No lessons in this module yet.
                       </div>
                     )}
                   </div>
@@ -817,7 +817,7 @@ export default function InstructorCourseManager({
                   <div className="border-t pt-4 space-y-3">
                     <h5 className="font-bold flex items-center gap-2 text-gray-700">
                       <Plus size={16} className="text-indigo-600" />
-                      إضافة درس جديد
+                      Add New Lesson
                     </h5>
 
                     <input
@@ -829,7 +829,7 @@ export default function InstructorCourseManager({
                           e.target.value
                         )
                       }
-                      placeholder="عنوان الدرس"
+                      placeholder="Lesson title"
                       className="w-full border rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500"
                     />
 
@@ -842,7 +842,7 @@ export default function InstructorCourseManager({
                           e.target.value
                         )
                       }
-                      placeholder="ملاحظات / وصف الدرس"
+                      placeholder="Notes / lesson description"
                       rows={3}
                       className="w-full border rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
                     />
@@ -856,7 +856,7 @@ export default function InstructorCourseManager({
                           e.target.value
                         )
                       }
-                      placeholder="مسار الفيديو أو رابطه"
+                      placeholder="Video path or URL"
                       className="w-full border rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500"
                     />
 
@@ -868,12 +868,12 @@ export default function InstructorCourseManager({
                       {addingLessonFor === module.id ? (
                         <>
                           <Loader2 size={16} className="animate-spin" />
-                          جاري الإضافة...
+                          Adding...
                         </>
                       ) : (
                         <>
                           <Plus size={16} />
-                          حفظ الدرس
+                          Save Lesson
                         </>
                       )}
                     </button>
@@ -883,7 +883,7 @@ export default function InstructorCourseManager({
             })
           ) : (
             <div className="text-center py-10 bg-gray-50 border-2 border-dashed rounded-2xl text-gray-400">
-              لا توجد وحدات بعد.
+              No modules yet.
             </div>
           )}
         </div>

@@ -186,14 +186,14 @@ export default function StudentCourseViewer({
       const data = await readJsonSafely<ProgressSaveResponse>(res);
 
       if (!res.ok) {
-        alert(data?.error || "فشل حفظ التقدم");
+        alert(data?.error || "Failed to save progress");
         return;
       }
 
       await fetchCourse();
     } catch (error) {
       console.error(error);
-      alert("حدث خطأ أثناء حفظ التقدم");
+      alert("An error occurred while saving progress");
     } finally {
       setSavingProgress(false);
     }
@@ -210,25 +210,25 @@ export default function StudentCourseViewer({
   if (!course) {
     return (
       <div className="max-w-5xl mx-auto p-10 text-center font-bold text-red-500">
-        لا يمكن الوصول إلى هذا الكورس أو أنك غير مسجل فيه
+        This course is not accessible or you are not enrolled
       </div>
     );
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-6 grid grid-cols-1 lg:grid-cols-3 gap-8" dir="rtl">
+    <div className="max-w-6xl mx-auto p-6 grid grid-cols-1 lg:grid-cols-3 gap-8">
       <div className="lg:col-span-1">
         <div className="bg-white border rounded-2xl p-6 shadow-sm sticky top-6 space-y-5">
           <div>
             <h1 className="text-2xl font-black mb-2">{course.title}</h1>
             <p className="text-sm text-gray-500">
-              {course.description || "لا يوجد وصف لهذا الكورس"}
+              {course.description || "No description for this course"}
             </p>
           </div>
 
           <div>
             <div className="flex justify-between text-sm font-medium mb-2">
-              <span>تقدم الكورس</span>
+              <span>Course Progress</span>
               <span>{course.overallProgress}%</span>
             </div>
 
@@ -262,7 +262,7 @@ export default function StudentCourseViewer({
                               setSelectedLessonId(lesson.id);
                             }
                           }}
-                          className={`w-full text-right border rounded-xl p-3 transition ${
+                          className={`w-full text-left border rounded-xl p-3 transition ${
                             isSelected
                               ? "border-indigo-600 bg-indigo-50"
                               : "border-gray-200 bg-white"
@@ -275,15 +275,15 @@ export default function StudentCourseViewer({
                               </p>
 
                               <div className="text-xs text-gray-500 mt-1 space-y-1">
-                                <p>التقدم: {lesson.watchedPercent}%</p>
+                                <p>Progress: {lesson.watchedPercent}%</p>
                                 {lesson.hasQuiz && (
                                   <p>
-                                    الاختبار:{" "}
+                                    Quiz:{" "}
                                     {lesson.quizPassed
-                                      ? "تم النجاح"
+                                      ? "Passed"
                                       : lesson.attemptCount > 0
-                                      ? `آخر نتيجة ${lesson.latestScore ?? 0}%`
-                                      : "لم يُحل بعد"}
+                                      ? `Last score ${lesson.latestScore ?? 0}%`
+                                      : "Not attempted"}
                                   </p>
                                 )}
                               </div>
@@ -307,7 +307,7 @@ export default function StudentCourseViewer({
               ))
             ) : (
               <div className="text-center text-gray-400 py-6">
-                لا توجد وحدات أو دروس في هذا الكورس بعد.
+                No modules or lessons in this course yet.
               </div>
             )}
           </div>
@@ -323,26 +323,26 @@ export default function StudentCourseViewer({
                   <h2 className="text-2xl font-black mb-2">{selectedLesson.title}</h2>
                   <div className="flex items-center gap-3 text-sm flex-wrap">
                     <span className="px-3 py-1 rounded-full bg-indigo-50 text-indigo-600 font-bold">
-                      {selectedLesson.watchedPercent}% تقدم
+                      {selectedLesson.watchedPercent}% progress
                     </span>
 
                     {selectedLesson.isCompleted ? (
                       <span className="px-3 py-1 rounded-full bg-green-50 text-green-600 font-bold inline-flex items-center gap-1">
                         <CheckCircle2 size={14} />
-                        مكتمل
+                        Completed
                       </span>
                     ) : (
                       <span className="px-3 py-1 rounded-full bg-gray-100 text-gray-600 font-bold inline-flex items-center gap-1">
                         <CircleDashed size={14} />
-                        غير مكتمل
+                        Incomplete
                       </span>
                     )}
 
                     {selectedLesson.hasQuiz && (
                       <span className="px-3 py-1 rounded-full bg-amber-50 text-amber-700 font-bold">
                         {selectedLesson.quizPassed
-                          ? "الاختبار: ناجح"
-                          : "الاختبار: مطلوب"}
+                          ? "Quiz: Passed"
+                          : "Quiz: Required"}
                       </span>
                     )}
                   </div>
@@ -350,35 +350,35 @@ export default function StudentCourseViewer({
               </div>
 
               <div className="border rounded-2xl bg-gray-50 p-6 space-y-4">
-                <h3 className="font-bold text-gray-800">واجهة الدرس</h3>
+                <h3 className="font-bold text-gray-800">Lesson Player</h3>
 
                 <div className="border-2 border-dashed rounded-2xl p-8 bg-white text-center text-gray-500">
                   {selectedLesson.videoPath ? (
                     <div className="space-y-2">
                       <p className="font-semibold text-gray-700">
-                        مسار / رابط الفيديو الحالي:
+                        Current video path / URL:
                       </p>
                       <p className="text-sm break-all">{selectedLesson.videoPath}</p>
                     </div>
                   ) : (
-                    <p>لا يوجد فيديو مرفوع لهذا الدرس بعد.</p>
+                    <p>No video uploaded for this lesson yet.</p>
                   )}
                 </div>
 
                 <div>
-                  <h4 className="font-bold mb-2">ملاحظات الدرس</h4>
+                  <h4 className="font-bold mb-2">Lesson Notes</h4>
                   <div className="bg-white border rounded-xl p-4 text-gray-700 min-h-[120px]">
-                    {selectedLesson.notes || "لا توجد ملاحظات لهذا الدرس."}
+                    {selectedLesson.notes || "No notes for this lesson."}
                   </div>
                 </div>
               </div>
 
               <div className="border rounded-2xl p-6 space-y-4">
-                <h3 className="font-bold text-gray-800">حفظ التقدم</h3>
+                <h3 className="font-bold text-gray-800">Save Progress</h3>
 
                 <div>
                   <label className="block text-sm font-medium mb-2">
-                    نسبة المشاهدة / الإنجاز
+                    Watch / Completion Percentage
                   </label>
                   <input
                     type="range"
@@ -389,13 +389,13 @@ export default function StudentCourseViewer({
                     className="w-full"
                   />
                   <div className="text-sm text-gray-500 mt-2">
-                    القيمة الحالية: {watchedPercentDraft}%
+                    Current value: {watchedPercentDraft}%
                   </div>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium mb-2">
-                    آخر موضع (ثانية)
+                    Last Position (seconds)
                   </label>
                   <input
                     type="number"
@@ -414,19 +414,20 @@ export default function StudentCourseViewer({
                   {savingProgress ? (
                     <>
                       <Loader2 size={16} className="animate-spin" />
-                      جاري الحفظ...
+                      Saving...
                     </>
                   ) : (
                     <>
                       <Save size={16} />
-                      حفظ التقدم
+                      Save Progress
                     </>
                   )}
                 </button>
 
                 <p className="text-xs text-gray-500">
-                  لإكمال هذا الدرس: يجب رفع نسبة التقدم إلى 80% على الأقل، وإذا كان
-                  هناك اختبار فيجب النجاح فيه أيضًا حتى يُفتح الدرس التالي.
+                  To complete this lesson: progress must reach at least 80%, and if
+                  there is a quiz, you must pass it as well before the next lesson
+                  is unlocked.
                 </p>
               </div>
             </div>
@@ -440,7 +441,7 @@ export default function StudentCourseViewer({
           </div>
         ) : (
           <div className="bg-white border rounded-2xl p-10 text-center text-gray-500">
-            لا يوجد درس محدد لعرضه حاليًا.
+            No lesson selected to display.
           </div>
         )}
       </div>

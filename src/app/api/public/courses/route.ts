@@ -67,21 +67,6 @@ export async function GET() {
           reviewCount
         : 0;
 
-      const combinedText =
-        `${course.title} ${course.description}`.toLowerCase();
-      const category = combinedText.includes("3d")
-        ? "3D"
-        : combinedText.includes("2d")
-          ? "2D"
-          : combinedText.includes("animation")
-            ? "Animation"
-            : combinedText.includes("design") ||
-                combinedText.includes("ui") ||
-                combinedText.includes("ux") ||
-                combinedText.includes("graphic")
-              ? "Design"
-              : "General";
-
       return {
         id: course.id,
         title: course.title,
@@ -94,7 +79,7 @@ export async function GET() {
         lessonsCount,
         studentsCount: course._count.enrollments,
         rating: Number(averageRating.toFixed(1)),
-        category,
+        category: course.category?.trim() || "Others",
       };
     });
 

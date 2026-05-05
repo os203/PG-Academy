@@ -51,6 +51,8 @@ interface UploadResponse {
   error?: string;
 }
 
+const CATEGORY_OPTIONS = ["3D", "2D", "VFX", "Others"];
+
 const containerVariants: Variants = {
   hidden: { opacity: 0 },
   visible: {
@@ -104,8 +106,8 @@ export default function InstructorDashboard() {
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
   const [status, setStatus] = useState<CourseStatus>("DRAFT");
-  const [category, setCategory] = useState("");
-  const [thumbnail, setThumbnail] = useState<string>("");
+  const [category, setCategory] = useState("Others");
+  const [thumbnail, setThumbnail] = useState("");
 
   const [uploadingThumbnail, setUploadingThumbnail] = useState(false);
 
@@ -114,7 +116,7 @@ export default function InstructorDashboard() {
     setDescription("");
     setPrice("");
     setStatus("DRAFT");
-    setCategory("");
+    setCategory("Others");
     setThumbnail("");
     setEditingCourse(null);
     setShowCreateForm(false);
@@ -194,7 +196,7 @@ export default function InstructorDashboard() {
       }
     } catch (error) {
       console.error(error);
-      alert("حدث خطأ أثناء رفع صورة الكورس");
+      alert("An error occurred while uploading the course thumbnail");
     } finally {
       setUploadingThumbnail(false);
       e.target.value = "";
@@ -231,7 +233,7 @@ export default function InstructorDashboard() {
       }
     } catch (error) {
       console.error(error);
-      alert("حدث خطأ أثناء إنشاء الكورس");
+      alert("An error occurred while creating the course");
     }
   };
 
@@ -262,7 +264,7 @@ export default function InstructorDashboard() {
       }
     } catch (error) {
       console.error(error);
-      alert("حدث خطأ أثناء تعديل الكورس");
+      alert("An error occurred while updating the course");
     }
   };
 
@@ -282,7 +284,7 @@ export default function InstructorDashboard() {
       }
     } catch (error) {
       console.error(error);
-      alert("حدث خطأ أثناء حذف الكورس");
+      alert("An error occurred while deleting the course");
     }
   };
 
@@ -293,7 +295,7 @@ export default function InstructorDashboard() {
     setDescription("");
     setPrice("");
     setStatus("DRAFT");
-    setCategory("");
+    setCategory("Others");
     setThumbnail("");
   };
 
@@ -303,7 +305,7 @@ export default function InstructorDashboard() {
     setDescription(course.description);
     setPrice(course.price.toString());
     setStatus(course.status === "PUBLISHED" ? "PUBLISHED" : "DRAFT");
-    setCategory(course.category || "");
+    setCategory(course.category || "Others");
     setThumbnail(course.thumbnail || "");
     setShowCreateForm(false);
   };
@@ -337,7 +339,6 @@ export default function InstructorDashboard() {
         animate="visible"
         className="max-w-7xl mx-auto space-y-8"
       >
-        {/* Header Section with CTAs */}
         <motion.div
           variants={itemVariants}
           className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4"
@@ -377,7 +378,6 @@ export default function InstructorDashboard() {
           </div>
         </motion.div>
 
-        {/* Needs Attention / To-Do Section */}
         <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div
             onClick={() => router.push("/dashboard/instructor/qa")}
@@ -413,7 +413,6 @@ export default function InstructorDashboard() {
           </div>
         </motion.div>
 
-        {/* Stats Grid */}
         <motion.div
           variants={containerVariants}
           className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
@@ -440,7 +439,6 @@ export default function InstructorDashboard() {
           ))}
         </motion.div>
 
-        {/* Revenue & Enrollments Chart */}
         <motion.div variants={itemVariants}>
           <Card className="border-border shadow-sm">
             <CardHeader>
@@ -454,7 +452,6 @@ export default function InstructorDashboard() {
           </Card>
         </motion.div>
 
-        {/* Create / Edit Form Modal */}
         {(showCreateForm || editingCourse) && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
             <motion.div
@@ -519,13 +516,17 @@ export default function InstructorDashboard() {
                         <label className="text-sm font-medium text-foreground">
                           Category
                         </label>
-                        <input
-                          type="text"
+                        <select
                           value={category}
                           onChange={(e) => setCategory(e.target.value)}
-                          placeholder="e.g. Programming, Design..."
                           className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
-                        />
+                        >
+                          {CATEGORY_OPTIONS.map((item) => (
+                            <option key={item} value={item}>
+                              {item}
+                            </option>
+                          ))}
+                        </select>
                       </div>
                     </div>
 
@@ -535,9 +536,7 @@ export default function InstructorDashboard() {
                       </label>
                       <select
                         value={status}
-                        onChange={(e) =>
-                          setStatus(e.target.value as CourseStatus)
-                        }
+                        onChange={(e) => setStatus(e.target.value as CourseStatus)}
                         className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
                       >
                         <option value="DRAFT">Draft</option>
@@ -610,11 +609,7 @@ export default function InstructorDashboard() {
                     </div>
 
                     <div className="flex justify-end gap-3 pt-4">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={resetForm}
-                      >
+                      <Button type="button" variant="outline" onClick={resetForm}>
                         Cancel
                       </Button>
 
@@ -632,12 +627,10 @@ export default function InstructorDashboard() {
           </div>
         )}
 
-        {/* Main Content Split */}
         <motion.div
           variants={itemVariants}
           className="grid grid-cols-1 xl:grid-cols-3 gap-8"
         >
-          {/* Left Column: Courses Table */}
           <div className="xl:col-span-2 space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <h2 className="text-xl font-semibold text-foreground">
@@ -664,7 +657,6 @@ export default function InstructorDashboard() {
             </div>
           </div>
 
-          {/* Right Column: Recent Activity */}
           <div className="space-y-6">
             <h2 className="text-xl font-semibold text-foreground">
               Recent Activity

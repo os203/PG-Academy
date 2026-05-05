@@ -146,8 +146,8 @@ export default function CoursesPage() {
       if (!res.ok) {
         setEnrollError(
           data?.details ||
-          data?.error ||
-          "Failed to enroll in this course. This action is available for students only."
+            data?.error ||
+            "Failed to enroll in this course. This action is available for students only."
         );
         return;
       }
@@ -213,8 +213,8 @@ export default function CoursesPage() {
             {courses.map((course) => (
               <CourseCardForSale
                 key={course.id}
-                thumbnail={course.thumbnail ?? "taco3.jpg"}
-                category={course.category ?? "General"}
+                thumbnail={course.thumbnail ?? "/taco3.jpg"}
+                category={course.category ?? "Others"}
                 title={course.title}
                 instructor={course.instructorName}
                 rating={course.rating}
