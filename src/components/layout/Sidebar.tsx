@@ -26,7 +26,7 @@ export default function Sidebar() {
         },
         {
             label: "My Courses",
-            href: `/myCourses`,
+            href: `/dashboard/myCourses`,
             icon: <GraduationCap />,
             roles: ["student", "instructor"],
         },
