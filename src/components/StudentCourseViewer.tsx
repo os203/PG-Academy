@@ -10,6 +10,7 @@ import {
   Save,
 } from "lucide-react";
 import StudentQuizPanel from "@/components/StudentQuizPanel";
+import StudentQAPanel from "@/components/StudentQAPanel";
 
 interface StudentLesson {
   id: string;
@@ -26,6 +27,7 @@ interface StudentLesson {
   quizPassed: boolean;
   attemptCount: number;
   latestScore: number | null;
+  resources: Array<{ id: string; name: string; url: string }>;
 }
 
 interface StudentModule {
@@ -371,6 +373,35 @@ export default function StudentCourseViewer({
                     {selectedLesson.notes || "No notes for this lesson."}
                   </div>
                 </div>
+
+                {selectedLesson.resources && selectedLesson.resources.length > 0 && (
+                  <div className="pt-2 border-t">
+                    <h4 className="font-bold mb-3 flex items-center gap-2">
+                      <span className="bg-indigo-100 text-indigo-600 p-1.5 rounded-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-file-text"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
+                      </span>
+                      Downloads & Materials
+                    </h4>
+                    <div className="space-y-2">
+                      {selectedLesson.resources.map((res) => (
+                        <a
+                          key={res.id}
+                          href={res.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="flex items-center justify-between p-3 border rounded-xl hover:border-indigo-300 hover:bg-indigo-50 transition group"
+                        >
+                          <span className="font-medium text-gray-700 group-hover:text-indigo-700 transition">
+                            {res.name}
+                          </span>
+                          <span className="text-sm text-indigo-600 font-bold opacity-0 group-hover:opacity-100 transition">
+                            Open
+                          </span>
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="border rounded-2xl p-6 space-y-4">
@@ -438,6 +469,8 @@ export default function StudentCourseViewer({
                 onSubmitted={fetchCourse}
               />
             )}
+
+            <StudentQAPanel lessonId={selectedLesson.id} />
           </div>
         ) : (
           <div className="bg-white border rounded-2xl p-10 text-center text-gray-500">

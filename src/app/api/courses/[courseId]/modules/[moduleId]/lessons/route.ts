@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { verifyToken } from "@/lib/auth";
+import { getAuthorizedCourse } from "@/lib/auth";
 import { db } from "@/lib/db";
 
 export async function GET(
@@ -10,28 +9,9 @@ export async function GET(
   try {
     const { courseId, moduleId } = await params;
 
-    const cookieStore = await cookies();
-    const token = cookieStore.get("token")?.value;
-
-    if (!token) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const decoded = await verifyToken(token);
-
-    if (!decoded?.userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const courseOwner = await db.course.findFirst({
-      where: {
-        id: courseId,
-        instructorId: decoded.userId,
-      },
-    });
-
-    if (!courseOwner) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    const authResult = await getAuthorizedCourse(courseId);
+    if (!authResult.ok) {
+      return authResult.response;
     }
 
     const moduleRecord = await db.module.findFirst({
@@ -77,28 +57,9 @@ export async function POST(
       );
     }
 
-    const cookieStore = await cookies();
-    const token = cookieStore.get("token")?.value;
-
-    if (!token) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const decoded = await verifyToken(token);
-
-    if (!decoded?.userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const courseOwner = await db.course.findFirst({
-      where: {
-        id: courseId,
-        instructorId: decoded.userId,
-      },
-    });
-
-    if (!courseOwner) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    const authResult = await getAuthorizedCourse(courseId);
+    if (!authResult.ok) {
+      return authResult.response;
     }
 
     const moduleRecord = await db.module.findFirst({

@@ -48,6 +48,18 @@ export async function GET() {
         status: true,
         createdAt: true,
         updatedAt: true,
+        instructor: { select: { name: true } },
+        _count: {
+          select: {
+            modules: true,
+            enrollments: true,
+          },
+        },
+        modules: {
+          select: {
+            _count: { select: { lessons: true } },
+          },
+        },
       },
     });
 
@@ -73,8 +85,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    if (decoded.role !== "ADMIN" && decoded.role !== "INSTRUCTOR") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    if (decoded.role !== "ADMIN") {
+      return NextResponse.json({ error: "Forbidden. Only Admins can create courses." }, { status: 403 });
     }
 
     const body = await req.json();
@@ -117,6 +129,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const instructorId = typeof body.instructorId === "string" ? body.instructorId.trim() : null;
+    if (!instructorId) {
+      return NextResponse.json(
+        { error: "Instructor ID is required to create a course." },
+        { status: 400 }
+      );
+    }
+
     const course = await db.course.create({
       data: {
         title,
@@ -125,7 +145,7 @@ export async function POST(req: NextRequest) {
         status,
         thumbnail,
         category,
-        instructorId: decoded.userId,
+        instructorId: instructorId,
       },
     });
 

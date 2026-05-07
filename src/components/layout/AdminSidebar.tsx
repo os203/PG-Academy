@@ -15,7 +15,8 @@ import {
   ScrollText,
   LogOut,
   Home,
-  Send
+  Send,
+  Ticket,
 } from "lucide-react";
 import {
   Sidebar,
@@ -45,6 +46,11 @@ const adminNavigation = [
     title: "Course Catalog",
     url: "/dashboard/admin/courses",
     icon: Library,
+  },
+  {
+    title: "Coupons",
+    url: "/dashboard/admin/coupons",
+    icon: Ticket,
   },
   {
     title: "Transactions",

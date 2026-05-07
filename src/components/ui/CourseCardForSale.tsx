@@ -98,10 +98,9 @@ export default function CourseCardForSale({
 
                     <button
                         onClick={onEnroll}
-                        disabled={isEnrolled || isProcessing}
-                        className={`bg-brand-primary text-white font-medium transition-all duration-300 p-2 ${isEnrolled || isProcessing ? "opacity-60 cursor-not-allowed" : "hover:bg-brand-hover"}`}
+                        className={`bg-brand-primary text-white font-medium transition-all duration-300 p-2 hover:bg-brand-hover`}
                     >
-                        {isEnrolled ? "Enrolled" : isProcessing ? "Enrolling..." : "Enroll Now"}
+                        {isEnrolled ? "Enrolled (View Details)" : "View Details"}
                     </button>
                 </div>
             </div>

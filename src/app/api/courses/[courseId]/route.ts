@@ -1,65 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { db } from "@/lib/db";
-import { verifyToken } from "@/lib/auth";
+import { getAuthorizedCourse } from "@/lib/auth";
 
 type CourseStatusValue = "DRAFT" | "PUBLISHED";
 
 function isCourseStatus(value: string): value is CourseStatusValue {
   return value === "DRAFT" || value === "PUBLISHED";
-}
-
-async function getAuthorizedCourse(courseId: string) {
-  const cookieStore = await cookies();
-  const token = cookieStore.get("token")?.value;
-
-  if (!token) {
-    return {
-      ok: false as const,
-      response: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
-    };
-  }
-
-  const decoded = await verifyToken(token);
-
-  if (!decoded?.userId || !decoded?.role) {
-    return {
-      ok: false as const,
-      response: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
-    };
-  }
-
-  if (decoded.role !== "ADMIN" && decoded.role !== "INSTRUCTOR") {
-    return {
-      ok: false as const,
-      response: NextResponse.json({ error: "Forbidden" }, { status: 403 }),
-    };
-  }
-
-  const course = await db.course.findFirst({
-    where:
-      decoded.role === "ADMIN"
-        ? { id: courseId }
-        : {
-            id: courseId,
-            instructorId: decoded.userId,
-          },
-  });
-
-  if (!course) {
-    return {
-      ok: false as const,
-      response: NextResponse.json(
-        { error: "Course not found" },
-        { status: 404 }
-      ),
-    };
-  }
-
-  return {
-    ok: true as const,
-    course,
-  };
 }
 
 export async function GET(
@@ -87,6 +33,7 @@ export async function GET(
                 quizzes: {
                   orderBy: { createdAt: "desc" },
                 },
+                resources: true,
               },
             },
           },

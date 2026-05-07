@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { db } from "@/lib/db";
-import { verifyToken } from "@/lib/auth";
+import { getAuthorizedCourse } from "@/lib/auth";
 
 export async function PATCH(
   req: NextRequest,
@@ -18,28 +17,9 @@ export async function PATCH(
   try {
     const { courseId, moduleId, lessonId } = await params;
 
-    const cookieStore = await cookies();
-    const token = cookieStore.get("token")?.value;
-
-    if (!token) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const decoded = await verifyToken(token);
-
-    if (!decoded?.userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const courseOwner = await db.course.findFirst({
-      where: {
-        id: courseId,
-        instructorId: decoded.userId,
-      },
-    });
-
-    if (!courseOwner) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    const authResult = await getAuthorizedCourse(courseId);
+    if (!authResult.ok) {
+      return authResult.response;
     }
 
     const moduleRecord = await db.module.findFirst({
@@ -109,28 +89,9 @@ export async function DELETE(
   try {
     const { courseId, moduleId, lessonId } = await params;
 
-    const cookieStore = await cookies();
-    const token = cookieStore.get("token")?.value;
-
-    if (!token) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const decoded = await verifyToken(token);
-
-    if (!decoded?.userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const courseOwner = await db.course.findFirst({
-      where: {
-        id: courseId,
-        instructorId: decoded.userId,
-      },
-    });
-
-    if (!courseOwner) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    const authResult = await getAuthorizedCourse(courseId);
+    if (!authResult.ok) {
+      return authResult.response;
     }
 
     const moduleRecord = await db.module.findFirst({

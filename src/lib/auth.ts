@@ -44,3 +44,61 @@ export async function hashPassword(password: string): Promise<string> {
 export async function comparePasswords(password: string, hash: string): Promise<boolean> {
   return bcrypt.compare(password, hash);
 }
+
+import { db } from "@/lib/db";
+import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
+
+export async function getAuthorizedCourse(courseId: string) {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("token")?.value;
+
+  if (!token) {
+    return {
+      ok: false as const,
+      response: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
+    };
+  }
+
+  const decoded = await verifyToken(token);
+
+  if (!decoded?.userId || !decoded?.role) {
+    return {
+      ok: false as const,
+      response: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
+    };
+  }
+
+  if (decoded.role !== "ADMIN" && decoded.role !== "INSTRUCTOR") {
+    return {
+      ok: false as const,
+      response: NextResponse.json({ error: "Forbidden" }, { status: 403 }),
+    };
+  }
+
+  const course = await db.course.findFirst({
+    where:
+      decoded.role === "ADMIN"
+        ? { id: courseId }
+        : {
+            id: courseId,
+            instructorId: decoded.userId,
+          },
+  });
+
+  if (!course) {
+    return {
+      ok: false as const,
+      response: NextResponse.json(
+        { error: "Course not found or forbidden" },
+        { status: 403 }
+      ),
+    };
+  }
+
+  return {
+    ok: true as const,
+    course,
+    decoded,
+  };
+}

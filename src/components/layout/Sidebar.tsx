@@ -73,6 +73,18 @@ export default function Sidebar() {
             roles: ["instructor"],
         },
         {
+            label: "Students",
+            href: "/dashboard/instructor/students",
+            icon: <Users />,
+            roles: ["instructor"],
+        },
+        {
+            label: "Q&A",
+            href: "/dashboard/instructor/qa",
+            icon: <LayoutDashboard />,
+            roles: ["instructor"],
+        },
+        {
             label: "Users",
             href: "/dashboard/admin/users",
             icon: <Users />,
@@ -82,6 +94,12 @@ export default function Sidebar() {
             label: "Courses",
             href: "/dashboard/admin/courses",
             icon: <Library />,
+            roles: ["admin"],
+        },
+        {
+            label: "Coupons",
+            href: "/dashboard/admin/coupons",
+            icon: <CreditCard />,
             roles: ["admin"],
         },
         {

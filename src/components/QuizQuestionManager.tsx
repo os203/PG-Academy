@@ -215,21 +215,21 @@ export default function QuizQuestionManager({
   };
 
   return (
-    <div className="border rounded-2xl p-4 bg-white space-y-4">
-      <h4 className="font-bold text-gray-800">Quiz Questions</h4>
+    <div className="border border-border rounded-2xl p-4 bg-card space-y-4">
+      <h4 className="font-bold text-foreground">Quiz Questions</h4>
 
       <div className="space-y-3">
         <input
           value={questionText}
           onChange={(e) => setQuestionText(e.target.value)}
           placeholder="Question text"
-          className="w-full border rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500"
+          className="w-full border border-border rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-brand-primary bg-background text-foreground"
         />
 
         <select
           value={type}
           onChange={(e) => setType(e.target.value as QuestionTypeValue)}
-          className="w-full border rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+          className="w-full border border-border rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-brand-primary bg-background text-foreground"
         >
           <option value="TRUE_FALSE">True / False</option>
           <option value="MULTIPLE_CHOICE">Multiple Choice</option>
@@ -251,7 +251,7 @@ export default function QuizQuestionManager({
               onChange={(e) => setMcqOptionsText(e.target.value)}
               placeholder={"Write each option on a new line\nOption 1\nOption 2\nOption 3"}
               rows={4}
-              className="w-full border rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+              className="w-full border border-border rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-brand-primary resize-none bg-background text-foreground"
             />
 
             <input
@@ -260,7 +260,7 @@ export default function QuizQuestionManager({
               value={correctOptionIndex}
               onChange={(e) => setCorrectOptionIndex(e.target.value)}
               placeholder="Correct option number"
-              className="w-full border rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full border border-border rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-brand-primary bg-background text-foreground"
             />
           </div>
         )}
@@ -268,7 +268,7 @@ export default function QuizQuestionManager({
         <button
           onClick={() => void addQuestion()}
           disabled={saving}
-          className="inline-flex items-center gap-2 bg-indigo-600 text-white px-4 py-2.5 rounded-xl font-bold hover:bg-indigo-700 transition disabled:opacity-70"
+          className="inline-flex items-center gap-2 bg-brand-primary text-white px-4 py-2.5 rounded-xl font-bold hover:bg-brand-primary/90 transition disabled:opacity-70"
         >
           {saving ? (
             <>
@@ -287,22 +287,22 @@ export default function QuizQuestionManager({
       <div className="space-y-3">
         {loading ? (
           <div className="flex justify-center py-6">
-            <Loader2 className="animate-spin text-indigo-600" size={22} />
+            <Loader2 className="animate-spin text-brand-primary" size={22} />
           </div>
         ) : questions.length === 0 ? (
-          <div className="text-sm text-gray-400 border border-dashed rounded-2xl p-4 text-center">
+          <div className="text-sm text-muted-foreground border border-dashed border-border rounded-2xl p-4 text-center">
             No questions yet.
           </div>
         ) : (
           questions.map((question) => (
             <div
               key={question.id}
-              className="border rounded-xl p-4 bg-gray-50 space-y-2"
+              className="border border-border rounded-xl p-4 bg-muted/30 space-y-2"
             >
               <div className="flex justify-between items-start gap-4">
                 <div>
-                  <p className="font-bold text-gray-800">{question.questionText}</p>
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="font-bold text-foreground">{question.questionText}</p>
+                  <p className="text-xs text-muted-foreground mt-1">
                     Type:{" "}
                     {question.type === "TRUE_FALSE"
                       ? "True / False"
@@ -313,7 +313,7 @@ export default function QuizQuestionManager({
                 <button
                   onClick={() => void deleteQuestion(question.id)}
                   disabled={deletingId === question.id}
-                  className="p-2 text-gray-400 hover:text-red-600 transition disabled:opacity-50"
+                  className="p-2 text-muted-foreground hover:text-red-500 transition disabled:opacity-50"
                   title="Delete Question"
                 >
                   {deletingId === question.id ? (
@@ -325,7 +325,7 @@ export default function QuizQuestionManager({
               </div>
 
               {question.type === "TRUE_FALSE" ? (
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-muted-foreground">
                   Correct answer:{" "}
                   <span className="font-bold">
                     {question.correctTrueFalse ? "True" : "False"}
@@ -338,8 +338,8 @@ export default function QuizQuestionManager({
                       key={option.id}
                       className={`text-sm px-3 py-2 rounded-lg border ${
                         option.isCorrect
-                          ? "bg-green-50 border-green-200 text-green-700"
-                          : "bg-white border-gray-200 text-gray-700"
+                          ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
+                          : "bg-muted/50 border-border text-foreground"
                       }`}
                     >
                       {option.order}. {option.optionText}

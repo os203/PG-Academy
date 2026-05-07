@@ -1,9 +1,10 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import { Loader2, Search } from "lucide-react";
 import CourseCardForSale from "@/components/ui/CourseCardForSale";
 import { useWishlist } from "@/hooks/use-wishlist";
+import { useRouter } from "next/navigation";
 
 interface PublicCourse {
     id: string;
@@ -16,12 +17,6 @@ interface PublicCourse {
     instructorName: string;
     modulesCount: number;
     lessonsCount: number;
-}
-
-interface EnrollResponse {
-    message?: string;
-    error?: string;
-    alreadyEnrolled?: boolean;
 }
 
 
@@ -57,14 +52,13 @@ async function readJsonSafely<T>(res: Response): Promise<T | null> {
 }
 
 export default function SearchPage() {
+    const router = useRouter();
     const [courses, setCourses] = useState<PublicCourse[]>([]);
     const [query, setQuery] = useState("");
     const [activeFilter, setActiveFilter] = useState("all");
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [enrollingCourseId, setEnrollingCourseId] = useState<string | null>(null);
     const [enrolledCourseIds, setEnrolledCourseIds] = useState<string[]>([]);
-    const [enrollError, setEnrollError] = useState<string | null>(null);
     const { toggleWishlist, isWishlisted } = useWishlist();
 
     useEffect(() => {
@@ -108,36 +102,8 @@ export default function SearchPage() {
         void fetchEnrolledCourses();
     }, []);
 
-    const enrollInCourse = async (courseId: string) => {
-        setEnrollError(null);
-        setEnrollingCourseId(courseId);
-
-        try {
-            const res = await fetch("/api/student/enroll", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ courseId }),
-            });
-
-            const data = await readJsonSafely<EnrollResponse>(res);
-
-            if (!res.ok) {
-                setEnrollError(data?.error || "Unable to enroll in this course.");
-                return;
-            }
-
-            if (data?.alreadyEnrolled) {
-                setEnrollError("You are already enrolled in this course.");
-            } else {
-                setEnrolledCourseIds((prev) => [...new Set([...prev, courseId])]);
-            }
-        } catch {
-            setEnrollError("Unable to enroll in this course. Please try again.");
-        } finally {
-            setEnrollingCourseId(null);
-        }
+    const viewCourseDetails = (courseId: string) => {
+        router.push(`/courses/${courseId}`);
     };
 
     const filteredCourses = useMemo(() => {
@@ -233,16 +199,12 @@ export default function SearchPage() {
                     </div>
                 ) : (
                     <>
-                        {enrollError ? (
-                            <div className="rounded-3xl border border-red-200 bg-red-50 p-4 text-red-700 mb-6">
-                                {enrollError}
-                            </div>
-                        ) : null}
+
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {filteredCourses.map((course) => (
                                 <CourseCardForSale
                                     key={course.id}
-                                    thumbnail={course.thumbnail ?? "taco3.jpg"}
+                                    thumbnail={course.thumbnail ?? "/taco3.jpg"}
                                     category={course.category ?? "General"}
                                     title={course.title}
                                     instructor={course.instructorName}
@@ -252,8 +214,8 @@ export default function SearchPage() {
                                     isWishlisted={isWishlisted(course.id)}
                                     onToggleWishlist={() => toggleWishlist(course.id)}
                                     isEnrolled={enrolledCourseIds.includes(course.id)}
-                                    isProcessing={enrollingCourseId === course.id}
-                                    onEnroll={() => void enrollInCourse(course.id)}
+                                    isProcessing={false}
+                                    onEnroll={() => viewCourseDetails(course.id)}
                                 />
                             ))}
                         </div>

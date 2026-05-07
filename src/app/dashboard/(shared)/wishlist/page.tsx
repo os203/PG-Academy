@@ -162,7 +162,7 @@ export default function WishlistPage() {
                             {wishlistCourses.map((course) => (
                                 <CourseCardForSale
                                     key={course.id}
-                                    thumbnail={course.thumbnail ?? "taco3.jpg"}
+                                    thumbnail={course.thumbnail ?? "/taco3.jpg"}
                                     category={course.category ?? "General"}
                                     title={course.title}
                                     instructor={course.instructorName}

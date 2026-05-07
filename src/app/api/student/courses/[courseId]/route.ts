@@ -29,6 +29,7 @@ interface StudentCourseResponse {
       quizPassed: boolean;
       attemptCount: number;
       latestScore: number | null;
+      resources: Array<{ id: string; name: string; url: string }>;
     }>;
   }>;
 }
@@ -78,6 +79,9 @@ export async function GET(
                   include: {
                     progress: {
                       where: { userId: currentUser.id },
+                    },
+                    resources: {
+                      select: { id: true, name: true, url: true },
                     },
                     quizzes: {
                       include: {
@@ -162,6 +166,7 @@ export async function GET(
             quizPassed: latestAttempt ? latestAttempt.passed : false,
             attemptCount: quiz?.attempts.length ?? 0,
             latestScore: latestAttempt?.score ?? null,
+            resources: lesson.resources || [],
           };
         }),
       })),

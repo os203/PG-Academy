@@ -7,7 +7,6 @@ import {
   User,
   GraduationCap,
   MoreHorizontal,
-  Ban,
   Key,
   Search,
   Download,
@@ -15,6 +14,9 @@ import {
   Filter,
   Trash2,
   ArrowUpDown,
+  BookOpen,
+  X,
+  Loader2,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -41,12 +43,24 @@ interface AdminUser {
   };
 }
 
+interface CourseOption {
+  id: string;
+  title: string;
+}
+
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("ALL");
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+
+  // Enrollment modal state
+  const [enrollModalUser, setEnrollModalUser] = useState<AdminUser | null>(null);
+  const [availableCourses, setAvailableCourses] = useState<CourseOption[]>([]);
+  const [selectedCourseId, setSelectedCourseId] = useState("");
+  const [enrolling, setEnrolling] = useState(false);
+  const [coursesLoading, setCoursesLoading] = useState(false);
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -108,6 +122,56 @@ export default function AdminUsersPage() {
       console.error("Delete failed", err);
     } finally {
       setActionLoading(null);
+    }
+  };
+
+  const openEnrollModal = async (user: AdminUser) => {
+    setEnrollModalUser(user);
+    setSelectedCourseId("");
+    setCoursesLoading(true);
+    try {
+      const res = await fetch("/api/admin/courses");
+      if (res.ok) {
+        const data = await res.json();
+        setAvailableCourses(
+          (data.courses || []).map((c: { id: string; title: string }) => ({
+            id: c.id,
+            title: c.title,
+          }))
+        );
+      }
+    } catch (err) {
+      console.error("Failed to load courses", err);
+    } finally {
+      setCoursesLoading(false);
+    }
+  };
+
+  const handleEnroll = async () => {
+    if (!enrollModalUser || !selectedCourseId) return;
+    setEnrolling(true);
+    try {
+      const res = await fetch("/api/admin/enroll", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: enrollModalUser.id,
+          courseId: selectedCourseId,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert(data.message || "Enrolled successfully!");
+        setEnrollModalUser(null);
+        // Refresh users to update enrollment count
+        fetchUsers();
+      } else {
+        alert(data.error || "Failed to enroll");
+      }
+    } catch {
+      alert("An error occurred");
+    } finally {
+      setEnrolling(false);
     }
   };
 
@@ -336,6 +400,12 @@ export default function AdminUsersPage() {
                               <DropdownMenuItem className="cursor-pointer">
                                 <Key className="mr-2 h-4 w-4" /> Force Password Reset
                               </DropdownMenuItem>
+                              <DropdownMenuItem
+                                className="cursor-pointer"
+                                onSelect={() => openEnrollModal(u)}
+                              >
+                                <BookOpen className="mr-2 h-4 w-4" /> Enroll in Course
+                              </DropdownMenuItem>
                             </DropdownMenuGroup>
                             <DropdownMenuSeparator />
                             <DropdownMenuGroup>
@@ -371,6 +441,70 @@ export default function AdminUsersPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Enrollment Modal */}
+      {enrollModalUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <Card className="w-full max-w-md border-brand-primary/50 shadow-2xl relative overflow-hidden bg-background">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-brand-primary to-brand-accent" />
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg">Enroll in Course</CardTitle>
+                <button
+                  onClick={() => setEnrollModalUser(null)}
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Enrolling <span className="font-medium text-foreground">{enrollModalUser.name}</span> ({enrollModalUser.email})
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {coursesLoading ? (
+                <div className="flex items-center gap-2 py-4 text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" /> Loading courses...
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground">
+                    Select Course
+                  </label>
+                  <select
+                    value={selectedCourseId}
+                    onChange={(e) => setSelectedCourseId(e.target.value)}
+                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                  >
+                    <option value="">Choose a course...</option>
+                    {availableCourses.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.title}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              <div className="flex justify-end gap-3 pt-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setEnrollModalUser(null)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  className="bg-brand-primary text-white hover:bg-brand-primary/90"
+                  onClick={handleEnroll}
+                  disabled={!selectedCourseId || enrolling}
+                >
+                  {enrolling && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Enroll Student
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }

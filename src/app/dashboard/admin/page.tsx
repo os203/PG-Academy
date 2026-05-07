@@ -25,6 +25,7 @@ interface AdminStats {
   revenue: { gross: number; net: number; platformCut: number };
   payments: { completed: number; pending: number; failed: number };
   activityFeed: Array<{ type: string; message: string; time: string }>;
+  topCourses: Array<{ id: string; title: string; enrollments: number; instructor: string }>;
 }
 
 export default function AdminOverview() {
@@ -260,6 +261,42 @@ export default function AdminOverview() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Top Courses */}
+      {s.topCourses && s.topCourses.length > 0 && (
+        <Card className="bg-card border-border">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle>Top Courses</CardTitle>
+              <TrendingUp className="h-4 w-4 text-brand-accent" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {s.topCourses.map((course, i) => (
+                <div key={course.id} className="flex items-center gap-4">
+                  <div className={`flex items-center justify-center h-8 w-8 rounded-full text-xs font-bold shrink-0 ${
+                    i === 0 ? "bg-amber-500/20 text-amber-600" :
+                    i === 1 ? "bg-slate-400/20 text-slate-500" :
+                    i === 2 ? "bg-orange-500/20 text-orange-600" :
+                    "bg-muted text-muted-foreground"
+                  }`}>
+                    #{i + 1}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{course.title}</p>
+                    <p className="text-xs text-muted-foreground">{course.instructor}</p>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <span className="text-sm font-bold">{course.enrollments}</span>
+                    <p className="text-xs text-muted-foreground">students</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

@@ -35,6 +35,7 @@ export async function GET() {
       failedPayments,
       recentEnrollments,
       recentPayments,
+      topCourses,
     ] = await Promise.all([
       db.user.count(),
       db.user.count({ where: { role: "STUDENT" } }),
@@ -71,6 +72,16 @@ export async function GET() {
         orderBy: { createdAt: "desc" },
         include: {
           user: { select: { name: true } },
+        },
+      }),
+      db.course.findMany({
+        take: 5,
+        orderBy: { enrollments: { _count: "desc" } },
+        select: {
+          id: true,
+          title: true,
+          _count: { select: { enrollments: true } },
+          instructor: { select: { name: true } },
         },
       }),
     ]);
@@ -122,6 +133,12 @@ export async function GET() {
         failed: failedPayments,
       },
       activityFeed,
+      topCourses: topCourses.map((c) => ({
+        id: c.id,
+        title: c.title,
+        enrollments: c._count.enrollments,
+        instructor: c.instructor.name,
+      })),
     });
   } catch (error) {
     console.error("Admin Stats error:", error);

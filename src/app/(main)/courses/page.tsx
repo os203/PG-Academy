@@ -7,6 +7,7 @@ import {
   ChevronLeft,
   Loader2,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import CourseCardForSale from "@/components/ui/CourseCardForSale";
 import { useWishlist } from "@/hooks/use-wishlist";
 
@@ -30,12 +31,7 @@ interface PublicCoursesResponse {
   error?: string;
 }
 
-interface EnrollResponse {
-  message?: string;
-  error?: string;
-  details?: string;
-  alreadyEnrolled?: boolean;
-}
+
 
 interface StudentEnrolledCourse {
   id: string;
@@ -67,11 +63,10 @@ async function readJsonSafely<T>(res: Response): Promise<T | null> {
 }
 
 export default function CoursesPage() {
+  const router = useRouter();
   const [courses, setCourses] = useState<PublicCourse[]>([]);
   const [loading, setLoading] = useState(true);
-  const [enrollingCourseId, setEnrollingCourseId] = useState<string | null>(null);
   const [enrolledCourseIds, setEnrolledCourseIds] = useState<string[]>([]);
-  const [enrollError, setEnrollError] = useState<string | null>(null);
   const { toggleWishlist, isWishlisted } = useWishlist();
 
   const fetchCourses = async (): Promise<void> => {
@@ -128,43 +123,8 @@ export default function CoursesPage() {
     void fetchEnrolledCourses();
   }, []);
 
-  const enrollInCourse = async (courseId: string): Promise<void> => {
-    setEnrollError(null);
-    setEnrollingCourseId(courseId);
-
-    try {
-      const res = await fetch("/api/student/enroll", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ courseId }),
-      });
-
-      const data = await readJsonSafely<EnrollResponse>(res);
-
-      if (!res.ok) {
-        setEnrollError(
-          data?.details ||
-            data?.error ||
-            "Failed to enroll in this course. This action is available for students only."
-        );
-        return;
-      }
-
-      if (data?.alreadyEnrolled) {
-        setEnrollError("You are already enrolled in this course.");
-      } else {
-        setEnrolledCourseIds((prev) =>
-          prev.includes(courseId) ? prev : [...prev, courseId]
-        );
-      }
-    } catch (error) {
-      console.error(error);
-      setEnrollError("An error occurred while enrolling in this course.");
-    } finally {
-      setEnrollingCourseId(null);
-    }
+  const viewCourseDetails = (courseId: string) => {
+    router.push(`/courses/${courseId}`);
   };
 
   if (loading) {
@@ -198,11 +158,7 @@ export default function CoursesPage() {
           </Link>
         </div>
 
-        {enrollError ? (
-          <div className="rounded-3xl border border-red-200 bg-red-50 p-4 text-red-700 mb-6">
-            {enrollError}
-          </div>
-        ) : null}
+
 
         {courses.length === 0 ? (
           <div className="bg-card border border-border rounded-2xl p-12 text-center text-muted-foreground">
@@ -223,8 +179,8 @@ export default function CoursesPage() {
                 isWishlisted={isWishlisted(course.id)}
                 onToggleWishlist={() => toggleWishlist(course.id)}
                 isEnrolled={enrolledCourseIds.includes(course.id)}
-                isProcessing={enrollingCourseId === course.id}
-                onEnroll={() => void enrollInCourse(course.id)}
+                isProcessing={false}
+                onEnroll={() => viewCourseDetails(course.id)}
               />
             ))}
           </div>

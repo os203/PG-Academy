@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CheckCircle, XCircle, MoreHorizontal, Eye, BarChart } from "lucide-react";
+import { CheckCircle, XCircle, MoreHorizontal, Eye, BarChart, Plus, Pencil } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,6 +13,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuGroup,
 } from "@/components/ui/dropdown-menu";
+import CreateCourseModal from "@/components/admin/CreateCourseModal";
 
 interface AdminCourse {
   id: string;
@@ -33,6 +34,7 @@ interface AdminCourse {
 export default function AdminCoursesPage() {
   const [courses, setCourses] = useState<AdminCourse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   const fetchCourses = async () => {
     setIsLoading(true);
@@ -109,6 +111,12 @@ export default function AdminCoursesPage() {
           <h1 className="text-3xl font-bold tracking-tight text-foreground">Course Catalog</h1>
           <p className="text-muted-foreground">Review, approve, and moderate instructor content.</p>
         </div>
+        <Button 
+          onClick={() => setShowCreateModal(true)}
+          className="flex items-center gap-2 bg-brand-primary hover:bg-brand-primary/90 text-white"
+        >
+          <Plus className="h-4 w-4" /> Create Course
+        </Button>
       </div>
 
       <Card className="bg-card border-border shadow-sm">
@@ -178,8 +186,17 @@ export default function AdminCoursesPage() {
                             </DropdownMenuGroup>
                             <DropdownMenuSeparator />
                             <DropdownMenuGroup>
-                              <DropdownMenuItem className="cursor-pointer">
-                                <Eye className="mr-2 h-4 w-4" /> Preview Content
+                              <DropdownMenuItem 
+                                className="cursor-pointer"
+                                onClick={() => window.location.href = `/dashboard/admin/courses/${c.id}`}
+                              >
+                                <Pencil className="mr-2 h-4 w-4" /> Manage Course Content
+                              </DropdownMenuItem>
+                              <DropdownMenuItem 
+                                className="cursor-pointer"
+                                onClick={() => window.location.href = `/courses/${c.id}`}
+                              >
+                                <Eye className="mr-2 h-4 w-4" /> View Public Page
                               </DropdownMenuItem>
                               <DropdownMenuItem className="cursor-pointer">
                                 <BarChart className="mr-2 h-4 w-4" /> View Analytics
@@ -196,6 +213,15 @@ export default function AdminCoursesPage() {
           )}
         </CardContent>
       </Card>
+      
+      {showCreateModal && (
+        <CreateCourseModal 
+          onClose={() => setShowCreateModal(false)} 
+          onSuccess={() => {
+            fetchCourses();
+          }} 
+        />
+      )}
     </div>
   );
 }

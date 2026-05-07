@@ -13,6 +13,7 @@ import {
   X,
 } from "lucide-react";
 import LessonQuizManager, { QuizMeta } from "@/components/LessonQuizManager";
+import LessonResourceManager from "@/components/LessonResourceManager";
 
 interface Lesson {
   id: string;
@@ -21,6 +22,13 @@ interface Lesson {
   videoPath: string | null;
   order: number;
   quizzes: QuizMeta[];
+  resources: Resource[];
+}
+
+export interface Resource {
+  id: string;
+  name: string;
+  url: string;
 }
 
 interface Module {
@@ -58,6 +66,7 @@ interface ApiLesson {
   videoPath?: string | null;
   order?: number;
   quizzes?: ApiQuiz[];
+  resources?: Resource[];
 }
 
 interface ApiModule {
@@ -168,6 +177,13 @@ export default function InstructorCourseManager({
                               ? quiz.maxAttempts
                               : null,
                           lessonId: quiz.lessonId ?? (lesson.id ?? ""),
+                        }))
+                      : [],
+                    resources: Array.isArray(lesson.resources)
+                      ? lesson.resources.map((res: { id?: string; name?: string; url?: string }) => ({
+                          id: res.id ?? "",
+                          name: res.name ?? "",
+                          url: res.url ?? "",
                         }))
                       : [],
                   }))
@@ -502,7 +518,7 @@ export default function InstructorCourseManager({
   if (loading) {
     return (
       <div className="flex justify-center p-20">
-        <Loader2 className="animate-spin text-indigo-600" size={40} />
+        <Loader2 className="animate-spin text-brand-primary" size={40} />
       </div>
     );
   }
@@ -517,7 +533,7 @@ export default function InstructorCourseManager({
 
   return (
     <div className="max-w-5xl mx-auto p-6 space-y-8">
-      <div className="bg-gradient-to-r from-indigo-600 to-violet-700 rounded-3xl p-8 text-white shadow-lg relative overflow-hidden">
+      <div className="bg-gradient-to-r from-brand-primary to-brand-accent rounded-3xl p-8 text-white shadow-lg relative overflow-hidden">
         <h1 className="text-3xl font-black mb-2">{course.title}</h1>
         <p className="opacity-80 flex items-center gap-2 mb-2">
           <Layers size={16} />
@@ -530,20 +546,20 @@ export default function InstructorCourseManager({
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-1">
-          <div className="bg-white border rounded-2xl p-6 shadow-sm sticky top-6">
-            <h3 className="font-bold mb-4">Add New Module</h3>
+          <div className="bg-card border border-border rounded-2xl p-6 shadow-sm sticky top-6">
+            <h3 className="font-bold mb-4 text-foreground">Add New Module</h3>
 
             <input
               value={newModuleTitle}
               onChange={(e) => setNewModuleTitle(e.target.value)}
-              className="w-full border rounded-xl px-4 py-3 mb-3 outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full border border-border rounded-xl px-4 py-3 mb-3 outline-none focus:ring-2 focus:ring-brand-primary text-foreground placeholder:text-muted-foreground bg-background"
               placeholder="Module title..."
             />
 
             <button
               onClick={() => void addModule()}
               disabled={addingModule}
-              className="w-full bg-indigo-600 text-white font-bold py-3 rounded-xl hover:bg-indigo-700 transition-all disabled:opacity-70"
+              className="w-full bg-brand-primary text-white font-bold py-3 rounded-xl hover:bg-brand-primary/90 transition-all disabled:opacity-70"
             >
               {addingModule ? "Saving..." : "Save Module"}
             </button>
@@ -551,8 +567,8 @@ export default function InstructorCourseManager({
         </div>
 
         <div className="lg:col-span-2 space-y-4">
-          <h2 className="text-xl font-bold flex items-center gap-2">
-            <LayoutGrid className="text-indigo-600" />
+          <h2 className="text-xl font-bold flex items-center gap-2 text-foreground">
+            <LayoutGrid className="text-brand-primary" />
             Curriculum Structure
           </h2>
 
@@ -570,11 +586,11 @@ export default function InstructorCourseManager({
               return (
                 <div
                   key={module.id}
-                  className="bg-white border rounded-2xl p-5 shadow-sm space-y-5"
+                  className="bg-card border border-border rounded-2xl p-5 shadow-sm space-y-5"
                 >
                   <div className="flex justify-between items-start gap-4">
                     <div className="flex items-start gap-4 flex-1">
-                      <span className="text-xl font-black text-gray-200 mt-1">
+                      <span className="text-xl font-black text-muted-foreground/40 mt-1">
                         {(index + 1).toString().padStart(2, "0")}
                       </span>
 
@@ -589,7 +605,7 @@ export default function InstructorCourseManager({
                                   [module.id]: e.target.value,
                                 }))
                               }
-                              className="w-full border rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500"
+                              className="w-full border border-border rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-brand-primary bg-background text-foreground"
                               placeholder="Module title"
                             />
 
@@ -597,7 +613,7 @@ export default function InstructorCourseManager({
                               <button
                                 onClick={() => void saveModuleEdit(module.id)}
                                 disabled={savingModuleId === module.id}
-                                className="inline-flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-xl font-bold hover:bg-indigo-700 transition disabled:opacity-70"
+                                className="inline-flex items-center gap-2 bg-brand-primary text-white px-4 py-2 rounded-xl font-bold hover:bg-brand-primary/90 transition disabled:opacity-70"
                               >
                                 {savingModuleId === module.id ? (
                                   <>
@@ -614,7 +630,7 @@ export default function InstructorCourseManager({
 
                               <button
                                 onClick={cancelEditModule}
-                                className="inline-flex items-center gap-2 bg-gray-100 text-gray-700 px-4 py-2 rounded-xl font-bold hover:bg-gray-200 transition"
+                                className="inline-flex items-center gap-2 bg-muted text-muted-foreground px-4 py-2 rounded-xl font-bold hover:bg-muted/80 transition"
                               >
                                 <X size={16} />
                                 Cancel
@@ -623,10 +639,10 @@ export default function InstructorCourseManager({
                           </div>
                         ) : (
                           <div>
-                            <h4 className="font-bold text-gray-800">
+                            <h4 className="font-bold text-foreground">
                               {module.title}
                             </h4>
-                            <p className="text-sm text-gray-400">
+                            <p className="text-sm text-muted-foreground">
                               Lessons: {module.lessons.length}
                             </p>
                           </div>
@@ -638,7 +654,7 @@ export default function InstructorCourseManager({
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => startEditModule(module)}
-                          className="p-2 text-gray-400 hover:text-indigo-600 transition-colors"
+                          className="p-2 text-muted-foreground hover:text-brand-primary transition-colors"
                           title="Edit Module"
                         >
                           <Pencil size={18} />
@@ -646,7 +662,7 @@ export default function InstructorCourseManager({
 
                         <button
                           onClick={() => void deleteModule(module.id)}
-                          className="p-2 text-gray-400 hover:text-red-500 transition-colors"
+                          className="p-2 text-muted-foreground hover:text-red-500 transition-colors"
                           title="Delete Module"
                         >
                           <Trash2 size={18} />
@@ -668,7 +684,7 @@ export default function InstructorCourseManager({
                         return (
                           <div
                             key={lesson.id}
-                            className="border rounded-xl p-4 bg-gray-50 space-y-4"
+                            className="border border-border rounded-xl p-4 bg-muted/30 space-y-4"
                           >
                             {lessonIsEditing ? (
                               <div className="space-y-3">
@@ -682,7 +698,7 @@ export default function InstructorCourseManager({
                                     )
                                   }
                                   placeholder="Lesson title"
-                                  className="w-full border rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                                  className="w-full border border-border rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-brand-primary bg-background text-foreground"
                                 />
 
                                 <textarea
@@ -696,7 +712,7 @@ export default function InstructorCourseManager({
                                   }
                                   placeholder="Notes / lesson description"
                                   rows={3}
-                                  className="w-full border rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500 resize-none bg-white"
+                                  className="w-full border border-border rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-brand-primary resize-none bg-background text-foreground"
                                 />
 
                                 <input
@@ -709,7 +725,7 @@ export default function InstructorCourseManager({
                                     )
                                   }
                                   placeholder="Video path or URL"
-                                  className="w-full border rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                                  className="w-full border border-border rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-brand-primary bg-background text-foreground"
                                 />
 
                                 <div className="flex items-center gap-2">
@@ -718,7 +734,7 @@ export default function InstructorCourseManager({
                                       void saveLessonEdit(module.id, lesson.id)
                                     }
                                     disabled={savingLessonId === lesson.id}
-                                    className="inline-flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-xl font-bold hover:bg-indigo-700 transition disabled:opacity-70"
+                                    className="inline-flex items-center gap-2 bg-brand-primary text-white px-4 py-2 rounded-xl font-bold hover:bg-brand-primary/90 transition disabled:opacity-70"
                                   >
                                     {savingLessonId === lesson.id ? (
                                       <>
@@ -735,7 +751,7 @@ export default function InstructorCourseManager({
 
                                   <button
                                     onClick={cancelEditLesson}
-                                    className="inline-flex items-center gap-2 bg-gray-100 text-gray-700 px-4 py-2 rounded-xl font-bold hover:bg-gray-200 transition"
+                                    className="inline-flex items-center gap-2 bg-muted text-muted-foreground px-4 py-2 rounded-xl font-bold hover:bg-muted/80 transition"
                                   >
                                     <X size={16} />
                                     Cancel
@@ -746,17 +762,17 @@ export default function InstructorCourseManager({
                               <>
                                 <div className="flex items-start justify-between gap-4 mb-2">
                                   <div className="flex items-center gap-3">
-                                    <div className="bg-indigo-100 text-indigo-600 p-2 rounded-lg">
+                                    <div className="bg-brand-primary/10 text-brand-primary p-2 rounded-lg">
                                       <Video size={16} />
                                     </div>
 
                                     <div>
-                                      <h5 className="font-bold text-gray-800">
+                                      <h5 className="font-bold text-foreground">
                                         {lessonIndex + 1}. {lesson.title}
                                       </h5>
 
                                       {lesson.videoPath && (
-                                        <p className="text-xs text-gray-500 break-all">
+                                        <p className="text-xs text-muted-foreground break-all">
                                           Video path: {lesson.videoPath}
                                         </p>
                                       )}
@@ -766,7 +782,7 @@ export default function InstructorCourseManager({
                                   <div className="flex items-center gap-2">
                                     <button
                                       onClick={() => startEditLesson(lesson)}
-                                      className="p-2 text-gray-400 hover:text-indigo-600 transition"
+                                      className="p-2 text-muted-foreground hover:text-brand-primary transition"
                                       title="Edit Lesson"
                                     >
                                       <Pencil size={16} />
@@ -777,7 +793,7 @@ export default function InstructorCourseManager({
                                         void deleteLesson(module.id, lesson.id)
                                       }
                                       disabled={deletingLessonId === lesson.id}
-                                      className="p-2 text-gray-400 hover:text-red-600 transition disabled:opacity-50"
+                                      className="p-2 text-muted-foreground hover:text-red-500 transition disabled:opacity-50"
                                       title="Delete Lesson"
                                     >
                                       {deletingLessonId === lesson.id ? (
@@ -790,7 +806,7 @@ export default function InstructorCourseManager({
                                 </div>
 
                                 {lesson.notes && (
-                                  <div className="text-sm text-gray-600 bg-white border rounded-lg p-3">
+                                  <div className="text-sm text-muted-foreground bg-muted/50 border border-border rounded-lg p-3">
                                     {lesson.notes}
                                   </div>
                                 )}
@@ -804,19 +820,27 @@ export default function InstructorCourseManager({
                               initialQuiz={lesson.quizzes[0] ?? null}
                               onChanged={fetchCourseData}
                             />
+
+                            <LessonResourceManager
+                              courseId={courseId}
+                              moduleId={module.id}
+                              lessonId={lesson.id}
+                              resources={lesson.resources || []}
+                              onChanged={fetchCourseData}
+                            />
                           </div>
                         );
                       })
                     ) : (
-                      <div className="text-center py-6 bg-gray-50 border-2 border-dashed rounded-2xl text-gray-400">
+                      <div className="text-center py-6 bg-muted/30 border-2 border-dashed border-border rounded-2xl text-muted-foreground">
                         No lessons in this module yet.
                       </div>
                     )}
                   </div>
 
                   <div className="border-t pt-4 space-y-3">
-                    <h5 className="font-bold flex items-center gap-2 text-gray-700">
-                      <Plus size={16} className="text-indigo-600" />
+                    <h5 className="font-bold flex items-center gap-2 text-foreground">
+                      <Plus size={16} className="text-brand-primary" />
                       Add New Lesson
                     </h5>
 
@@ -830,7 +854,7 @@ export default function InstructorCourseManager({
                         )
                       }
                       placeholder="Lesson title"
-                      className="w-full border rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="w-full border border-border rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-brand-primary bg-background text-foreground"
                     />
 
                     <textarea
@@ -844,7 +868,7 @@ export default function InstructorCourseManager({
                       }
                       placeholder="Notes / lesson description"
                       rows={3}
-                      className="w-full border rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+                      className="w-full border border-border rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-brand-primary resize-none bg-background text-foreground"
                     />
 
                     <input
@@ -857,13 +881,13 @@ export default function InstructorCourseManager({
                         )
                       }
                       placeholder="Video path or URL"
-                      className="w-full border rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="w-full border border-border rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-brand-primary bg-background text-foreground"
                     />
 
                     <button
                       onClick={() => void addLesson(module.id)}
                       disabled={addingLessonFor === module.id}
-                      className="inline-flex items-center gap-2 bg-indigo-600 text-white px-4 py-2.5 rounded-xl font-bold hover:bg-indigo-700 transition disabled:opacity-70"
+                      className="inline-flex items-center gap-2 bg-brand-primary text-white px-4 py-2.5 rounded-xl font-bold hover:bg-brand-primary/90 transition disabled:opacity-70"
                     >
                       {addingLessonFor === module.id ? (
                         <>
@@ -882,7 +906,7 @@ export default function InstructorCourseManager({
               );
             })
           ) : (
-            <div className="text-center py-10 bg-gray-50 border-2 border-dashed rounded-2xl text-gray-400">
+            <div className="text-center py-10 bg-muted/30 border-2 border-dashed border-border rounded-2xl text-muted-foreground font-medium">
               No modules yet.
             </div>
           )}

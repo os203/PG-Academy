@@ -228,9 +228,9 @@ export default function LessonQuizManager({
 
   return (
     <div className="space-y-4">
-      <div className="bg-white border rounded-2xl p-4 space-y-4">
+      <div className="bg-card border border-border rounded-2xl p-4 space-y-4">
         <div className="flex justify-between items-center">
-          <div className="flex items-center gap-2 text-indigo-600 font-bold">
+          <div className="flex items-center gap-2 text-brand-primary font-bold">
             <BookOpen size={18} />
             Lesson Quiz
           </div>
@@ -239,7 +239,7 @@ export default function LessonQuizManager({
             <div className="flex items-center gap-2">
               <button
                 onClick={startEdit}
-                className="p-2 text-gray-400 hover:text-indigo-600 transition"
+                className="p-2 text-muted-foreground hover:text-brand-primary transition"
                 title="Edit Quiz"
               >
                 <Pencil size={16} />
@@ -248,7 +248,7 @@ export default function LessonQuizManager({
               <button
                 onClick={() => void deleteQuiz()}
                 disabled={deleting}
-                className="p-2 text-gray-400 hover:text-red-600 transition disabled:opacity-50"
+                className="p-2 text-muted-foreground hover:text-red-500 transition disabled:opacity-50"
                 title="Delete Quiz"
               >
                 {deleting ? (
@@ -269,7 +269,7 @@ export default function LessonQuizManager({
                 setForm((prev) => ({ ...prev, title: e.target.value }))
               }
               placeholder="Quiz title"
-              className="w-full border rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full border border-border rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-brand-primary bg-background text-foreground"
             />
 
             <input
@@ -278,7 +278,7 @@ export default function LessonQuizManager({
                 setForm((prev) => ({ ...prev, passingScore: e.target.value }))
               }
               placeholder="Passing score"
-              className="w-full border rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full border border-border rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-brand-primary bg-background text-foreground"
             />
 
             <input
@@ -287,14 +287,14 @@ export default function LessonQuizManager({
                 setForm((prev) => ({ ...prev, maxAttempts: e.target.value }))
               }
               placeholder="Max attempts (optional)"
-              className="w-full border rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full border border-border rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-brand-primary bg-background text-foreground"
             />
 
             <div className="flex items-center gap-2">
               <button
                 onClick={() => void saveQuiz()}
                 disabled={saving}
-                className="inline-flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-xl font-bold hover:bg-indigo-700 transition disabled:opacity-70"
+                className="inline-flex items-center gap-2 bg-brand-primary text-white px-4 py-2 rounded-xl font-bold hover:bg-brand-primary/90 transition disabled:opacity-70"
               >
                 {saving ? (
                   <>
@@ -311,7 +311,7 @@ export default function LessonQuizManager({
 
               <button
                 onClick={cancelEdit}
-                className="inline-flex items-center gap-2 bg-gray-100 text-gray-700 px-4 py-2 rounded-xl font-bold hover:bg-gray-200 transition"
+                className="inline-flex items-center gap-2 bg-muted text-muted-foreground px-4 py-2 rounded-xl font-bold hover:bg-muted/80 transition"
               >
                 <X size={16} />
                 Cancel
@@ -321,18 +321,18 @@ export default function LessonQuizManager({
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
             <div>
-              <p className="text-gray-400 mb-1">Quiz Title</p>
-              <p className="font-bold text-gray-800">{quiz.title}</p>
+              <p className="text-muted-foreground mb-1">Quiz Title</p>
+              <p className="font-bold text-foreground">{quiz.title}</p>
             </div>
 
             <div>
-              <p className="text-gray-400 mb-1">Passing Score</p>
-              <p className="font-bold text-gray-800">{quiz.passingScore}%</p>
+              <p className="text-muted-foreground mb-1">Passing Score</p>
+              <p className="font-bold text-foreground">{quiz.passingScore}%</p>
             </div>
 
             <div>
-              <p className="text-gray-400 mb-1">Max Attempts</p>
-              <p className="font-bold text-gray-800">
+              <p className="text-muted-foreground mb-1">Max Attempts</p>
+              <p className="font-bold text-foreground">
                 {quiz.maxAttempts ?? "Unlimited"}
               </p>
             </div>

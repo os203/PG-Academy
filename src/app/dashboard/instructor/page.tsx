@@ -99,7 +99,6 @@ export default function InstructorDashboard() {
 
   const [courses, setCourses] = useState<DashboardCourse[]>([]);
   const [loadingCourses, setLoadingCourses] = useState(true);
-  const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingCourse, setEditingCourse] = useState<DashboardCourse | null>(null);
 
   const [title, setTitle] = useState("");
@@ -111,6 +110,14 @@ export default function InstructorDashboard() {
 
   const [uploadingThumbnail, setUploadingThumbnail] = useState(false);
 
+  // Real stats from API
+  const [realStats, setRealStats] = useState<{
+    totalStudents: number;
+    totalRevenue: number;
+    avgCompletion: number;
+    unansweredQA: number;
+  } | null>(null);
+
   const resetForm = (): void => {
     setTitle("");
     setDescription("");
@@ -119,7 +126,6 @@ export default function InstructorDashboard() {
     setCategory("Others");
     setThumbnail("");
     setEditingCourse(null);
-    setShowCreateForm(false);
   };
 
   const fetchCourses = async (): Promise<void> => {
@@ -164,6 +170,11 @@ export default function InstructorDashboard() {
   useEffect(() => {
     if (user) {
       void fetchCourses();
+      // Fetch real stats
+      fetch("/api/instructor/stats")
+        .then((r) => r.ok ? r.json() : null)
+        .then((data) => { if (data) setRealStats(data); })
+        .catch(console.error);
     }
   }, [user]);
 
@@ -207,35 +218,7 @@ export default function InstructorDashboard() {
     setThumbnail("");
   };
 
-  const handleCreateCourse = async (e: React.FormEvent): Promise<void> => {
-    e.preventDefault();
 
-    try {
-      const res = await fetch("/api/courses", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title,
-          description,
-          price: parseFloat(price) || 0,
-          status,
-          category: category.trim() || null,
-          thumbnail: thumbnail.trim() || null,
-        }),
-      });
-
-      if (res.ok) {
-        resetForm();
-        await fetchCourses();
-      } else {
-        const data = await res.json().catch(() => null);
-        alert(data?.error || "Failed to create course");
-      }
-    } catch (error) {
-      console.error(error);
-      alert("An error occurred while creating the course");
-    }
-  };
 
   const handleEditCourse = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
@@ -288,16 +271,7 @@ export default function InstructorDashboard() {
     }
   };
 
-  const openCreateModal = (): void => {
-    setEditingCourse(null);
-    setShowCreateForm(true);
-    setTitle("");
-    setDescription("");
-    setPrice("");
-    setStatus("DRAFT");
-    setCategory("Others");
-    setThumbnail("");
-  };
+
 
   const openEditModal = (course: DashboardCourse): void => {
     setEditingCourse(course);
@@ -307,7 +281,6 @@ export default function InstructorDashboard() {
     setStatus(course.status === "PUBLISHED" ? "PUBLISHED" : "DRAFT");
     setCategory(course.category || "Others");
     setThumbnail(course.thumbnail || "");
-    setShowCreateForm(false);
   };
 
   if (isLoading) {
@@ -325,10 +298,10 @@ export default function InstructorDashboard() {
   }
 
   const stats = [
-    { title: "Total Students", value: "1,248", icon: Users, trend: "+12%" },
-    { title: "Active Learners", value: "892", icon: Activity, trend: "This week" },
-    { title: "Avg. Completion", value: "68%", icon: BookOpen, trend: "+2.4%" },
-    { title: "Total Revenue", value: "$8,450", icon: Wallet, trend: "+24%" },
+    { title: "Total Students", value: realStats ? realStats.totalStudents.toLocaleString() : "—", icon: Users, trend: "Across all courses" },
+    { title: "Avg. Completion", value: realStats ? `${realStats.avgCompletion}%` : "—", icon: BookOpen, trend: "Lesson completion" },
+    { title: "Total Revenue", value: realStats ? `$${realStats.totalRevenue.toLocaleString()}` : "—", icon: Wallet, trend: "Completed payments" },
+    { title: "Unanswered Q&A", value: realStats ? realStats.unansweredQA.toString() : "—", icon: Activity, trend: "Needs reply" },
   ];
 
   return (
@@ -369,12 +342,6 @@ export default function InstructorDashboard() {
               <Megaphone className="h-4 w-4" /> Announce
             </Button>
 
-            <Button
-              onClick={openCreateModal}
-              className="flex items-center gap-2 bg-brand-primary hover:bg-brand-primary/90 text-white w-full sm:w-auto"
-            >
-              <Plus className="h-4 w-4" /> Create Course
-            </Button>
           </div>
         </motion.div>
 
@@ -385,7 +352,7 @@ export default function InstructorDashboard() {
           >
             <div className="flex items-center gap-3">
               <MessageSquare className="h-5 w-5 shrink-0" />
-              <div className="text-sm font-medium">14 unanswered Q&amp;A</div>
+              <div className="text-sm font-medium">{realStats ? realStats.unansweredQA : 0} unanswered Q&amp;A</div>
             </div>
             <ArrowRight className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity" />
           </div>
@@ -452,7 +419,7 @@ export default function InstructorDashboard() {
           </Card>
         </motion.div>
 
-        {(showCreateForm || editingCourse) && (
+        {editingCourse && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
@@ -463,12 +430,12 @@ export default function InstructorDashboard() {
                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-brand-primary to-brand-accent" />
                 <CardHeader>
                   <CardTitle>
-                    {editingCourse ? "Edit Course" : "Create a New Course"}
+                    Edit Course
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <form
-                    onSubmit={editingCourse ? handleEditCourse : handleCreateCourse}
+                    onSubmit={handleEditCourse}
                     className="space-y-4"
                   >
                     <div className="space-y-2">
@@ -617,7 +584,7 @@ export default function InstructorDashboard() {
                         type="submit"
                         className="bg-brand-primary text-white hover:bg-brand-primary/90"
                       >
-                        {editingCourse ? "Save Changes" : "Create Course"}
+                        Save Changes
                       </Button>
                     </div>
                   </form>
