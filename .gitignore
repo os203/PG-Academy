@@ -40,4 +40,25 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# Local video storage
+private/
+uploads/
+videos/
+
+# Video files
+*.mp4
+*.mov
+*.mkv
+*.avi
+*.webm
+*.m3u8
+*.ts
+
+# Environment files
+.env
+.env.local
+
+# SSH keys
+*.pem
+
 /src/generated/prisma
