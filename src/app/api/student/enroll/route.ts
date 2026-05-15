@@ -58,6 +58,7 @@ export async function POST(req: NextRequest) {
       select: {
         id: true,
         status: true,
+        price: true,
       },
     });
 
@@ -65,6 +66,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         { error: "Course not found or not published" },
         { status: 404 }
+      );
+    }
+
+    // Block direct enrollment for paid courses
+    if (course.price > 0) {
+      return NextResponse.json(
+        { error: "This course requires payment. Please use the checkout process." },
+        { status: 402 }
       );
     }
 

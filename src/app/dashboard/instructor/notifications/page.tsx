@@ -5,11 +5,25 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Bell } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { formatDistanceToNow } from "date-fns";
+
+interface SentNotification {
+  id: string;
+  message: string;
+  type: string;
+  targetRole: string;
+  audienceSize: number;
+  createdAt: string;
+  course?: { title: string } | null;
+}
 
 export default function InstructorNotificationsPage() {
   const { user, isLoading } = useAuth();
   const router = useRouter();
+
+  const [history, setHistory] = useState<SentNotification[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(true);
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -17,10 +31,21 @@ export default function InstructorNotificationsPage() {
     }
   }, [user, isLoading, router]);
 
-  if (isLoading) {
+  useEffect(() => {
+    if (user && (user.role === "INSTRUCTOR" || user.role === "ADMIN")) {
+      fetch("/api/instructor/notifications/history")
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.history) setHistory(data.history);
+        })
+        .finally(() => setLoadingHistory(false));
+    }
+  }, [user]);
+
+  if (isLoading || loadingHistory) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
-        <p className="text-muted-foreground animate-pulse">Loading notifications...</p>
+        <p className="text-muted-foreground animate-pulse">Loading history...</p>
       </div>
     );
   }
@@ -50,38 +75,45 @@ export default function InstructorNotificationsPage() {
           </div>
         </div>
 
-        {/* Placeholder List */}
         <Card className="border-border shadow-sm">
           <CardHeader>
-            <CardTitle className="text-lg">Recent Activity History</CardTitle>
+            <CardTitle className="text-lg">Sent Broadcasts History</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="p-4 rounded-lg bg-muted/30 border border-border flex items-start gap-4">
-              <div className="mt-1 w-2 h-2 rounded-full bg-brand-accent shrink-0"></div>
-              <div>
-                <p className="font-medium text-foreground">New Student Enrolled</p>
-                <p className="text-sm text-muted-foreground">Sarah enrolled in Admin Masterclass.</p>
-                <p className="text-xs text-muted-foreground mt-1">just now</p>
+            {history.length === 0 ? (
+              <div className="text-center py-12 text-muted-foreground border border-dashed border-border rounded-lg">
+                You haven't sent any broadcast notifications yet.
               </div>
-            </div>
-            
-            <div className="p-4 rounded-lg bg-muted/30 border border-border flex items-start gap-4">
-              <div className="mt-1 w-2 h-2 rounded-full bg-brand-accent shrink-0"></div>
-              <div>
-                <p className="font-medium text-foreground">5-Star Review!</p>
-                <p className="text-sm text-muted-foreground">David left a review on Designer Masterclass.</p>
-                <p className="text-xs text-muted-foreground mt-1">2 hours ago</p>
-              </div>
-            </div>
-
-            <div className="p-4 rounded-lg bg-muted/30 border border-border flex items-start gap-4">
-              <div className="mt-1 w-2 h-2 rounded-full bg-muted-foreground shrink-0"></div>
-              <div>
-                <p className="font-medium text-foreground">Payout Initiated</p>
-                <p className="text-sm text-muted-foreground">Stripe payout of $1,200 is on the way.</p>
-                <p className="text-xs text-muted-foreground mt-1">yesterday</p>
-              </div>
-            </div>
+            ) : (
+              history.map((item) => (
+                <div key={item.id} className="p-4 rounded-lg bg-muted/30 border border-border flex items-start gap-4">
+                  <div className={`mt-1 w-2 h-2 rounded-full shrink-0 ${
+                    item.type === "WARNING" ? "bg-amber-500" :
+                    item.type === "SUCCESS" ? "bg-emerald-500" : "bg-brand-accent"
+                  }`}></div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-foreground">{item.type} Broadcast</p>
+                    <p className="text-sm text-foreground mt-1">{item.message}</p>
+                    <div className="flex flex-wrap items-center gap-2 mt-2">
+                      <span className="inline-flex items-center rounded-full bg-blue-500/10 text-blue-500 border border-blue-500/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">
+                        {item.targetRole.replace("_", " ")}
+                      </span>
+                      {item.course && (
+                        <span className="inline-flex items-center rounded-full bg-brand-accent/10 text-brand-accent border border-brand-accent/20 px-2 py-0.5 text-[10px] font-bold tracking-wider">
+                          {item.course.title}
+                        </span>
+                      )}
+                      <span className="text-[10px] text-muted-foreground font-medium">
+                        Sent to {item.audienceSize} user(s)
+                      </span>
+                      <span className="text-[10px] text-muted-foreground">
+                        {formatDistanceToNow(new Date(item.createdAt), { addSuffix: true })}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
           </CardContent>
         </Card>
       </div>

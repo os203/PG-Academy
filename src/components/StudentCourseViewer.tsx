@@ -8,9 +8,14 @@ import {
   Lock,
   PlayCircle,
   Save,
+  Medal,
 } from "lucide-react";
 import StudentQuizPanel from "@/components/StudentQuizPanel";
 import StudentQAPanel from "@/components/StudentQAPanel";
+import dynamic from 'next/dynamic';
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const ReactPlayer = dynamic(() => import('react-player'), { ssr: false }) as any;
 
 interface StudentLesson {
   id: string;
@@ -87,6 +92,7 @@ export default function StudentCourseViewer({
   const [watchedPercentDraft, setWatchedPercentDraft] = useState<number>(0);
   const [lastPositionDraft, setLastPositionDraft] = useState<number>(0);
   const [savingProgress, setSavingProgress] = useState(false);
+  const [claimingCert, setClaimingCert] = useState(false);
 
   const fetchCourse = async (): Promise<void> => {
     try {
@@ -167,6 +173,11 @@ export default function StudentCourseViewer({
     setLastPositionDraft(selectedLesson.lastPosition);
   }, [selectedLesson]);
 
+  const selectedModule = useMemo(() => {
+    if (!course || !selectedLessonId) return null;
+    return course.modules.find(m => m.lessons.some(l => l.id === selectedLessonId)) || null;
+  }, [course, selectedLessonId]);
+
   const saveProgress = async (): Promise<void> => {
     if (!selectedLesson) return;
 
@@ -198,6 +209,30 @@ export default function StudentCourseViewer({
       alert("An error occurred while saving progress");
     } finally {
       setSavingProgress(false);
+    }
+  };
+
+  const claimCertificate = async () => {
+    if (!course) return;
+    setClaimingCert(true);
+    try {
+      const res = await fetch(`/api/student/courses/${courseId}/certificate`, {
+        method: "POST",
+      });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const data = await readJsonSafely<any>(res);
+      if (!res.ok) {
+        alert(data?.error || data || "Failed to claim certificate. Ensure all lessons and quizzes are completed.");
+        return;
+      }
+      if (data?.uniqueCode) {
+        window.location.href = `/certificates/${data.uniqueCode}`;
+      }
+    } catch (error) {
+      console.error("Error claiming certificate:", error);
+      alert("Error generating certificate.");
+    } finally {
+      setClaimingCert(false);
     }
   };
 
@@ -234,12 +269,23 @@ export default function StudentCourseViewer({
               <span>{course.overallProgress}%</span>
             </div>
 
-            <div className="w-full h-3 bg-gray-100 rounded-full overflow-hidden">
+            <div className="w-full h-3 bg-gray-100 rounded-full overflow-hidden mb-4">
               <div
-                className="h-full bg-indigo-600 rounded-full transition-all"
+                className="h-full bg-brand-primary rounded-full transition-all"
                 style={{ width: `${course.overallProgress}%` }}
               />
             </div>
+
+            {course.overallProgress === 100 && (
+              <button
+                onClick={claimCertificate}
+                disabled={claimingCert}
+                className="w-full py-3 bg-linear-to-r from-yellow-400 to-yellow-600 hover:from-yellow-500 hover:to-yellow-700 text-white font-bold rounded-xl shadow-md flex items-center justify-center gap-2 transition-all transform hover:scale-[1.02] active:scale-95 disabled:opacity-50"
+              >
+                {claimingCert ? <Loader2 className="animate-spin" size={18} /> : <Medal size={20} />}
+                {claimingCert ? "Generating..." : "Claim Certificate"}
+              </button>
+            )}
           </div>
 
           <div className="space-y-4">
@@ -354,13 +400,28 @@ export default function StudentCourseViewer({
               <div className="border rounded-2xl bg-gray-50 p-6 space-y-4">
                 <h3 className="font-bold text-gray-800">Lesson Player</h3>
 
-                <div className="border-2 border-dashed rounded-2xl p-8 bg-white text-center text-gray-500">
-                  {selectedLesson.videoPath ? (
-                    <div className="space-y-2">
-                      <p className="font-semibold text-gray-700">
-                        Current video path / URL:
-                      </p>
-                      <p className="text-sm break-all">{selectedLesson.videoPath}</p>
+                <div className="border-2 border-dashed rounded-2xl overflow-hidden bg-black text-center text-gray-500 min-h-[400px] flex items-center justify-center">
+                  {selectedLesson.videoPath && selectedModule ? (
+                    <div className="w-full h-full aspect-video">
+                      <ReactPlayer
+                        url={`/api/videos/hls/${courseId}/${selectedModule.id}/${selectedLesson.id}/index.m3u8`}
+                        width="100%"
+                        height="100%"
+                        controls
+                        playing={true}
+                        config={({
+                          file: {
+                            forceHLS: true,
+                            hlsOptions: {
+                              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                              xhrSetup: function (xhr: any) {
+                                xhr.withCredentials = true;
+                              },
+                            },
+                          },
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        }) as any}
+                      />
                     </div>
                   ) : (
                     <p>No video uploaded for this lesson yet.</p>

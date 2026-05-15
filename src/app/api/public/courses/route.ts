@@ -23,6 +23,7 @@ export async function GET() {
         status: "PUBLISHED",
       },
       include: {
+        category: { select: { name: true } },
         instructor: {
           select: {
             name: true,
@@ -79,7 +80,7 @@ export async function GET() {
         lessonsCount,
         studentsCount: course._count.enrollments,
         rating: Number(averageRating.toFixed(1)),
-        category: course.category?.trim() || "Others",
+        category: course.category?.name || "Others",
       };
     });
 

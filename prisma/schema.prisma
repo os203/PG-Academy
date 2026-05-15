@@ -13,9 +13,12 @@ model User {
   email         String         @unique
   password      String
   role          Role           @default(STUDENT)
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  certificates  Certificate[]
+  bio           String?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  resetToken       String?
+  resetTokenExpiry DateTime?
+  certificates     Certificate[]
   courses       Course[]       @relation("InstructorCourses")
   enrollments   Enrollment[]
   notifications Notification[]
@@ -24,24 +27,37 @@ model User {
   qaQuestions   QAQuestion[]
   quizAttempts  QuizAttempt[]
   reviews       Review[]
+  auditLogs     AuditLog[]     @relation("AdminAuditLogs")
+  sentNotifications SentNotification[] @relation("InstructorSentNotifications")
 }
 
 model Course {
-  id           String        @id @default(uuid())
-  title        String
-  description  String
-  thumbnail    String?
-  price        Float         @default(0)
-  category     String?
-  status       CourseStatus  @default(DRAFT)
-  instructorId String
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  certificates Certificate[]
-  instructor   User          @relation("InstructorCourses", fields: [instructorId], references: [id])
-  enrollments  Enrollment[]
-  modules      Module[]
-  reviews      Review[]
+  id                 String        @id @default(uuid())
+  title              String
+  subtitle           String?
+  description        String
+  thumbnail          String?
+  price              Float         @default(0)
+  categoryId         String?
+  category           Category?     @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  language           String?       @default("English")
+  level              String?       @default("All Levels")
+  learningObjectives String?
+  requirements       String?
+  targetAudience     String?
+  tags               String?
+  previewVideoUrl    String?
+  status             CourseStatus  @default(DRAFT)
+  instructorId       String
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  certificates       Certificate[]
+  instructor         User          @relation("InstructorCourses", fields: [instructorId], references: [id])
+  enrollments        Enrollment[]
+  modules            Module[]
+  payments           Payment[]
+  reviews            Review[]
+  sentNotifications  SentNotification[]
 }
 
 
@@ -181,6 +197,7 @@ model Certificate {
 model Payment {
   id        String        @id @default(uuid())
   userId    String
+  courseId  String?
   amount    Float
   type      PaymentType
   status    PaymentStatus @default(PENDING)
@@ -188,6 +205,7 @@ model Payment {
   couponId  String?
   createdAt DateTime      @default(now())
   coupon    Coupon?       @relation(fields: [couponId], references: [id])
+  course    Course?       @relation(fields: [courseId], references: [id], onDelete: SetNull)
   user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
@@ -275,4 +293,37 @@ model Resource {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   lesson    Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+}
+
+model Category {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  courses   Course[]
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  adminId   String?  
+  action    String
+  category  String   // USER_MGMT, CONTENT, SYSTEM, PAYMENT, FINANCE
+  severity  String   // info, warning, success, error
+  timestamp DateTime @default(now())
+  ip        String?
+  admin     User?    @relation("AdminAuditLogs", fields: [adminId], references: [id], onDelete: SetNull)
+}
+
+model SentNotification {
+  id           String   @id @default(uuid())
+  senderId     String
+  message      String
+  type         String
+  targetRole   String
+  courseId     String?
+  audienceSize Int      @default(0)
+  createdAt    DateTime @default(now())
+  sender       User     @relation("InstructorSentNotifications", fields: [senderId], references: [id], onDelete: Cascade)
+  course       Course?  @relation(fields: [courseId], references: [id], onDelete: SetNull)
 }

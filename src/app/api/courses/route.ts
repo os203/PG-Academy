@@ -44,7 +44,8 @@ export async function GET() {
         description: true,
         price: true,
         thumbnail: true,
-        category: true,
+        categoryId: true,
+        category: { select: { id: true, name: true, slug: true } },
         status: true,
         createdAt: true,
         updatedAt: true,
@@ -112,8 +113,8 @@ export async function POST(req: NextRequest) {
     const thumbnail =
       typeof body.thumbnail === "string" ? body.thumbnail.trim() : null;
 
-    const category =
-      typeof body.category === "string" ? body.category.trim() : null;
+    const categoryId =
+      typeof body.categoryId === "string" ? body.categoryId.trim() : null;
 
     if (!title) {
       return NextResponse.json(
@@ -137,14 +138,46 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const subtitle =
+      typeof body.subtitle === "string" ? body.subtitle.trim() : null;
+
+    const language =
+      typeof body.language === "string" ? body.language.trim() : "English";
+
+    const level =
+      typeof body.level === "string" ? body.level.trim() : "All Levels";
+
+    const learningObjectives =
+      typeof body.learningObjectives === "string" ? body.learningObjectives : null;
+
+    const requirements =
+      typeof body.requirements === "string" ? body.requirements : null;
+
+    const targetAudience =
+      typeof body.targetAudience === "string" ? body.targetAudience : null;
+
+    const tags =
+      typeof body.tags === "string" ? body.tags : null;
+
+    const previewVideoUrl =
+      typeof body.previewVideoUrl === "string" ? body.previewVideoUrl.trim() : null;
+
     const course = await db.course.create({
       data: {
         title,
         description,
+        subtitle,
         price,
         status,
         thumbnail,
-        category,
+        categoryId,
+        language,
+        level,
+        learningObjectives,
+        requirements,
+        targetAudience,
+        tags,
+        previewVideoUrl,
         instructorId: instructorId,
       },
     });

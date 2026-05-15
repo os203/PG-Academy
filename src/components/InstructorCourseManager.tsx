@@ -14,6 +14,11 @@ import {
 } from "lucide-react";
 import LessonQuizManager, { QuizMeta } from "@/components/LessonQuizManager";
 import LessonResourceManager from "@/components/LessonResourceManager";
+import EditCourseDetailsModal from "@/components/admin/EditCourseDetailsModal";
+import dynamic from 'next/dynamic';
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const ReactPlayer = dynamic(() => import('react-player'), { ssr: false }) as any;
 
 interface Lesson {
   id: string;
@@ -130,6 +135,7 @@ export default function InstructorCourseManager({
   >({});
   const [savingLessonId, setSavingLessonId] = useState<string | null>(null);
   const [deletingLessonId, setDeletingLessonId] = useState<string | null>(null);
+  const [showEditDetailsModal, setShowEditDetailsModal] = useState(false);
 
   const fetchCourseData = useCallback(async (): Promise<void> => {
     try {
@@ -533,15 +539,26 @@ export default function InstructorCourseManager({
 
   return (
     <div className="max-w-5xl mx-auto p-6 space-y-8">
-      <div className="bg-gradient-to-r from-brand-primary to-brand-accent rounded-3xl p-8 text-white shadow-lg relative overflow-hidden">
-        <h1 className="text-3xl font-black mb-2">{course.title}</h1>
-        <p className="opacity-80 flex items-center gap-2 mb-2">
-          <Layers size={16} />
-          Course Content Management
-        </p>
-        <p className="text-sm opacity-80">
-          {course.description || "No description for this course"}
-        </p>
+      <div className="bg-linear-to-r from-brand-primary to-brand-accent rounded-3xl p-8 text-white shadow-lg relative overflow-hidden">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-black mb-2">{course.title}</h1>
+            <p className="opacity-80 flex items-center gap-2 mb-2">
+              <Layers size={16} />
+              Course Content Management
+            </p>
+            <p className="text-sm opacity-80">
+              {course.description || "No description for this course"}
+            </p>
+          </div>
+          <button
+            onClick={() => setShowEditDetailsModal(true)}
+            className="shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white text-sm font-semibold transition-all border border-white/20"
+          >
+            <Pencil size={16} />
+            Edit Details
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -772,9 +789,26 @@ export default function InstructorCourseManager({
                                       </h5>
 
                                       {lesson.videoPath && (
-                                        <p className="text-xs text-muted-foreground break-all">
-                                          Video path: {lesson.videoPath}
-                                        </p>
+                                        <div className="mt-2 mb-2 w-full max-w-sm rounded-xl overflow-hidden bg-black aspect-video border border-border">
+                                          <ReactPlayer
+                                            url={`/api/videos/hls/${course.id}/${module.id}/${lesson.id}/index.m3u8`}
+                                            width="100%"
+                                            height="100%"
+                                            controls
+                                            config={({
+                                              file: {
+                                                forceHLS: true,
+                                                hlsOptions: {
+                                                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                                  xhrSetup: function (xhr: any) {
+                                                    xhr.withCredentials = true;
+                                                  },
+                                                },
+                                              },
+                                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                            }) as any}
+                                          />
+                                        </div>
                                       )}
                                     </div>
                                   </div>
@@ -912,6 +946,15 @@ export default function InstructorCourseManager({
           )}
         </div>
       </div>
+
+      {/* Edit Course Details Modal */}
+      {showEditDetailsModal && (
+        <EditCourseDetailsModal
+          courseId={courseId}
+          onClose={() => setShowEditDetailsModal(false)}
+          onSuccess={() => void fetchCourseData()}
+        />
+      )}
     </div>
   );
 }

@@ -95,6 +95,31 @@ export async function POST(request: Request) {
       data: notificationsToCreate,
     });
 
+    // Create history record for the sender
+    await db.sentNotification.create({
+      data: {
+        senderId: decoded.userId,
+        message,
+        type,
+        targetRole,
+        courseId: courseId || null,
+        audienceSize: targetUsers.length,
+      }
+    });
+
+    // Create audit log for Admin (if sender is admin)
+    if (sender.role === "ADMIN") {
+      await db.auditLog.create({
+        data: {
+          adminId: decoded.userId,
+          action: `Sent broadcast notification to ${targetRole} (${targetUsers.length} users)`,
+          category: "USER_MGMT",
+          severity: "info",
+          ip: request.headers.get("x-forwarded-for") || "unknown",
+        }
+      });
+    }
+
     return NextResponse.json({ 
       success: true, 
       count: result.count,

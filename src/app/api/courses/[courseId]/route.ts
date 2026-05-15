@@ -96,10 +96,50 @@ export async function PATCH(
         ? body.thumbnail.trim()
         : authResult.course.thumbnail;
 
-    const category =
-      typeof body.category === "string"
-        ? body.category.trim()
-        : authResult.course.category;
+    const categoryId =
+      typeof body.categoryId === "string"
+        ? body.categoryId.trim()
+        : authResult.course.categoryId;
+
+    const subtitle =
+      typeof body.subtitle === "string"
+        ? body.subtitle.trim()
+        : (authResult.course as Record<string, unknown>).subtitle as string | null;
+
+    const language =
+      typeof body.language === "string"
+        ? body.language.trim()
+        : (authResult.course as Record<string, unknown>).language as string | null;
+
+    const level =
+      typeof body.level === "string"
+        ? body.level.trim()
+        : (authResult.course as Record<string, unknown>).level as string | null;
+
+    const learningObjectives =
+      typeof body.learningObjectives === "string"
+        ? body.learningObjectives
+        : (authResult.course as Record<string, unknown>).learningObjectives as string | null;
+
+    const requirements =
+      typeof body.requirements === "string"
+        ? body.requirements
+        : (authResult.course as Record<string, unknown>).requirements as string | null;
+
+    const targetAudience =
+      typeof body.targetAudience === "string"
+        ? body.targetAudience
+        : (authResult.course as Record<string, unknown>).targetAudience as string | null;
+
+    const tags =
+      typeof body.tags === "string"
+        ? body.tags
+        : (authResult.course as Record<string, unknown>).tags as string | null;
+
+    const previewVideoUrl =
+      typeof body.previewVideoUrl === "string"
+        ? body.previewVideoUrl.trim()
+        : (authResult.course as Record<string, unknown>).previewVideoUrl as string | null;
 
     if (!title) {
       return NextResponse.json(
@@ -122,10 +162,18 @@ export async function PATCH(
       data: {
         title,
         description,
+        subtitle,
         price,
         status,
         thumbnail,
-        category,
+        categoryId,
+        language,
+        level,
+        learningObjectives,
+        requirements,
+        targetAudience,
+        tags,
+        previewVideoUrl,
       },
     });
 

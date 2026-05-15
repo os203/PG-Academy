@@ -56,7 +56,7 @@ export default function Sidebar() {
         },
         {
             label: "Certificates",
-            href: "",
+            href: "/dashboard/student/certificates",
             icon: <BrickWallShield />,
             roles: ["student"],
         },

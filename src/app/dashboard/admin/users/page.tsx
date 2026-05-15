@@ -62,6 +62,12 @@ export default function AdminUsersPage() {
   const [enrolling, setEnrolling] = useState(false);
   const [coursesLoading, setCoursesLoading] = useState(false);
 
+  // Create Instructor modal state
+  const [createInstructorModalOpen, setCreateInstructorModalOpen] = useState(false);
+  const [newInstructor, setNewInstructor] = useState({ name: "", email: "", password: "" });
+  const [creatingInstructor, setCreatingInstructor] = useState(false);
+  const [instructorError, setInstructorError] = useState("");
+
   const fetchUsers = useCallback(async () => {
     try {
       const res = await fetch("/api/admin/users");
@@ -175,6 +181,36 @@ export default function AdminUsersPage() {
     }
   };
 
+  const handleCreateInstructor = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newInstructor.name || !newInstructor.email || !newInstructor.password) {
+      setInstructorError("All fields are required");
+      return;
+    }
+    setCreatingInstructor(true);
+    setInstructorError("");
+    try {
+      const res = await fetch("/api/admin/instructors", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newInstructor),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert("Instructor created successfully!");
+        setCreateInstructorModalOpen(false);
+        setNewInstructor({ name: "", email: "", password: "" });
+        fetchUsers();
+      } else {
+        setInstructorError(data.error || "Failed to create instructor");
+      }
+    } catch {
+      setInstructorError("An error occurred");
+    } finally {
+      setCreatingInstructor(false);
+    }
+  };
+
   const exportCSV = () => {
     const headers = ["Name", "Email", "Role", "Joined", "Enrollments", "Courses"];
     const rows = filteredUsers.map((u) => [
@@ -240,9 +276,14 @@ export default function AdminUsersPage() {
             Manage accounts, roles, and access across PG Academy.
           </p>
         </div>
-        <Button variant="outline" className="gap-2" onClick={exportCSV}>
-          <Download className="h-4 w-4" /> Export CSV
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" className="gap-2" onClick={exportCSV}>
+            <Download className="h-4 w-4" /> Export CSV
+          </Button>
+          <Button onClick={() => setCreateInstructorModalOpen(true)} className="gap-2 bg-brand-primary text-white hover:bg-brand-primary/90">
+            <UserPlus className="h-4 w-4" /> Create Instructor
+          </Button>
+        </div>
       </div>
 
       {/* Role Summary Cards */}
@@ -503,6 +544,92 @@ export default function AdminUsersPage() {
               </div>
             </CardContent>
           </Card>
+        </div>
+      )}
+
+      {/* Create Instructor Modal */}
+      {createInstructorModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
+          <div className="bg-card w-full max-w-md rounded-2xl shadow-xl border border-border overflow-hidden">
+            <div className="p-6 border-b border-border flex items-center justify-between">
+              <div>
+                <h3 className="text-xl font-bold">Create Instructor</h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Provision a new instructor account manually.
+                </p>
+              </div>
+              <button
+                onClick={() => setCreateInstructorModalOpen(false)}
+                className="p-2 hover:bg-muted rounded-full transition-colors"
+              >
+                <X className="h-5 w-5 text-muted-foreground" />
+              </button>
+            </div>
+            
+            <form onSubmit={handleCreateInstructor} className="p-6 space-y-4">
+              {instructorError && (
+                <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-500 rounded-lg text-sm">
+                  {instructorError}
+                </div>
+              )}
+              
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Full Name</label>
+                <Input
+                  required
+                  placeholder="John Doe"
+                  value={newInstructor.name}
+                  onChange={(e) => setNewInstructor({ ...newInstructor, name: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Email Address</label>
+                <Input
+                  required
+                  type="email"
+                  placeholder="john@pgacademy.com"
+                  value={newInstructor.email}
+                  onChange={(e) => setNewInstructor({ ...newInstructor, email: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Temporary Password</label>
+                <Input
+                  required
+                  type="password"
+                  placeholder="••••••••"
+                  value={newInstructor.password}
+                  onChange={(e) => setNewInstructor({ ...newInstructor, password: e.target.value })}
+                />
+                <p className="text-xs text-muted-foreground">The instructor can change this later.</p>
+              </div>
+
+              <div className="pt-4 flex items-center justify-end gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setCreateInstructorModalOpen(false)}
+                  disabled={creatingInstructor}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={creatingInstructor}
+                  className="bg-brand-primary text-white"
+                >
+                  {creatingInstructor ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Creating...
+                    </>
+                  ) : (
+                    "Create Account"
+                  )}
+                </Button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>

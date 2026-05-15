@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { format, subHours, subMinutes, subDays } from "date-fns";
+import { useState, useEffect } from "react";
+import { format } from "date-fns";
 import {
   ScrollText,
   Shield,
@@ -20,109 +20,47 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 
-// Mock audit log data — will be replaced with real backend logging
-const mockAuditLogs = [
-  {
-    id: "log_001",
-    admin: "Admin User",
-    action: "Changed role of 'Omar Salameh' from STUDENT to INSTRUCTOR",
-    category: "USER_MGMT",
-    severity: "info" as const,
-    timestamp: subMinutes(new Date(), 15).toISOString(),
-    ip: "192.168.1.1",
-  },
-  {
-    id: "log_002",
-    admin: "Admin User",
-    action: "Approved course 'Advanced React Patterns' for publication",
-    category: "CONTENT",
-    severity: "info" as const,
-    timestamp: subHours(new Date(), 2).toISOString(),
-    ip: "192.168.1.1",
-  },
-  {
-    id: "log_003",
-    admin: "System",
-    action: "Automated database backup completed successfully",
-    category: "SYSTEM",
-    severity: "success" as const,
-    timestamp: subHours(new Date(), 6).toISOString(),
-    ip: "127.0.0.1",
-  },
-  {
-    id: "log_004",
-    admin: "System",
-    action: "Stripe webhook endpoint returned 502 — retrying in 30s",
-    category: "PAYMENT",
-    severity: "warning" as const,
-    timestamp: subHours(new Date(), 8).toISOString(),
-    ip: "52.89.214.238",
-  },
-  {
-    id: "log_005",
-    admin: "Admin User",
-    action: "Created coupon code 'RAMADAN2026' — 20% off, no expiry",
-    category: "FINANCE",
-    severity: "info" as const,
-    timestamp: subHours(new Date(), 12).toISOString(),
-    ip: "192.168.1.1",
-  },
-  {
-    id: "log_006",
-    admin: "System",
-    action: "Database connection pool exhausted — auto-scaled from 10 to 20 connections",
-    category: "SYSTEM",
-    severity: "warning" as const,
-    timestamp: subDays(new Date(), 1).toISOString(),
-    ip: "127.0.0.1",
-  },
-  {
-    id: "log_007",
-    admin: "Admin User",
-    action: "Deleted user account 'test@example.com' (GDPR request)",
-    category: "USER_MGMT",
-    severity: "error" as const,
-    timestamp: subDays(new Date(), 1).toISOString(),
-    ip: "192.168.1.1",
-  },
-  {
-    id: "log_008",
-    admin: "System",
-    action: "SSL certificate renewal triggered — expires in 14 days",
-    category: "SYSTEM",
-    severity: "info" as const,
-    timestamp: subDays(new Date(), 2).toISOString(),
-    ip: "127.0.0.1",
-  },
-  {
-    id: "log_009",
-    admin: "Admin User",
-    action: "Force-unpublished course 'Outdated Tutorial' due to policy violation",
-    category: "CONTENT",
-    severity: "warning" as const,
-    timestamp: subDays(new Date(), 3).toISOString(),
-    ip: "192.168.1.1",
-  },
-  {
-    id: "log_010",
-    admin: "System",
-    action: "Failed to send welcome email to 'new_user@mail.com' — SMTP timeout",
-    category: "SYSTEM",
-    severity: "error" as const,
-    timestamp: subDays(new Date(), 3).toISOString(),
-    ip: "127.0.0.1",
-  },
-];
+// Real backend logging interface
+interface AuditLog {
+  id: string;
+  adminId: string | null;
+  admin: { name: string; email: string } | null;
+  action: string;
+  category: string;
+  severity: string;
+  timestamp: string;
+  ip: string | null;
+}
 
 export default function AdminLogsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("ALL");
   const [severityFilter, setSeverityFilter] = useState<string>("ALL");
+  const [logs, setLogs] = useState<AuditLog[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const filteredLogs = mockAuditLogs.filter((log) => {
+  useEffect(() => {
+    const fetchLogs = async () => {
+      try {
+        const res = await fetch("/api/admin/logs");
+        if (res.ok) {
+          const data = await res.json();
+          setLogs(data.logs);
+        }
+      } catch (error) {
+        console.error("Failed to fetch logs:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchLogs();
+  }, []);
+
+  const filteredLogs = logs.filter((log) => {
+    const adminName = log.admin?.name || "System";
     const matchesSearch =
       log.action.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      log.admin.toLowerCase().includes(searchTerm.toLowerCase());
+      adminName.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = categoryFilter === "ALL" || log.category === categoryFilter;
     const matchesSeverity = severityFilter === "ALL" || log.severity === severityFilter;
     return matchesSearch && matchesCategory && matchesSeverity;
@@ -306,7 +244,11 @@ export default function AdminLogsPage() {
           </div>
         </CardHeader>
         <CardContent>
-          {filteredLogs.length === 0 ? (
+          {isLoading ? (
+            <div className="text-center py-16 text-muted-foreground">
+              Loading logs...
+            </div>
+          ) : filteredLogs.length === 0 ? (
             <div className="text-center py-16 text-muted-foreground border border-dashed border-border rounded-lg">
               No logs match your filter criteria.
             </div>
@@ -323,10 +265,10 @@ export default function AdminLogsPage() {
                     <div className="flex flex-wrap items-center gap-2">
                       {getCategoryBadge(log.category)}
                       <span className="text-[10px] text-muted-foreground">
-                        by <span className="font-medium">{log.admin}</span>
+                        by <span className="font-medium">{log.admin?.name || "System"}</span>
                       </span>
                       <span className="text-[10px] text-muted-foreground font-mono">
-                        IP: {log.ip}
+                        IP: {log.ip || "N/A"}
                       </span>
                     </div>
                   </div>

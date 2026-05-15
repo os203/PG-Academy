@@ -35,7 +35,7 @@ type CourseStatus = "DRAFT" | "PUBLISHED";
 
 type DashboardCourse = Course & {
   status?: CourseStatus;
-  category?: string | null;
+  categoryId?: string | null;
   thumbnail?: string | null;
 };
 
@@ -51,7 +51,7 @@ interface UploadResponse {
   error?: string;
 }
 
-const CATEGORY_OPTIONS = ["3D", "2D", "VFX", "Others"];
+
 
 const containerVariants: Variants = {
   hidden: { opacity: 0 },
@@ -105,7 +105,8 @@ export default function InstructorDashboard() {
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
   const [status, setStatus] = useState<CourseStatus>("DRAFT");
-  const [category, setCategory] = useState("Others");
+  const [categoryId, setCategoryId] = useState("");
+  const [categories, setCategories] = useState<{id: string, name: string}[]>([]);
   const [thumbnail, setThumbnail] = useState("");
 
   const [uploadingThumbnail, setUploadingThumbnail] = useState(false);
@@ -123,7 +124,7 @@ export default function InstructorDashboard() {
     setDescription("");
     setPrice("");
     setStatus("DRAFT");
-    setCategory("Others");
+    setCategoryId("");
     setThumbnail("");
     setEditingCourse(null);
   };
@@ -144,7 +145,7 @@ export default function InstructorDashboard() {
                 course.status === "PUBLISHED" || course.status === "DRAFT"
                   ? course.status
                   : "DRAFT",
-              category: typeof course.category === "string" ? course.category : null,
+              categoryId: typeof course.categoryId === "string" ? course.categoryId : null,
               thumbnail: typeof course.thumbnail === "string" ? course.thumbnail : null,
             }))
           : [];
@@ -170,6 +171,12 @@ export default function InstructorDashboard() {
   useEffect(() => {
     if (user) {
       void fetchCourses();
+      // Fetch categories
+      fetch("/api/categories")
+        .then((r) => r.ok ? r.json() : null)
+        .then((data) => { if (data?.categories) setCategories(data.categories); })
+        .catch(console.error);
+        
       // Fetch real stats
       fetch("/api/instructor/stats")
         .then((r) => r.ok ? r.json() : null)
@@ -233,7 +240,7 @@ export default function InstructorDashboard() {
           description,
           price: parseFloat(price) || 0,
           status,
-          category: category.trim() || null,
+          categoryId: categoryId.trim() || null,
           thumbnail: thumbnail.trim() || null,
         }),
       });
@@ -279,7 +286,7 @@ export default function InstructorDashboard() {
     setDescription(course.description);
     setPrice(course.price.toString());
     setStatus(course.status === "PUBLISHED" ? "PUBLISHED" : "DRAFT");
-    setCategory(course.category || "Others");
+    setCategoryId(course.categoryId || "");
     setThumbnail(course.thumbnail || "");
   };
 
@@ -484,13 +491,14 @@ export default function InstructorDashboard() {
                           Category
                         </label>
                         <select
-                          value={category}
-                          onChange={(e) => setCategory(e.target.value)}
+                          value={categoryId}
+                          onChange={(e) => setCategoryId(e.target.value)}
                           className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
                         >
-                          {CATEGORY_OPTIONS.map((item) => (
-                            <option key={item} value={item}>
-                              {item}
+                          <option value="">Select Category</option>
+                          {categories.map((item) => (
+                            <option key={item.id} value={item.id}>
+                              {item.name}
                             </option>
                           ))}
                         </select>
