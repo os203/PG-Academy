@@ -66,12 +66,29 @@ model Lesson {
   notes       String?
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
+
   module      Module       @relation(fields: [moduleId], references: [id], onDelete: Cascade)
   progress    Progress[]
   qaQuestions QAQuestion[]
   quizzes     Quiz[]
   resources   Resource[]
+  videoAsset  VideoAsset?
 }
+
+model VideoAsset {
+  id              String      @id @default(uuid())
+  lessonId        String      @unique
+  originalPath    String?
+  hlsManifestPath String?
+  duration        Int?
+  status          VideoStatus @default(PROCESSING)
+  errorMessage    String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  lesson          Lesson      @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+}
+
 
 model Enrollment {
   id         String   @id @default(uuid())
@@ -226,6 +243,12 @@ enum Role {
 enum CourseStatus {
   DRAFT
   PUBLISHED
+}
+
+enum VideoStatus {
+  PROCESSING
+  READY
+  FAILED
 }
 
 enum PaymentType {

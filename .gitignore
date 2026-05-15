@@ -46,17 +46,25 @@ uploads/
 videos/
 
 # Video files
+# Video files
 *.mp4
 *.mov
 *.mkv
 *.avi
 *.webm
 *.m3u8
-*.ts
 
-# Environment files
+# HLS segment files only inside private video storage
+private/videos/**/*.ts
+
+# env files
 .env
 .env.local
+.env.production
+.env.development
+
+# keep example env file tracked
+!.env.example
 
 # SSH keys
 *.pem
