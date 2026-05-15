@@ -120,7 +120,7 @@ export default function AdminAnalyticsPage() {
     count: r.count,
   }));
 
-  // Top courses bar chart data
+  // Top tracks bar chart data
   const topCoursesChart = data.topCourses.slice(0, 8).map((c) => ({
     name: c.title.length > 20 ? c.title.substring(0, 20) + "..." : c.title,
     enrollments: c.enrollments,
@@ -217,14 +217,14 @@ export default function AdminAnalyticsPage() {
         </Card>
       </div>
 
-      {/* Top Courses Bar Chart + Revenue Pie */}
+      {/* Top Tracks Bar Chart + Revenue Pie */}
       <div className="grid gap-6 md:grid-cols-7">
         <Card className="md:col-span-4 bg-card border-border shadow-sm">
           <CardHeader>
             <div className="flex items-center gap-2">
               <BarChart3 className="h-5 w-5 text-brand-primary" />
               <div>
-                <CardTitle>Top Performing Courses</CardTitle>
+                <CardTitle>Top Performing Tracks</CardTitle>
                 <CardDescription>By enrollment count</CardDescription>
               </div>
             </div>
@@ -232,7 +232,7 @@ export default function AdminAnalyticsPage() {
           <CardContent>
             {topCoursesChart.length === 0 ? (
               <div className="h-[300px] flex items-center justify-center text-muted-foreground text-sm">
-                No course data available.
+                No track data available.
               </div>
             ) : (
               <div className="h-[300px]">
@@ -313,21 +313,21 @@ export default function AdminAnalyticsPage() {
 
       {/* Leaderboards */}
       <div className="grid gap-6 md:grid-cols-2">
-        {/* Top Courses Table */}
+        {/* Top Tracks Table */}
         <Card className="bg-card border-border shadow-sm">
           <CardHeader>
             <div className="flex items-center gap-2">
               <Trophy className="h-5 w-5 text-amber-500" />
-              <CardTitle>Course Leaderboard</CardTitle>
+              <CardTitle>Track Leaderboard</CardTitle>
             </div>
           </CardHeader>
           <CardContent>
             {data.topCourses.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground text-sm">No courses yet.</div>
+              <div className="text-center py-8 text-muted-foreground text-sm">No tracks yet.</div>
             ) : (
               <div className="space-y-3">
-                {data.topCourses.slice(0, 5).map((course, i) => (
-                  <div key={course.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border">
+                {data.topCourses.slice(0, 5).map((track, i) => (
+                  <div key={track.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border">
                     <div className="flex items-center gap-3">
                       <span className={`flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold ${
                         i === 0 ? "bg-amber-500/20 text-amber-500" :
@@ -338,13 +338,13 @@ export default function AdminAnalyticsPage() {
                         #{i + 1}
                       </span>
                       <div>
-                        <p className="text-sm font-medium text-foreground truncate max-w-[200px]">{course.title}</p>
-                        <p className="text-xs text-muted-foreground">by {course.instructor.name}</p>
+                        <p className="text-sm font-medium text-foreground truncate max-w-[200px]">{track.title}</p>
+                        <p className="text-xs text-muted-foreground">by {track.instructor.name}</p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm font-bold text-foreground">{course.enrollments} students</p>
-                      <p className="text-xs text-emerald-500 font-medium">${course.estimatedRevenue.toFixed(0)}</p>
+                      <p className="text-sm font-bold text-foreground">{track.enrollments} students</p>
+                      <p className="text-xs text-emerald-500 font-medium">${track.estimatedRevenue.toFixed(0)}</p>
                     </div>
                   </div>
                 ))}
@@ -379,7 +379,7 @@ export default function AdminAnalyticsPage() {
                       </span>
                       <div>
                         <p className="text-sm font-medium text-foreground">{inst.name}</p>
-                        <p className="text-xs text-muted-foreground">{inst.courseCount} courses · {inst.totalEnrollments} students</p>
+                        <p className="text-xs text-muted-foreground">{inst.courseCount} tracks · {inst.totalEnrollments} students</p>
                       </div>
                     </div>
                     <div className="text-right">

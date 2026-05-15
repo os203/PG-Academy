@@ -28,8 +28,8 @@ export default async function InstructorSendNotificationPage() {
     redirect("/dashboard");
   }
 
-  // Fetch courses taught by this instructor
-  const courses = await db.course.findMany({
+  // Fetch tracks taught by this instructor
+  const tracks = await db.track.findMany({
     where: { instructorId: decoded.userId },
     select: { id: true, title: true },
     orderBy: { createdAt: "desc" },
@@ -37,7 +37,7 @@ export default async function InstructorSendNotificationPage() {
 
   return (
     <div className="p-6 max-w-2xl mx-auto w-full min-h-screen">
-      <SendNotificationForm courses={courses} />
+      <SendNotificationForm tracks={tracks} />
     </div>
   );
 }

@@ -28,7 +28,7 @@ export default function MyCourseCard({
     onContinue,
 }: MyCourseCardProps) {
     const isNotStarted = progress === 0;
-    const label = buttonLabel ?? (isNotStarted ? "Start" : "Continue Course");
+    const label = buttonLabel ?? (isNotStarted ? "Start" : "Continue Track");
 
     return (
         <div className="min-w-[350px] w-full h-106 max-w-md bg-gray-100 dark:bg-gray-900 shadow-md dark:shadow-brand-accent/20 overflow-hidden flex flex-col hover:-translate-y-4 duration-300">

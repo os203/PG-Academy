@@ -19,29 +19,33 @@ export async function GET() {
 
     const instructorId = decoded.userId;
 
-    // Get all courses for this instructor
-    const courses = await db.course.findMany({
+    // Get all tracks for this instructor
+    const tracks = await db.track.findMany({
       where: { instructorId },
       select: {
         id: true,
-        modules: {
+        phases: {
           select: {
-            lessons: { select: { id: true } },
+            modules: {
+              select: {
+                lessons: { select: { id: true } },
+              },
+            },
           },
         },
       },
     });
 
-    const courseIds = courses.map((c) => c.id);
+    const courseIds = tracks.map((c) => c.id);
 
     // Total unique students
     const totalStudents = await db.enrollment.groupBy({
       by: ["userId"],
-      where: { courseId: { in: courseIds } },
+      where: { trackId: { in: courseIds } },
     });
 
-    // Revenue estimate: sum course price * enrollment count
-    const coursesWithEnrollments = await db.course.findMany({
+    // Revenue estimate: sum track price * enrollment count
+    const coursesWithEnrollments = await db.track.findMany({
       where: { id: { in: courseIds } },
       select: {
         price: true,
@@ -54,8 +58,10 @@ export async function GET() {
     );
 
     // Average completion percentage
-    const allLessonIds = courses.flatMap((c) =>
-      c.modules.flatMap((m) => m.lessons.map((l) => l.id))
+    const allLessonIds = tracks.flatMap((c) =>
+      c.phases.flatMap((p) =>
+        p.modules.flatMap((m) => m.lessons.map((l) => l.id))
+      )
     );
     const totalLessons = allLessonIds.length;
 
@@ -77,7 +83,9 @@ export async function GET() {
       where: {
         lesson: {
           module: {
-            course: { instructorId },
+            phase: {
+              track: { instructorId },
+            },
           },
         },
         answer: null,

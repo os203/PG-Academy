@@ -18,11 +18,11 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { userId, courseId } = body;
+    const { userId, trackId } = body;
 
-    if (!userId || !courseId) {
+    if (!userId || !trackId) {
       return NextResponse.json(
-        { error: "userId and courseId are required" },
+        { error: "userId and trackId are required" },
         { status: 400 }
       );
     }
@@ -37,36 +37,36 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Verify course exists
-    const course = await db.course.findUnique({
-      where: { id: courseId },
+    // Verify track exists
+    const track = await db.track.findUnique({
+      where: { id: trackId },
       select: { id: true, title: true },
     });
 
-    if (!course) {
-      return NextResponse.json({ error: "Course not found" }, { status: 404 });
+    if (!track) {
+      return NextResponse.json({ error: "Track not found" }, { status: 404 });
     }
 
     // Check if already enrolled
     const existing = await db.enrollment.findFirst({
-      where: { userId, courseId },
+      where: { userId, trackId },
     });
 
     if (existing) {
       return NextResponse.json(
-        { error: "User is already enrolled in this course", alreadyEnrolled: true },
+        { error: "User is already enrolled in this track", alreadyEnrolled: true },
         { status: 409 }
       );
     }
 
     // Create enrollment
     const enrollment = await db.enrollment.create({
-      data: { userId, courseId },
+      data: { userId, trackId },
     });
 
     return NextResponse.json(
       {
-        message: `${user.name} has been enrolled in "${course.title}"`,
+        message: `${user.name} has been enrolled in "${track.title}"`,
         enrollment,
       },
       { status: 201 }

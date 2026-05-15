@@ -19,19 +19,19 @@ model User {
   resetToken       String?
   resetTokenExpiry DateTime?
   certificates     Certificate[]
-  courses       Course[]       @relation("InstructorCourses")
-  enrollments   Enrollment[]
-  notifications Notification[]
-  payments      Payment[]
-  progress      Progress[]
-  qaQuestions   QAQuestion[]
-  quizAttempts  QuizAttempt[]
-  reviews       Review[]
-  auditLogs     AuditLog[]     @relation("AdminAuditLogs")
+  tracks           Track[]        @relation("InstructorTracks")
+  enrollments      Enrollment[]
+  notifications    Notification[]
+  payments         Payment[]
+  progress         Progress[]
+  qaQuestions      QAQuestion[]
+  quizAttempts     QuizAttempt[]
+  reviews          Review[]
+  auditLogs        AuditLog[]     @relation("AdminAuditLogs")
   sentNotifications SentNotification[] @relation("InstructorSentNotifications")
 }
 
-model Course {
+model Track {
   id                 String        @id @default(uuid())
   title              String
   subtitle           String?
@@ -47,29 +47,39 @@ model Course {
   targetAudience     String?
   tags               String?
   previewVideoUrl    String?
-  status             CourseStatus  @default(DRAFT)
+  status             TrackStatus   @default(DRAFT)
   instructorId       String
   createdAt          DateTime      @default(now())
   updatedAt          DateTime      @updatedAt
   certificates       Certificate[]
-  instructor         User          @relation("InstructorCourses", fields: [instructorId], references: [id])
+  instructor         User          @relation("InstructorTracks", fields: [instructorId], references: [id])
   enrollments        Enrollment[]
-  modules            Module[]
+  phases             Phase[]
   payments           Payment[]
   reviews            Review[]
   sentNotifications  SentNotification[]
 }
 
+model Phase {
+  id        String   @id @default(uuid())
+  title     String
+  order     Int
+  trackId   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  modules   Module[]
+  track     Track    @relation(fields: [trackId], references: [id], onDelete: Cascade)
+}
 
 model Module {
   id        String   @id @default(uuid())
   title     String
   order     Int
-  courseId  String
+  phaseId   String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   lessons   Lesson[]
-  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  phase     Phase    @relation(fields: [phaseId], references: [id], onDelete: Cascade)
 }
 
 model Lesson {
@@ -105,13 +115,13 @@ model VideoAsset {
   lesson          Lesson      @relation(fields: [lessonId], references: [id], onDelete: Cascade)
 }
 
-
 model Enrollment {
   id         String   @id @default(uuid())
   userId     String
-  courseId   String
+  trackId    String
+  status     EnrollmentStatus @default(PENDING)
   enrolledAt DateTime @default(now())
-  course     Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  track      Track    @relation(fields: [trackId], references: [id], onDelete: Cascade)
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
@@ -121,6 +131,7 @@ model Progress {
   lessonId       String
   watchedPercent Float    @default(0)
   lastPosition   Int      @default(0)
+  isCompleted    Boolean  @default(false)
   updatedAt      DateTime @updatedAt
   lesson         Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
   user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -187,17 +198,17 @@ model QuizOption {
 model Certificate {
   id         String   @id @default(uuid())
   userId     String
-  courseId   String
+  trackId    String
   uniqueCode String   @unique
   issuedAt   DateTime @default(now())
-  course     Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  track      Track    @relation(fields: [trackId], references: [id], onDelete: Cascade)
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Payment {
   id        String        @id @default(uuid())
   userId    String
-  courseId  String?
+  trackId   String?
   amount    Float
   type      PaymentType
   status    PaymentStatus @default(PENDING)
@@ -205,7 +216,7 @@ model Payment {
   couponId  String?
   createdAt DateTime      @default(now())
   coupon    Coupon?       @relation(fields: [couponId], references: [id])
-  course    Course?       @relation(fields: [courseId], references: [id], onDelete: SetNull)
+  track     Track?        @relation(fields: [trackId], references: [id], onDelete: SetNull)
   user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
@@ -222,11 +233,11 @@ model Coupon {
 model Review {
   id        String   @id @default(uuid())
   userId    String
-  courseId  String
+  trackId   String
   rating    Int
   comment   String?
   createdAt DateTime @default(now())
-  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  track     Track    @relation(fields: [trackId], references: [id], onDelete: Cascade)
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
@@ -258,9 +269,15 @@ enum Role {
   STUDENT
 }
 
-enum CourseStatus {
+enum TrackStatus {
   DRAFT
   PUBLISHED
+}
+
+enum EnrollmentStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }
 
 enum VideoStatus {
@@ -301,7 +318,7 @@ model Category {
   slug      String   @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  courses   Course[]
+  tracks    Track[]
 }
 
 model AuditLog {
@@ -321,9 +338,9 @@ model SentNotification {
   message      String
   type         String
   targetRole   String
-  courseId     String?
+  trackId      String?
   audienceSize Int      @default(0)
   createdAt    DateTime @default(now())
   sender       User     @relation("InstructorSentNotifications", fields: [senderId], references: [id], onDelete: Cascade)
-  course       Course?  @relation(fields: [courseId], references: [id], onDelete: SetNull)
+  track        Track?   @relation(fields: [trackId], references: [id], onDelete: SetNull)
 }

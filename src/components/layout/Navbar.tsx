@@ -23,7 +23,7 @@ export default function Navbar() {
             </div>
           </Link>
           <div className="hidden md:flex space-x-8 items-center">
-            <Link href="/courses" className="text-foreground/80 hover:text-brand-accent transition-colors font-medium">Courses</Link>
+            <Link href="/tracks" className="text-foreground/80 hover:text-brand-accent transition-colors font-medium">Tracks</Link>
             <Link href="/about" className="text-foreground/80 hover:text-brand-accent transition-colors font-medium">About</Link>
             {user ? (
               <div className="flex items-center space-x-4">

@@ -34,25 +34,25 @@ export async function POST(req: NextRequest) {
 
     if (!currentUser || currentUser.role !== "STUDENT") {
       return NextResponse.json(
-        { error: "Only students can enroll in courses" },
+        { error: "Only students can enroll in tracks" },
         { status: 403 }
       );
     }
 
     const body = await req.json();
-    const courseId =
-      typeof body.courseId === "string" ? body.courseId.trim() : "";
+    const trackId =
+      typeof body.trackId === "string" ? body.trackId.trim() : "";
 
-    if (!courseId) {
+    if (!trackId) {
       return NextResponse.json(
-        { error: "Course ID is required" },
+        { error: "Track ID is required" },
         { status: 400 }
       );
     }
 
-    const course = await db.course.findFirst({
+    const track = await db.track.findFirst({
       where: {
-        id: courseId,
+        id: trackId,
         status: "PUBLISHED",
       },
       select: {
@@ -62,17 +62,17 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    if (!course) {
+    if (!track) {
       return NextResponse.json(
-        { error: "Course not found or not published" },
+        { error: "Track not found or not published" },
         { status: 404 }
       );
     }
 
-    // Block direct enrollment for paid courses
-    if (course.price > 0) {
+    // Block direct enrollment for paid tracks
+    if (track.price > 0) {
       return NextResponse.json(
-        { error: "This course requires payment. Please use the checkout process." },
+        { error: "This track requires payment. Please use the checkout process." },
         { status: 402 }
       );
     }
@@ -80,7 +80,7 @@ export async function POST(req: NextRequest) {
     const existingEnrollment = await db.enrollment.findFirst({
       where: {
         userId: currentUser.id,
-        courseId,
+        trackId,
       },
       select: {
         id: true,
@@ -89,7 +89,7 @@ export async function POST(req: NextRequest) {
 
     if (existingEnrollment) {
       return NextResponse.json({
-        message: "You are already enrolled in this course",
+        message: "You are already enrolled in this track",
         alreadyEnrolled: true,
       });
     }
@@ -97,7 +97,7 @@ export async function POST(req: NextRequest) {
     const enrollment = await db.enrollment.create({
       data: {
         userId: currentUser.id,
-        courseId,
+        trackId,
       },
     });
 

@@ -17,8 +17,8 @@ export async function GET() {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    // Get all courses this instructor owns
-    const courses = await db.course.findMany({
+    // Get all tracks this instructor owns
+    const tracks = await db.track.findMany({
       where:
         decoded.role === "ADMIN"
           ? {}
@@ -26,10 +26,14 @@ export async function GET() {
       select: {
         id: true,
         title: true,
-        modules: {
+        phases: {
           select: {
-            lessons: {
-              select: { id: true },
+            modules: {
+              select: {
+                lessons: {
+                  select: { id: true },
+                },
+              },
             },
           },
         },
@@ -53,7 +57,7 @@ export async function GET() {
       userId: string;
       name: string;
       email: string;
-      courseId: string;
+      trackId: string;
       courseTitle: string;
       enrolledAt: string;
       totalLessons: number;
@@ -62,13 +66,13 @@ export async function GET() {
       bestQuizScore: number | null;
     }> = [];
 
-    for (const course of courses) {
-      const allLessonIds = course.modules.flatMap((m) =>
-        m.lessons.map((l) => l.id)
+    for (const track of tracks) {
+      const allLessonIds = track.phases.flatMap((p) =>
+        p.modules.flatMap((m) => m.lessons.map((l) => l.id))
       );
       const totalLessons = allLessonIds.length;
 
-      for (const enrollment of course.enrollments) {
+      for (const enrollment of track.enrollments) {
         const studentId = enrollment.user.id;
 
         // Count completed lessons (watchedPercent >= 90)
@@ -82,7 +86,7 @@ export async function GET() {
             })
           : 0;
 
-        // Get best quiz score for this student in this course
+        // Get best quiz score for this student in this track
         const bestAttempt = allLessonIds.length > 0
           ? await db.quizAttempt.findFirst({
               where: {
@@ -100,8 +104,8 @@ export async function GET() {
           userId: studentId,
           name: enrollment.user.name,
           email: enrollment.user.email,
-          courseId: course.id,
-          courseTitle: course.title,
+          trackId: track.id,
+          courseTitle: track.title,
           enrolledAt: enrollment.enrolledAt.toISOString(),
           totalLessons,
           completedLessons: completedCount,
@@ -116,7 +120,7 @@ export async function GET() {
 
     return NextResponse.json({
       students,
-      courseNames: courses.map((c) => ({ id: c.id, title: c.title })),
+      courseNames: tracks.map((c) => ({ id: c.id, title: c.title })),
     });
   } catch (error) {
     console.error("[INSTRUCTOR_STUDENTS_ERROR]", error);

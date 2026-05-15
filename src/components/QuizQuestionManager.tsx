@@ -53,12 +53,14 @@ async function readJsonSafely<T>(res: Response): Promise<T | null> {
 }
 
 export default function QuizQuestionManager({
-  courseId,
+  trackId,
+  phaseId,
   moduleId,
   lessonId,
   quizId,
 }: {
-  courseId: string;
+  trackId: string;
+  phaseId: string;
   moduleId: string;
   lessonId: string;
   quizId: string;
@@ -75,7 +77,7 @@ export default function QuizQuestionManager({
   const [mcqOptionsText, setMcqOptionsText] = useState("");
   const [correctOptionIndex, setCorrectOptionIndex] = useState("1");
 
-  const endpoint = `/api/courses/${courseId}/modules/${moduleId}/lessons/${lessonId}/quiz/${quizId}/questions`;
+  const endpoint = `/api/tracks/${trackId}/phases/${phaseId}/modules/${moduleId}/lessons/${lessonId}/quiz/${quizId}/questions`;
 
   const fetchQuestions = useCallback(async (): Promise<void> => {
     try {

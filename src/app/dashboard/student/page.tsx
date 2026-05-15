@@ -36,7 +36,7 @@ interface NotificationsResponse {
 export default function StudentDashboard() {
   const { user, isLoading: isAuthLoading } = useAuth();
 
-  const [courses, setCourses] = useState<EnrolledCourse[]>([]);
+  const [tracks, setCourses] = useState<EnrolledCourse[]>([]);
   const [isCoursesLoading, setIsCoursesLoading] = useState(true);
 
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
@@ -45,16 +45,16 @@ export default function StudentDashboard() {
   useEffect(() => {
     const fetchCourses = async () => {
       try {
-        const res = await fetch("/api/student/courses");
+        const res = await fetch("/api/student/tracks");
 
         if (res.ok) {
           const data = await res.json();
-          setCourses(Array.isArray(data?.courses) ? data.courses : []);
+          setCourses(Array.isArray(data?.tracks) ? data.tracks : []);
         } else {
           setCourses([]);
         }
       } catch (err) {
-        console.error("Failed to fetch courses", err);
+        console.error("Failed to fetch tracks", err);
         setCourses([]);
       } finally {
         setIsCoursesLoading(false);
@@ -133,8 +133,8 @@ export default function StudentDashboard() {
       <div className="flex gap-6 justify-around flex-wrap">
         <DashCard
           icon={<BookOpen size={30} />}
-          title="Enrolled Courses"
-          number={courses.length}
+          title="Enrolled Tracks"
+          number={tracks.length}
         />
         <DashCard icon={<Clock4 size={30} />} title="Hours Learned" number={5} />
         <DashCard icon={<Medal size={30} />} title="Certificates" number={5} />
@@ -149,27 +149,27 @@ export default function StudentDashboard() {
 
       {isCoursesLoading ? (
         <div className="flex justify-center p-12 text-muted-foreground">
-          <p className="animate-pulse">Loading your courses...</p>
+          <p className="animate-pulse">Loading your tracks...</p>
         </div>
-      ) : courses.length === 0 ? (
+      ) : tracks.length === 0 ? (
         <div className="text-center py-16 mt-8 text-muted-foreground border border-dashed border-border rounded-lg max-w-4xl mx-auto w-full">
-          You haven&apos;t enrolled in any courses yet.
+          You haven&apos;t enrolled in any tracks yet.
         </div>
       ) : (
         <div
           className="grid gap-6 gap-y-8 justify-items-center pt-12"
           style={{ gridTemplateColumns: "repeat(auto-fill, minmax(350px, 1fr))" }}
         >
-          {courses.map((course) => (
+          {tracks.map((track) => (
             <MyCourseCard
-              key={course.id}
-              thumbnail={course.thumbnail || "/taco3.jpg"}
-              courseName={course.title}
-              instructor={course.instructorName}
-              category={course.category || "Others"}
-              progress={course.progressPercentage}
+              key={track.id}
+              thumbnail={track.thumbnail || "/taco3.jpg"}
+              courseName={track.title}
+              instructor={track.instructorName}
+              category={track.category || "Others"}
+              progress={track.progressPercentage}
               onContinue={() =>
-                (window.location.href = `/dashboard/student/${course.id}`)
+                (window.location.href = `/dashboard/student/${track.id}`)
               }
             />
           ))}

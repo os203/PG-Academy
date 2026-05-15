@@ -41,8 +41,8 @@ export async function GET() {
         orderBy: { createdAt: "asc" },
       }),
 
-      // Top courses by enrollment count
-      db.course.findMany({
+      // Top tracks by enrollment count
+      db.track.findMany({
         take: 10,
         orderBy: { enrollments: { _count: "desc" } },
         select: {
@@ -55,7 +55,7 @@ export async function GET() {
         },
       }),
 
-      // Top instructors by course count and enrollment
+      // Top instructors by track count and enrollment
       db.user.findMany({
         where: { role: "INSTRUCTOR" },
         take: 10,
@@ -63,8 +63,8 @@ export async function GET() {
           id: true,
           name: true,
           email: true,
-          _count: { select: { courses: true } },
-          courses: {
+          _count: { select: { tracks: true } },
+          tracks: {
             select: {
               _count: { select: { enrollments: true } },
               price: true,
@@ -107,12 +107,12 @@ export async function GET() {
         id: inst.id,
         name: inst.name,
         email: inst.email,
-        courseCount: inst._count.courses,
-        totalEnrollments: inst.courses.reduce(
+        courseCount: inst._count.tracks,
+        totalEnrollments: inst.tracks.reduce(
           (sum, c) => sum + c._count.enrollments,
           0
         ),
-        estimatedRevenue: inst.courses.reduce(
+        estimatedRevenue: inst.tracks.reduce(
           (sum, c) => sum + c._count.enrollments * c.price * 0.8, // 80% instructor cut
           0
         ),

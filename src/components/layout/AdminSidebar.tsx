@@ -43,8 +43,8 @@ const adminNavigation = [
     icon: Users,
   },
   {
-    title: "Course Catalog",
-    url: "/dashboard/admin/courses",
+    title: "Track Catalog",
+    url: "/dashboard/admin/tracks",
     icon: Library,
   },
   {

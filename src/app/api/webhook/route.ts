@@ -34,19 +34,19 @@ export async function POST(req: NextRequest) {
     const session = event.data.object as Stripe.Checkout.Session;
 
     const userId = session.metadata?.userId;
-    const courseId = session.metadata?.courseId;
+    const trackId = session.metadata?.trackId;
     const couponId = session.metadata?.couponId || null;
     const finalPrice = parseFloat(session.metadata?.finalPrice || "0");
 
-    if (!userId || !courseId) {
-      console.error("[STRIPE_WEBHOOK] Missing userId or courseId in metadata", session.metadata);
+    if (!userId || !trackId) {
+      console.error("[STRIPE_WEBHOOK] Missing userId or trackId in metadata", session.metadata);
       return NextResponse.json({ error: "Missing metadata" }, { status: 400 });
     }
 
     try {
       // Check if enrollment already exists (idempotency)
       const existingEnrollment = await db.enrollment.findFirst({
-        where: { userId, courseId },
+        where: { userId, trackId },
         select: { id: true },
       });
 
@@ -56,13 +56,13 @@ export async function POST(req: NextRequest) {
           db.enrollment.create({
             data: {
               userId,
-              courseId,
+              trackId,
             },
           }),
           db.payment.create({
             data: {
               userId,
-              courseId,
+              trackId,
               amount: finalPrice,
               type: "COURSE_PURCHASE",
               status: "COMPLETED",
@@ -72,7 +72,7 @@ export async function POST(req: NextRequest) {
           }),
         ]);
 
-        console.log(`[STRIPE_WEBHOOK] Enrolled user ${userId} in course ${courseId} (payment: ${session.id})`);
+        console.log(`[STRIPE_WEBHOOK] Enrolled user ${userId} in track ${trackId} (payment: ${session.id})`);
       } else {
         // Still record the payment even if already enrolled (e.g., duplicate webhook)
         const existingPayment = await db.payment.findUnique({
@@ -83,7 +83,7 @@ export async function POST(req: NextRequest) {
           await db.payment.create({
             data: {
               userId,
-              courseId,
+              trackId,
               amount: finalPrice,
               type: "COURSE_PURCHASE",
               status: "COMPLETED",
@@ -93,17 +93,17 @@ export async function POST(req: NextRequest) {
           });
         }
 
-        console.log(`[STRIPE_WEBHOOK] User ${userId} already enrolled in course ${courseId}, payment recorded.`);
+        console.log(`[STRIPE_WEBHOOK] User ${userId} already enrolled in track ${trackId}, payment recorded.`);
       }
 
-      // Fetch user and course details to send the invoice email
+      // Fetch user and track details to send the invoice email
       const user = await db.user.findUnique({ where: { id: userId } });
-      const course = await db.course.findUnique({ where: { id: courseId } });
+      const track = await db.track.findUnique({ where: { id: trackId } });
 
-      if (user && course) {
+      if (user && track) {
         try {
-          await sendInvoiceEmail(user.email, user.name, course.title, finalPrice, session.id);
-          console.log(`[STRIPE_WEBHOOK] Invoice email sent to ${user.email} for course ${course.id}`);
+          await sendInvoiceEmail(user.email, user.name, track.title, finalPrice, session.id);
+          console.log(`[STRIPE_WEBHOOK] Invoice email sent to ${user.email} for track ${track.id}`);
         } catch (emailErr) {
           console.error("[STRIPE_WEBHOOK] Failed to send invoice email:", emailErr);
           // Do not fail the webhook if the email fails

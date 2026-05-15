@@ -28,7 +28,7 @@ export default async function CertificatesPage() {
       userId: decoded.userId,
     },
     include: {
-      course: true,
+      track: true,
     },
     orderBy: {
       issuedAt: "desc",
@@ -54,13 +54,13 @@ export default async function CertificatesPage() {
           </div>
           <h3 className="text-xl font-bold text-gray-800 mb-2">No certificates yet</h3>
           <p className="text-gray-500 max-w-md mx-auto mb-6">
-            Complete your enrolled courses by watching all lessons and passing all quizzes to earn your first certificate!
+            Complete your enrolled tracks by watching all lessons and passing all quizzes to earn your first certificate!
           </p>
           <Link
             href="/dashboard/myCourses"
             className="inline-flex items-center gap-2 bg-brand-primary text-white px-6 py-3 rounded-xl font-medium hover:bg-brand-primary/90 transition"
           >
-            Go to My Courses
+            Go to My Tracks
           </Link>
         </div>
       ) : (
@@ -70,7 +70,7 @@ export default async function CertificatesPage() {
               <div className="h-32 bg-linear-to-r from-brand-primary to-indigo-700 p-6 flex flex-col justify-end relative overflow-hidden">
                 <Medal className="absolute -top-4 -right-4 w-24 h-24 text-white/10 rotate-12" />
                 <h3 className="text-white font-bold text-lg leading-tight line-clamp-2 z-10 relative shadow-sm">
-                  {cert.course.title}
+                  {cert.track.title}
                 </h3>
               </div>
               

@@ -20,7 +20,7 @@ import { formatDistanceToNow } from "date-fns";
 
 interface AdminStats {
   users: { total: number; students: number; instructors: number; admins: number };
-  courses: { total: number; published: number; draft: number };
+  tracks: { total: number; published: number; draft: number };
   enrollments: { total: number; today: number };
   revenue: { gross: number; net: number; platformCut: number };
   payments: { completed: number; pending: number; failed: number };
@@ -171,8 +171,8 @@ export default function AdminOverview() {
             <Clock className="h-4 w-4 text-amber-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-amber-500">{s.courses.draft}</div>
-            <p className="text-xs text-muted-foreground mt-1">Courses awaiting approval</p>
+            <div className="text-3xl font-bold text-amber-500">{s.tracks.draft}</div>
+            <p className="text-xs text-muted-foreground mt-1">Tracks awaiting approval</p>
           </CardContent>
         </Card>
 
@@ -198,17 +198,17 @@ export default function AdminOverview() {
 
         <Card className="bg-card border-border shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Platform Courses</CardTitle>
+            <CardTitle className="text-sm font-medium">Platform Tracks</CardTitle>
             <BookOpen className="h-4 w-4 text-brand-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{s.courses.total}</div>
+            <div className="text-3xl font-bold">{s.tracks.total}</div>
             <div className="flex items-center gap-3 mt-2">
               <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 font-medium">
-                {s.courses.published} Published
+                {s.tracks.published} Published
               </span>
               <span className="text-xs px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-500 font-medium">
-                {s.courses.draft} Draft
+                {s.tracks.draft} Draft
               </span>
             </div>
           </CardContent>
@@ -262,19 +262,19 @@ export default function AdminOverview() {
         </Card>
       </div>
 
-      {/* Top Courses */}
+      {/* Top Tracks */}
       {s.topCourses && s.topCourses.length > 0 && (
         <Card className="bg-card border-border">
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle>Top Courses</CardTitle>
+              <CardTitle>Top Tracks</CardTitle>
               <TrendingUp className="h-4 w-4 text-brand-accent" />
             </div>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {s.topCourses.map((course, i) => (
-                <div key={course.id} className="flex items-center gap-4">
+              {s.topCourses.map((track, i) => (
+                <div key={track.id} className="flex items-center gap-4">
                   <div className={`flex items-center justify-center h-8 w-8 rounded-full text-xs font-bold shrink-0 ${
                     i === 0 ? "bg-amber-500/20 text-amber-600" :
                     i === 1 ? "bg-slate-400/20 text-slate-500" :
@@ -284,11 +284,11 @@ export default function AdminOverview() {
                     #{i + 1}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{course.title}</p>
-                    <p className="text-xs text-muted-foreground">{course.instructor}</p>
+                    <p className="text-sm font-medium truncate">{track.title}</p>
+                    <p className="text-xs text-muted-foreground">{track.instructor}</p>
                   </div>
                   <div className="text-right shrink-0">
-                    <span className="text-sm font-bold">{course.enrollments}</span>
+                    <span className="text-sm font-bold">{track.enrollments}</span>
                     <p className="text-xs text-muted-foreground">students</p>
                   </div>
                 </div>

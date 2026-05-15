@@ -81,7 +81,7 @@ export default function SendNotificationPage() {
               {[
                 { id: "alert", label: "Alert", icon: AlertCircle, color: "text-red-500" },
                 { id: "info", label: "Info", icon: Info, color: "text-blue-500" },
-                { id: "course_update", label: "Course", icon: BookOpen, color: "text-purple-500" },
+                { id: "course_update", label: "Track", icon: BookOpen, color: "text-purple-500" },
                 { id: "welcome", label: "Feature", icon: Sparkles, color: "text-indigo-500" },
               ].map((t) => (
                 <div 

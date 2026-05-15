@@ -15,7 +15,7 @@ interface SentNotification {
   targetRole: string;
   audienceSize: number;
   createdAt: string;
-  course?: { title: string } | null;
+  track?: { title: string } | null;
 }
 
 export default function InstructorNotificationsPage() {
@@ -98,9 +98,9 @@ export default function InstructorNotificationsPage() {
                       <span className="inline-flex items-center rounded-full bg-blue-500/10 text-blue-500 border border-blue-500/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">
                         {item.targetRole.replace("_", " ")}
                       </span>
-                      {item.course && (
+                      {item.track && (
                         <span className="inline-flex items-center rounded-full bg-brand-accent/10 text-brand-accent border border-brand-accent/20 px-2 py-0.5 text-[10px] font-bold tracking-wider">
-                          {item.course.title}
+                          {item.track.title}
                         </span>
                       )}
                       <span className="text-[10px] text-muted-foreground font-medium">

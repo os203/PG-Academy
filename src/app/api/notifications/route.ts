@@ -69,7 +69,7 @@ export async function GET(request: Request) {
 function getTitleForType(type: string): string {
   switch (type) {
     case "welcome": return "Welcome";
-    case "course_update": return "Course Update";
+    case "course_update": return "Track Update";
     case "enrollment": return "Enrollment Successful";
     case "alert": return "System Alert";
     default: return "Notification";

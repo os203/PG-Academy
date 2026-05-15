@@ -41,9 +41,9 @@ export async function GET() {
       db.user.count({ where: { role: "STUDENT" } }),
       db.user.count({ where: { role: "INSTRUCTOR" } }),
       db.user.count({ where: { role: "ADMIN" } }),
-      db.course.count(),
-      db.course.count({ where: { status: "PUBLISHED" } }),
-      db.course.count({ where: { status: "DRAFT" } }),
+      db.track.count(),
+      db.track.count({ where: { status: "PUBLISHED" } }),
+      db.track.count({ where: { status: "DRAFT" } }),
       db.enrollment.count(),
       db.enrollment.count({
         where: {
@@ -64,7 +64,7 @@ export async function GET() {
         orderBy: { enrolledAt: "desc" },
         include: {
           user: { select: { name: true } },
-          course: { select: { title: true } },
+          track: { select: { title: true } },
         },
       }),
       db.payment.findMany({
@@ -74,7 +74,7 @@ export async function GET() {
           user: { select: { name: true } },
         },
       }),
-      db.course.findMany({
+      db.track.findMany({
         take: 5,
         orderBy: { enrollments: { _count: "desc" } },
         select: {
@@ -94,7 +94,7 @@ export async function GET() {
     const activityFeed = [
       ...recentEnrollments.map((e) => ({
         type: "enrollment" as const,
-        message: `${e.user.name} enrolled in "${e.course.title}"`,
+        message: `${e.user.name} enrolled in "${e.track.title}"`,
         time: e.enrolledAt.toISOString(),
       })),
       ...recentPayments.map((p) => ({
@@ -113,7 +113,7 @@ export async function GET() {
         instructors: instructorCount,
         admins: adminCount,
       },
-      courses: {
+      tracks: {
         total: totalCourses,
         published: publishedCourses,
         draft: draftCourses,

@@ -74,8 +74,8 @@ export default function MobileMenu() {
 
                 <div className="flex flex-col p-6 space-y-5">
 
-                    <Link href="/courses" onClick={() => setIsOpen(false)} className="hover:text-brand-accent">
-                        Courses
+                    <Link href="/tracks" onClick={() => setIsOpen(false)} className="hover:text-brand-accent">
+                        Tracks
                     </Link>
 
                     <Link href="/about" onClick={() => setIsOpen(false)} className="hover:text-brand-accent">

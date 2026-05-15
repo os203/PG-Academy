@@ -36,9 +36,9 @@ export function useWishlist() {
     }, []);
 
     const addToWishlist = useCallback(
-        (courseId: string) => {
+        (trackId: string) => {
             setWishlistIds((current) => {
-                const next = current.includes(courseId) ? current : [...current, courseId];
+                const next = current.includes(trackId) ? current : [...current, trackId];
                 if (typeof window !== "undefined") {
                     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
                 }
@@ -48,9 +48,9 @@ export function useWishlist() {
         []
     );
 
-    const removeFromWishlist = useCallback((courseId: string) => {
+    const removeFromWishlist = useCallback((trackId: string) => {
         setWishlistIds((current) => {
-            const next = current.filter((id) => id !== courseId);
+            const next = current.filter((id) => id !== trackId);
             if (typeof window !== "undefined") {
                 window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
             }
@@ -59,11 +59,11 @@ export function useWishlist() {
     }, []);
 
     const toggleWishlist = useCallback(
-        (courseId: string) => {
+        (trackId: string) => {
             setWishlistIds((current) => {
-                const next = current.includes(courseId)
-                    ? current.filter((id) => id !== courseId)
-                    : [...current, courseId];
+                const next = current.includes(trackId)
+                    ? current.filter((id) => id !== trackId)
+                    : [...current, trackId];
 
                 if (typeof window !== "undefined") {
                     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
@@ -76,7 +76,7 @@ export function useWishlist() {
     );
 
     const isWishlisted = useCallback(
-        (courseId: string) => wishlistIds.includes(courseId),
+        (trackId: string) => wishlistIds.includes(trackId),
         [wishlistIds]
     );
 

@@ -74,13 +74,15 @@ function normalizeQuiz(
 }
 
 export default function LessonQuizManager({
-  courseId,
+  trackId,
+  phaseId,
   moduleId,
   lessonId,
   initialQuiz,
   onChanged,
 }: {
-  courseId: string;
+  trackId: string;
+  phaseId: string;
   moduleId: string;
   lessonId: string;
   initialQuiz: QuizMeta | null;
@@ -156,8 +158,8 @@ export default function LessonQuizManager({
 
     try {
       const endpoint = quiz
-        ? `/api/courses/${courseId}/modules/${moduleId}/lessons/${lessonId}/quiz/${quiz.id}`
-        : `/api/courses/${courseId}/modules/${moduleId}/lessons/${lessonId}/quiz`;
+        ? `/api/tracks/${trackId}/phases/${phaseId}/modules/${moduleId}/lessons/${lessonId}/quiz/${quiz.id}`
+        : `/api/tracks/${trackId}/phases/${phaseId}/modules/${moduleId}/lessons/${lessonId}/quiz`;
 
       const method = quiz ? "PATCH" : "POST";
 
@@ -202,7 +204,7 @@ export default function LessonQuizManager({
 
     try {
       const res = await fetch(
-        `/api/courses/${courseId}/modules/${moduleId}/lessons/${lessonId}/quiz/${quiz.id}`,
+        `/api/tracks/${trackId}/phases/${phaseId}/modules/${moduleId}/lessons/${lessonId}/quiz/${quiz.id}`,
         {
           method: "DELETE",
         }
@@ -342,7 +344,8 @@ export default function LessonQuizManager({
 
       {quiz && (
         <QuizQuestionManager
-          courseId={courseId}
+          trackId={trackId}
+          phaseId={phaseId}
           moduleId={moduleId}
           lessonId={lessonId}
           quizId={quiz.id}

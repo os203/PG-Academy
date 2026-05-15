@@ -28,18 +28,22 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // Verify user is enrolled in the course that has this lesson
+    // Verify user is enrolled in the track that has this lesson
     const lesson = await db.lesson.findUnique({
       where: { id: lessonId },
       select: {
         module: {
           select: {
-            course: {
+            phase: {
               select: {
-                id: true,
-                enrollments: {
-                  where: { userId: decoded.userId },
-                  select: { id: true },
+                track: {
+                  select: {
+                    id: true,
+                    enrollments: {
+                      where: { userId: decoded.userId },
+                      select: { id: true },
+                    },
+                  },
                 },
               },
             },
@@ -53,13 +57,13 @@ export async function GET(req: NextRequest) {
     }
 
     // Allow enrolled students, instructors, and admins
-    const isEnrolled = lesson.module.course.enrollments.length > 0;
+    const isEnrolled = lesson.module.phase.track.enrollments.length > 0;
     const isPrivileged =
       decoded.role === "ADMIN" || decoded.role === "INSTRUCTOR";
 
     if (!isEnrolled && !isPrivileged) {
       return NextResponse.json(
-        { error: "You are not enrolled in this course" },
+        { error: "You are not enrolled in this track" },
         { status: 403 }
       );
     }
@@ -116,18 +120,22 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Verify user is enrolled in the course containing this lesson
+    // Verify user is enrolled in the track containing this lesson
     const lesson = await db.lesson.findUnique({
       where: { id: lessonId },
       select: {
         module: {
           select: {
-            course: {
+            phase: {
               select: {
-                id: true,
-                enrollments: {
-                  where: { userId: decoded.userId },
-                  select: { id: true },
+                track: {
+                  select: {
+                    id: true,
+                    enrollments: {
+                      where: { userId: decoded.userId },
+                      select: { id: true },
+                    },
+                  },
                 },
               },
             },
@@ -140,7 +148,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Lesson not found" }, { status: 404 });
     }
 
-    const isEnrolled = lesson.module.course.enrollments.length > 0;
+    const isEnrolled = lesson.module.phase.track.enrollments.length > 0;
     const isPrivileged =
       decoded.role === "ADMIN" || decoded.role === "INSTRUCTOR";
 

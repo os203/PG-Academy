@@ -3,15 +3,15 @@
 import { useState } from "react";
 import { Send, AlertCircle, Info, Sparkles, BookOpen } from "lucide-react";
 
-interface Course {
+interface Track {
   id: string;
   title: string;
 }
 
-export default function SendNotificationForm({ courses }: { courses: Course[] }) {
+export default function SendNotificationForm({ tracks }: { tracks: Track[] }) {
   const [message, setMessage] = useState("");
   const [type, setType] = useState("course_update");
-  const [courseId, setCourseId] = useState(""); // empty string means "All Courses"
+  const [trackId, setCourseId] = useState(""); // empty string means "All Tracks"
   const [isLoading, setIsLoading] = useState(false);
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
@@ -27,8 +27,8 @@ export default function SendNotificationForm({ courses }: { courses: Course[] })
         targetRole: "ENROLLED_STUDENTS", // Instructors are locked to this target
       };
 
-      if (courseId) {
-        payload.courseId = courseId;
+      if (trackId) {
+        payload.trackId = trackId;
       }
 
       const res = await fetch("/api/notifications/send", {
@@ -63,10 +63,10 @@ export default function SendNotificationForm({ courses }: { courses: Course[] })
       <div className="mb-8">
         <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-linear-to-r from-brand-primary to-brand-accent flex items-center gap-3">
           <Send className="w-8 h-8 text-brand-primary" />
-          Send Course Announcement
+          Send Track Announcement
         </h1>
         <p className="text-muted-foreground mt-2">
-          Broadcast a message to students enrolled in your courses.
+          Broadcast a message to students enrolled in your tracks.
         </p>
       </div>
 
@@ -77,18 +77,18 @@ export default function SendNotificationForm({ courses }: { courses: Course[] })
           <div className="space-y-2">
             <label className="text-sm font-medium">Target Audience</label>
             <select 
-              value={courseId}
+              value={trackId}
               onChange={(e) => setCourseId(e.target.value)}
               className="w-full bg-background border border-input rounded-md px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
             >
               <option value="">All My Enrolled Students</option>
-              {courses.map(course => (
-                <option key={course.id} value={course.id}>
-                  Students in: {course.title}
+              {tracks.map(track => (
+                <option key={track.id} value={track.id}>
+                  Students in: {track.title}
                 </option>
               ))}
             </select>
-            <p className="text-xs text-muted-foreground">Select whether to send to all your students, or only students in a specific course.</p>
+            <p className="text-xs text-muted-foreground">Select whether to send to all your students, or only students in a specific track.</p>
           </div>
 
           {/* Type Selection */}
@@ -96,7 +96,7 @@ export default function SendNotificationForm({ courses }: { courses: Course[] })
             <label className="text-sm font-medium">Notification Type</label>
             <div className="grid grid-cols-2 gap-3">
               {[
-                { id: "course_update", label: "Course Update", icon: BookOpen, color: "text-purple-500" },
+                { id: "course_update", label: "Track Update", icon: BookOpen, color: "text-purple-500" },
                 { id: "info", label: "General Info", icon: Info, color: "text-blue-500" },
               ].map((t) => (
                 <div 
@@ -123,7 +123,7 @@ export default function SendNotificationForm({ courses }: { courses: Course[] })
               onChange={(e) => setMessage(e.target.value)}
               required
               rows={4}
-              placeholder="Type your course announcement here..."
+              placeholder="Type your track announcement here..."
               className="w-full bg-background border border-input rounded-md px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary resize-none"
             />
           </div>

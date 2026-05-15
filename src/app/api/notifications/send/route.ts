@@ -29,7 +29,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { message, type, targetRole, courseId } = body;
+    const { message, type, targetRole, trackId } = body;
 
     if (!message || !type || !targetRole) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -41,13 +41,13 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: "Forbidden: Instructors can only message enrolled students" }, { status: 403 });
       }
 
-      if (courseId) {
-        const course = await db.course.findUnique({
-          where: { id: courseId },
+      if (trackId) {
+        const track = await db.track.findUnique({
+          where: { id: trackId },
           select: { instructorId: true }
         });
-        if (!course || course.instructorId !== decoded.userId) {
-          return NextResponse.json({ error: "Forbidden: You do not teach this course" }, { status: 403 });
+        if (!track || track.instructorId !== decoded.userId) {
+          return NextResponse.json({ error: "Forbidden: You do not teach this track" }, { status: 403 });
         }
       }
     }
@@ -58,9 +58,9 @@ export async function POST(request: Request) {
     if (targetRole === "ENROLLED_STUDENTS") {
       const enrollments = await db.enrollment.findMany({
         where: {
-          course: {
+          track: {
             instructorId: decoded.userId,
-            ...(courseId ? { id: courseId } : {})
+            ...(trackId ? { id: trackId } : {})
           }
         },
         select: { userId: true },
@@ -102,7 +102,7 @@ export async function POST(request: Request) {
         message,
         type,
         targetRole,
-        courseId: courseId || null,
+        trackId: trackId || null,
         audienceSize: targetUsers.length,
       }
     });

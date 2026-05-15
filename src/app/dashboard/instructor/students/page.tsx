@@ -28,7 +28,7 @@ interface StudentRecord {
   userId: string;
   name: string;
   email: string;
-  courseId: string;
+  trackId: string;
   courseTitle: string;
   enrolledAt: string;
   totalLessons: number;
@@ -73,7 +73,7 @@ export default function InstructorStudentsPage() {
         s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         s.email.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesCourse =
-        courseFilter === "ALL" || s.courseId === courseFilter;
+        courseFilter === "ALL" || s.trackId === courseFilter;
       return matchesSearch && matchesCourse;
     });
   }, [students, searchTerm, courseFilter]);
@@ -99,7 +99,7 @@ export default function InstructorStudentsPage() {
     const headers = [
       "Student Name",
       "Email",
-      "Course",
+      "Track",
       "Enrolled",
       "Lessons Completed",
       "Total Lessons",
@@ -134,7 +134,7 @@ export default function InstructorStudentsPage() {
             Student Performance
           </h1>
           <p className="text-muted-foreground">
-            Track progress and quiz scores across your courses.
+            Track progress and quiz scores across your tracks.
           </p>
         </div>
         <Button variant="outline" className="gap-2" onClick={exportCSV}>
@@ -206,16 +206,16 @@ export default function InstructorStudentsPage() {
               <DropdownMenu>
                 <DropdownMenuTrigger className="inline-flex items-center justify-center rounded-md text-sm font-medium border border-border bg-background hover:bg-accent px-3 h-9 gap-1">
                   <Filter className="h-4 w-4" />
-                  <span className="hidden sm:inline">Course</span>
+                  <span className="hidden sm:inline">Track</span>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuGroup>
-                    <DropdownMenuLabel>Filter by Course</DropdownMenuLabel>
+                    <DropdownMenuLabel>Filter by Track</DropdownMenuLabel>
                     <DropdownMenuItem
                       className={`cursor-pointer ${courseFilter === "ALL" ? "bg-accent" : ""}`}
                       onSelect={() => setCourseFilter("ALL")}
                     >
-                      All Courses
+                      All Tracks
                     </DropdownMenuItem>
                     {courseNames.map((c) => (
                       <DropdownMenuItem
@@ -244,7 +244,7 @@ export default function InstructorStudentsPage() {
               <p>
                 {searchTerm || courseFilter !== "ALL"
                   ? "No students match your search criteria."
-                  : "No students enrolled in your courses yet."}
+                  : "No students enrolled in your tracks yet."}
               </p>
             </div>
           ) : (
@@ -253,7 +253,7 @@ export default function InstructorStudentsPage() {
                 <thead>
                   <tr className="border-b border-border bg-muted/50 text-xs font-bold uppercase tracking-widest text-muted-foreground">
                     <th className="px-6 py-4">Student</th>
-                    <th className="px-6 py-4">Course</th>
+                    <th className="px-6 py-4">Track</th>
                     <th className="px-6 py-4">Enrolled</th>
                     <th className="px-6 py-4">Progress</th>
                     <th className="px-6 py-4 text-right">Quiz Score</th>
@@ -262,7 +262,7 @@ export default function InstructorStudentsPage() {
                 <tbody>
                   {filteredStudents.map((s, idx) => (
                     <tr
-                      key={`${s.userId}-${s.courseId}`}
+                      key={`${s.userId}-${s.trackId}`}
                       className={`transition-colors hover:bg-muted/80 ${
                         idx % 2 === 0 ? "bg-transparent" : "bg-muted/30"
                       }`}

@@ -82,7 +82,7 @@ export const sendInvoiceEmail = async (email: string, name: string, courseTitle:
             <td style="padding: 8px 0; font-weight: bold; text-align: right;">${new Date().toLocaleDateString()}</td>
           </tr>
           <tr style="border-top: 1px solid #eee;">
-            <td style="padding: 15px 0 8px 0; color: #666;">Course:</td>
+            <td style="padding: 15px 0 8px 0; color: #666;">Track:</td>
             <td style="padding: 15px 0 8px 0; font-weight: bold; text-align: right;">${courseTitle}</td>
           </tr>
           <tr>

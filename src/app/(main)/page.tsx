@@ -85,12 +85,12 @@ export default function Home() {
         </motion.h1>
         
         <motion.p variants={itemVariants} className="text-lg md:text-xl text-foreground/70 max-w-2xl mb-12 leading-relaxed">
-          Unlock your potential with PG Academy. Enjoy secure, culturally-tailored courses powered by AI, and earn verified credentials on your schedule.
+          Unlock your potential with PG Academy. Enjoy secure, culturally-tailored tracks powered by AI, and earn verified credentials on your schedule.
         </motion.p>
         
         <motion.div variants={itemVariants} className="flex flex-col sm:flex-row gap-4 items-center justify-center w-full sm:w-auto">
-          <Link href="/courses" className="w-full sm:w-auto px-8 py-4 bg-brand-primary hover:bg-brand-hover text-white rounded-full font-semibold text-lg transition-all hover-lift shadow-lg shadow-brand-primary/25 flex items-center justify-center gap-2">
-            Explore Courses
+          <Link href="/tracks" className="w-full sm:w-auto px-8 py-4 bg-brand-primary hover:bg-brand-hover text-white rounded-full font-semibold text-lg transition-all hover-lift shadow-lg shadow-brand-primary/25 flex items-center justify-center gap-2">
+            Explore Tracks
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
             </svg>

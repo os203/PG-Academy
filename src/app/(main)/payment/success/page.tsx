@@ -36,7 +36,7 @@ function generateConfetti(): ConfettiParticle[] {
 function PaymentSuccessContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const courseId = searchParams.get("courseId");
+  const trackId = searchParams.get("trackId");
   const sessionId = searchParams.get("session_id");
   const [sessionInfo, setSessionInfo] = useState<SessionInfo | null>(null);
   const [loading, setLoading] = useState(true);
@@ -137,7 +137,7 @@ function PaymentSuccessContent() {
                 <div className="space-y-2 text-sm">
                   {sessionInfo.courseName && (
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">Course</span>
+                      <span className="text-muted-foreground">Track</span>
                       <span className="font-medium text-foreground">{sessionInfo.courseName}</span>
                     </div>
                   )}
@@ -163,13 +163,13 @@ function PaymentSuccessContent() {
 
             {/* CTA Buttons */}
             <div className="space-y-3 pt-2">
-              {courseId && (
+              {trackId && (
                 <Button
-                  onClick={() => router.push(`/dashboard/student/${courseId}`)}
+                  onClick={() => router.push(`/dashboard/student/${trackId}`)}
                   className="w-full bg-brand-primary hover:bg-brand-hover text-white font-bold py-6 text-base transition-transform active:scale-[0.98] group"
                 >
                   <BookOpen className="w-5 h-5 mr-2" />
-                  Go to Your Course
+                  Go to Your Track
                   <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
                 </Button>
               )}
@@ -178,7 +178,7 @@ function PaymentSuccessContent() {
                 variant="outline"
                 className="w-full py-5"
               >
-                View All My Courses
+                View All My Tracks
               </Button>
             </div>
           </div>

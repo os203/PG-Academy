@@ -45,10 +45,14 @@ export async function POST(
           include: {
             module: {
               include: {
-                course: {
-                  select: {
-                    id: true,
-                    status: true,
+                phase: {
+                  include: {
+                    track: {
+                      select: {
+                        id: true,
+                        status: true,
+                      },
+                    },
                   },
                 },
               },
@@ -75,21 +79,21 @@ export async function POST(
       return NextResponse.json({ error: "Quiz not found" }, { status: 404 });
     }
 
-    if (quiz.lesson.module.course.status !== "PUBLISHED") {
-      return NextResponse.json({ error: "Course not available" }, { status: 403 });
+    if (quiz.lesson.module.phase.track.status !== "PUBLISHED") {
+      return NextResponse.json({ error: "Track not available" }, { status: 403 });
     }
 
     const enrollment = await db.enrollment.findFirst({
       where: {
         userId: currentUser.id,
-        courseId: quiz.lesson.module.course.id,
+        trackId: quiz.lesson.module.phase.track.id,
       },
       select: { id: true },
     });
 
     if (!enrollment) {
       return NextResponse.json(
-        { error: "You are not enrolled in this course" },
+        { error: "You are not enrolled in this track" },
         { status: 403 }
       );
     }

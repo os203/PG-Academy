@@ -101,7 +101,7 @@ export default function InstructorQAPage() {
           Q&A Management
         </h1>
         <p className="text-muted-foreground">
-          Review and reply to student questions across your courses.
+          Review and reply to student questions across your tracks.
         </p>
       </div>
 

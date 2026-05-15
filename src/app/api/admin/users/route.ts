@@ -28,7 +28,7 @@ export async function GET(request: Request) {
         _count: {
           select: {
             enrollments: true,
-            courses: true,
+            tracks: true,
           }
         }
       },

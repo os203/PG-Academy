@@ -8,7 +8,7 @@ import { XCircle, ArrowLeft, ShieldCheck } from "lucide-react";
 function PaymentCancelContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const courseId = searchParams.get("courseId");
+  const trackId = searchParams.get("trackId");
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4 relative overflow-hidden">
@@ -49,21 +49,21 @@ function PaymentCancelContent() {
 
             {/* CTA Buttons */}
             <div className="space-y-3 pt-2">
-              {courseId && (
+              {trackId && (
                 <Button
-                  onClick={() => router.push(`/courses/${courseId}`)}
+                  onClick={() => router.push(`/tracks/${trackId}`)}
                   className="w-full bg-brand-primary hover:bg-brand-hover text-white font-bold py-6 text-base transition-transform active:scale-[0.98]"
                 >
                   <ArrowLeft className="w-5 h-5 mr-2" />
-                  Back to Course
+                  Back to Track
                 </Button>
               )}
               <Button
-                onClick={() => router.push("/courses")}
+                onClick={() => router.push("/tracks")}
                 variant="outline"
                 className="w-full py-5"
               >
-                Browse All Courses
+                Browse All Tracks
               </Button>
             </div>
           </div>

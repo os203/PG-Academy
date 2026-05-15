@@ -31,7 +31,7 @@ export async function GET() {
       where: { senderId: decoded.userId },
       orderBy: { createdAt: "desc" },
       include: {
-        course: { select: { title: true } }
+        track: { select: { title: true } }
       }
     });
 

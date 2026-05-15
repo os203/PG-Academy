@@ -22,7 +22,7 @@ export default async function CertificateViewPage({
     where: { uniqueCode },
     include: {
       user: true,
-      course: {
+      track: {
         include: {
           instructor: true,
         },
@@ -83,11 +83,11 @@ export default async function CertificateViewPage({
             </h2>
 
             <p className="text-gray-500 text-lg sm:text-xl max-w-2xl mx-auto mb-6">
-              has successfully completed all requirements, lessons, and assessments for the course
+              has successfully completed all requirements, lessons, and assessments for the track
             </p>
 
             <h3 className="text-3xl sm:text-4xl font-bold text-gray-800 mb-20 max-w-4xl mx-auto leading-tight">
-              {certificate.course.title}
+              {certificate.track.title}
             </h3>
 
             <div className="flex flex-col sm:flex-row items-end justify-between w-full max-w-4xl mx-auto gap-12 sm:gap-0 mt-12">
@@ -107,7 +107,7 @@ export default async function CertificateViewPage({
               <div className="text-center w-full sm:w-auto">
                 {/* A generic signature or instructor name */}
                 <div className="font-serif text-3xl text-gray-800 border-b border-gray-300 pb-2 px-8 mb-2 capitalize" style={{ fontFamily: "'Brush Script MT', cursive" }}>
-                  {certificate.course.instructor.name}
+                  {certificate.track.instructor.name}
                 </div>
                 <p className="text-sm text-gray-500 uppercase tracking-widest font-semibold">
                   Instructor Signature

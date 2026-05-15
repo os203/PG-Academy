@@ -75,10 +75,14 @@ export async function POST(req: NextRequest) {
       include: {
         module: {
           include: {
-            course: {
-              select: {
-                id: true,
-                status: true,
+            phase: {
+              include: {
+                track: {
+                  select: {
+                    id: true,
+                    status: true,
+                  },
+                },
               },
             },
           },
@@ -90,9 +94,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Lesson not found" }, { status: 404 });
     }
 
-    if (lesson.module.course.status !== "PUBLISHED") {
+    if (lesson.module.phase.track.status !== "PUBLISHED") {
       return NextResponse.json(
-        { error: "Course is not published" },
+        { error: "Track is not published" },
         { status: 403 }
       );
     }
@@ -100,7 +104,7 @@ export async function POST(req: NextRequest) {
     const enrollment = await db.enrollment.findFirst({
       where: {
         userId: currentUser.id,
-        courseId: lesson.module.course.id,
+        trackId: lesson.module.phase.track.id,
       },
       select: {
         id: true,
@@ -109,7 +113,7 @@ export async function POST(req: NextRequest) {
 
     if (!enrollment) {
       return NextResponse.json(
-        { error: "You are not enrolled in this course" },
+        { error: "You are not enrolled in this track" },
         { status: 403 }
       );
     }

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Loader2, Search } from "lucide-react";
-import CourseCardForSale from "@/components/ui/CourseCardForSale";
+import TrackCardForSale from "@/components/ui/TrackCardForSale";
 import { useWishlist } from "@/hooks/use-wishlist";
 import { useRouter } from "next/navigation";
 
@@ -53,7 +53,7 @@ async function readJsonSafely<T>(res: Response): Promise<T | null> {
 
 export default function SearchPage() {
     const router = useRouter();
-    const [courses, setCourses] = useState<PublicCourse[]>([]);
+    const [tracks, setCourses] = useState<PublicCourse[]>([]);
     const [query, setQuery] = useState("");
     const [activeFilter, setActiveFilter] = useState("all");
     const [loading, setLoading] = useState(true);
@@ -67,18 +67,18 @@ export default function SearchPage() {
             setError(null);
 
             try {
-                const res = await fetch("/api/public/courses", { cache: "no-store" });
-                const data = await readJsonSafely<{ courses?: PublicCourse[]; error?: string }>(res);
+                const res = await fetch("/api/public/tracks", { cache: "no-store" });
+                const data = await readJsonSafely<{ tracks?: PublicCourse[]; error?: string }>(res);
 
                 if (!res.ok) {
-                    setError(data?.error || "Failed to load published courses.");
+                    setError(data?.error || "Failed to load published tracks.");
                     setCourses([]);
                     return;
                 }
 
-                setCourses(Array.isArray(data?.courses) ? data.courses : []);
+                setCourses(Array.isArray(data?.tracks) ? data.tracks : []);
             } catch {
-                setError("Unable to load courses. Please try again later.");
+                setError("Unable to load tracks. Please try again later.");
                 setCourses([]);
             } finally {
                 setLoading(false);
@@ -87,11 +87,11 @@ export default function SearchPage() {
 
         const fetchEnrolledCourses = async () => {
             try {
-                const res = await fetch("/api/student/courses", { cache: "no-store" });
-                const data = await readJsonSafely<{ courses?: { id: string }[]; error?: string }>(res);
+                const res = await fetch("/api/student/tracks", { cache: "no-store" });
+                const data = await readJsonSafely<{ tracks?: { id: string }[]; error?: string }>(res);
 
-                if (res.ok && Array.isArray(data?.courses)) {
-                    setEnrolledCourseIds(data.courses.map((course) => course.id));
+                if (res.ok && Array.isArray(data?.tracks)) {
+                    setEnrolledCourseIds(data.tracks.map((track) => track.id));
                 }
             } catch {
                 setEnrolledCourseIds([]);
@@ -102,15 +102,15 @@ export default function SearchPage() {
         void fetchEnrolledCourses();
     }, []);
 
-    const viewCourseDetails = (courseId: string) => {
-        router.push(`/courses/${courseId}`);
+    const viewCourseDetails = (trackId: string) => {
+        router.push(`/tracks/${trackId}`);
     };
 
     const filteredCourses = useMemo(() => {
         const normalizedQuery = query.trim().toLowerCase();
 
-        return courses.filter((course) => {
-            const searchText = `${course.title} ${course.category} ${course.instructorName}`.toLowerCase();
+        return tracks.filter((track) => {
+            const searchText = `${track.title} ${track.category} ${track.instructorName}`.toLowerCase();
             const matchesQuery =
                 !normalizedQuery || searchText.includes(normalizedQuery);
 
@@ -126,32 +126,32 @@ export default function SearchPage() {
                 searchText.includes(tag)
             );
         });
-    }, [courses, query, activeFilter]);
+    }, [tracks, query, activeFilter]);
 
     return (
         <div className="min-h-screen bg-background">
             <div className="max-w-7xl mx-auto">
                 <div className="mb-10">
                     <h1 className="text-3xl font-black mb-3 text-foreground">
-                        Browse Courses
+                        Browse Tracks
                     </h1>
                     <p className="text-muted-foreground max-w-2xl mb-1">
                         Discover your next learning adventure
                     </p>
                     <p className="text-muted-foreground max-w-2xl text-xs">
-                        Use the search to filter courses. Type a name, description or Author name, then choose one of the categories.
+                        Use the search to filter tracks. Type a name, description or Author name, then choose one of the categories.
                     </p>
                 </div>
 
                 <div className="shadow-md dark:shadow-brand-accent/20 dark:bg-gray-900 rounded-2xl p-8 mb-12">
                     <div className="space-y-3">
-                        <label htmlFor="course-search" className="text-sm font-semibold  text-foreground pl-1">
-                            Search for a course
+                        <label htmlFor="track-search" className="text-sm font-semibold  text-foreground pl-1">
+                            Search for a track
                         </label>
                         <div className="flex items-center gap-2 rounded-2xl border border-border bg-card mt-2 px-4 shadow-sm focus-within:border-primary">
                             <Search className="h-5 w-5 text-foreground " />
                             <input
-                                id="course-search"
+                                id="track-search"
                                 type="search"
                                 value={query}
                                 onChange={(event) => setQuery(event.target.value)}
@@ -181,13 +181,13 @@ export default function SearchPage() {
                 </div>
 
                 <p className="text-sm text-muted-foreground font-bold pb-8">
-                    {filteredCourses.length} course{filteredCourses.length === 1 ? "" : "s"} found
+                    {filteredCourses.length} track{filteredCourses.length === 1 ? "" : "s"} found
                 </p>
 
                 {loading ? (
                     <div className="rounded-3xl border border-border bg-card p-12 text-center text-foreground">
                         <Loader2 className="mx-auto mb-4 h-8 w-8 animate-spin text-primary" />
-                        Loading courses...
+                        Loading tracks...
                     </div>
                 ) : error ? (
                     <div className="rounded-3xl border border-red-200 bg-red-50 p-8 text-center text-red-700">
@@ -195,27 +195,27 @@ export default function SearchPage() {
                     </div>
                 ) : filteredCourses.length === 0 ? (
                     <div className="rounded-3xl border border-border bg-card p-12 text-center text-muted-foreground">
-                        No courses match the search or filter.
+                        No tracks match the search or filter.
                     </div>
                 ) : (
                     <>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {filteredCourses.map((course) => (
-                                <CourseCardForSale
-                                    key={course.id}
-                                    thumbnail={course.thumbnail ?? "/taco3.jpg"}
-                                    category={course.category ?? "General"}
-                                    title={course.title}
-                                    instructor={course.instructorName}
-                                    rating={course.rating}
-                                    studentsCount={course.studentsCount}
-                                    price={course.price}
-                                    isWishlisted={isWishlisted(course.id)}
-                                    onToggleWishlist={() => toggleWishlist(course.id)}
-                                    isEnrolled={enrolledCourseIds.includes(course.id)}
+                            {filteredCourses.map((track) => (
+                                <TrackCardForSale
+                                    key={track.id}
+                                    thumbnail={track.thumbnail ?? "/taco3.jpg"}
+                                    category={track.category ?? "General"}
+                                    title={track.title}
+                                    instructor={track.instructorName}
+                                    rating={track.rating}
+                                    studentsCount={track.studentsCount}
+                                    price={track.price}
+                                    isWishlisted={isWishlisted(track.id)}
+                                    onToggleWishlist={() => toggleWishlist(track.id)}
+                                    isEnrolled={enrolledCourseIds.includes(track.id)}
                                     isProcessing={false}
-                                    onEnroll={() => viewCourseDetails(course.id)}
+                                    onEnroll={() => viewCourseDetails(track.id)}
                                 />
                             ))}
                         </div>

@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({
       session: {
-        courseName: session.line_items ? undefined : session.metadata?.courseId,
+        courseName: session.line_items ? undefined : session.metadata?.trackId,
         amount: session.amount_total,
         email: session.customer_email || session.customer_details?.email,
         paymentId: session.payment_intent || session.id,

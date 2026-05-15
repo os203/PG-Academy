@@ -24,46 +24,46 @@ export async function POST(req: NextRequest) {
     });
 
     if (!currentUser || currentUser.role !== "STUDENT") {
-      return NextResponse.json({ error: "Only students can purchase courses" }, { status: 403 });
+      return NextResponse.json({ error: "Only students can purchase tracks" }, { status: 403 });
     }
 
     const body = await req.json();
-    const courseId = typeof body.courseId === "string" ? body.courseId.trim() : "";
+    const trackId = typeof body.trackId === "string" ? body.trackId.trim() : "";
     const couponCode = typeof body.couponCode === "string" ? body.couponCode.trim().toUpperCase() : "";
 
-    if (!courseId) {
-      return NextResponse.json({ error: "Course ID is required" }, { status: 400 });
+    if (!trackId) {
+      return NextResponse.json({ error: "Track ID is required" }, { status: 400 });
     }
 
-    const course = await db.course.findFirst({
-      where: { id: courseId, status: "PUBLISHED" },
+    const track = await db.track.findFirst({
+      where: { id: trackId, status: "PUBLISHED" },
       select: { id: true, title: true, price: true, thumbnail: true, instructorId: true },
     });
 
-    if (!course) {
-      return NextResponse.json({ error: "Course not found or not published" }, { status: 404 });
+    if (!track) {
+      return NextResponse.json({ error: "Track not found or not published" }, { status: 404 });
     }
 
     // Check already enrolled
     const existingEnrollment = await db.enrollment.findFirst({
-      where: { userId: currentUser.id, courseId },
+      where: { userId: currentUser.id, trackId },
       select: { id: true },
     });
 
     if (existingEnrollment) {
-      return NextResponse.json({ error: "You are already enrolled in this course", alreadyEnrolled: true }, { status: 400 });
+      return NextResponse.json({ error: "You are already enrolled in this track", alreadyEnrolled: true }, { status: 400 });
     }
 
-    // Free course — enroll directly
-    if (course.price === 0) {
+    // Free track — enroll directly
+    if (track.price === 0) {
       const enrollment = await db.enrollment.create({
-        data: { userId: currentUser.id, courseId },
+        data: { userId: currentUser.id, trackId },
       });
       return NextResponse.json({ free: true, enrollment }, { status: 201 });
     }
 
     // Calculate discount if coupon provided
-    let finalPrice = course.price;
+    let finalPrice = track.price;
     let couponId: string | null = null;
 
     if (couponCode) {
@@ -80,19 +80,19 @@ export async function POST(req: NextRequest) {
       couponId = coupon.id;
 
       if (coupon.discountType === "PERCENTAGE") {
-        finalPrice = course.price * (1 - coupon.value / 100);
+        finalPrice = track.price * (1 - coupon.value / 100);
       } else {
-        finalPrice = Math.max(0, course.price - coupon.value);
+        finalPrice = Math.max(0, track.price - coupon.value);
       }
 
       // If discount makes it free, enroll directly
       if (finalPrice <= 0) {
         const [enrollment] = await Promise.all([
-          db.enrollment.create({ data: { userId: currentUser.id, courseId } }),
+          db.enrollment.create({ data: { userId: currentUser.id, trackId } }),
           db.payment.create({
             data: {
               userId: currentUser.id,
-              courseId,
+              trackId,
               amount: 0,
               type: "COURSE_PURCHASE",
               status: "COMPLETED",
@@ -116,8 +116,8 @@ export async function POST(req: NextRequest) {
           price_data: {
             currency: "usd",
             product_data: {
-              name: course.title,
-              ...(course.thumbnail ? { images: [course.thumbnail.startsWith("http") ? course.thumbnail : `${appUrl}${course.thumbnail}`] } : {}),
+              name: track.title,
+              ...(track.thumbnail ? { images: [track.thumbnail.startsWith("http") ? track.thumbnail : `${appUrl}${track.thumbnail}`] } : {}),
             },
             unit_amount: Math.round(finalPrice * 100), // Stripe uses cents
           },
@@ -126,13 +126,13 @@ export async function POST(req: NextRequest) {
       ],
       metadata: {
         userId: currentUser.id,
-        courseId: course.id,
+        trackId: track.id,
         couponId: couponId || "",
-        originalPrice: String(course.price),
+        originalPrice: String(track.price),
         finalPrice: String(finalPrice),
       },
-      success_url: `${appUrl}/payment/success?session_id={CHECKOUT_SESSION_ID}&courseId=${courseId}`,
-      cancel_url: `${appUrl}/payment/cancel?courseId=${courseId}`,
+      success_url: `${appUrl}/payment/success?session_id={CHECKOUT_SESSION_ID}&trackId=${trackId}`,
+      cancel_url: `${appUrl}/payment/cancel?trackId=${trackId}`,
     });
 
     return NextResponse.json({ url: session.url });

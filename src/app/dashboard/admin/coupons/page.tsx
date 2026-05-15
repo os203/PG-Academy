@@ -126,7 +126,7 @@ export default function AdminCouponsPage() {
             Coupon Management
           </h1>
           <p className="text-muted-foreground">
-            Create and manage discount codes for your courses.
+            Create and manage discount codes for your tracks.
           </p>
         </div>
         <Button

@@ -17,8 +17,8 @@ export async function GET() {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    // Get all lessons from instructor's courses
-    const courses = await db.course.findMany({
+    // Get all lessons from instructor's tracks
+    const tracks = await db.track.findMany({
       where:
         decoded.role === "ADMIN"
           ? {}
@@ -26,10 +26,14 @@ export async function GET() {
       select: {
         id: true,
         title: true,
-        modules: {
+        phases: {
           select: {
-            lessons: {
-              select: { id: true, title: true },
+            modules: {
+              select: {
+                lessons: {
+                  select: { id: true, title: true },
+                },
+              },
             },
           },
         },
@@ -37,13 +41,15 @@ export async function GET() {
     });
 
     const lessonMap = new Map<string, { lessonTitle: string; courseTitle: string }>();
-    for (const course of courses) {
-      for (const mod of course.modules) {
-        for (const lesson of mod.lessons) {
-          lessonMap.set(lesson.id, {
-            lessonTitle: lesson.title,
-            courseTitle: course.title,
-          });
+    for (const track of tracks) {
+      for (const phase of track.phases) {
+        for (const mod of phase.modules) {
+          for (const lesson of mod.lessons) {
+            lessonMap.set(lesson.id, {
+              lessonTitle: lesson.title,
+              courseTitle: track.title,
+            });
+          }
         }
       }
     }
@@ -114,7 +120,7 @@ export async function PATCH(req: NextRequest) {
       );
     }
 
-    // Verify the question belongs to a lesson in instructor's course
+    // Verify the question belongs to a lesson in instructor's track
     const question = await db.qAQuestion.findUnique({
       where: { id: questionId },
       include: {
@@ -122,7 +128,11 @@ export async function PATCH(req: NextRequest) {
           include: {
             module: {
               include: {
-                course: { select: { instructorId: true } },
+                phase: {
+                  include: {
+                    track: { select: { instructorId: true } },
+                  },
+                },
               },
             },
           },
@@ -136,7 +146,7 @@ export async function PATCH(req: NextRequest) {
 
     if (
       decoded.role !== "ADMIN" &&
-      question.lesson.module.course.instructorId !== decoded.userId
+      question.lesson.module.phase.track.instructorId !== decoded.userId
     ) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }

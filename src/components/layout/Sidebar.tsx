@@ -25,13 +25,13 @@ export default function Sidebar() {
             roles: ["admin", "student", "instructor"],
         },
         {
-            label: "My Courses",
+            label: "My Tracks",
             href: `/dashboard/myCourses`,
             icon: <GraduationCap />,
             roles: ["student", "instructor"],
         },
         {
-            label: "Browse Courses",
+            label: "Browse Tracks",
             href: `/dashboard/searchPage`,
             icon: <BookSearch />,
             roles: ["admin", "student", "instructor"],
@@ -91,8 +91,8 @@ export default function Sidebar() {
             roles: ["admin"],
         },
         {
-            label: "Courses",
-            href: "/dashboard/admin/courses",
+            label: "Tracks",
+            href: "/dashboard/admin/tracks",
             icon: <Library />,
             roles: ["admin"],
         },

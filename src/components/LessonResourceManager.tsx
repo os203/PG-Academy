@@ -2,10 +2,11 @@
 
 import React, { useState } from "react";
 import { Loader2, Plus, Trash2, FileText, Link as LinkIcon } from "lucide-react";
-import { Resource } from "./InstructorCourseManager";
+import { Resource } from "./InstructorTrackManager";
 
 interface LessonResourceManagerProps {
-  courseId: string;
+  trackId: string;
+  phaseId: string;
   moduleId: string;
   lessonId: string;
   resources: Resource[];
@@ -13,7 +14,8 @@ interface LessonResourceManagerProps {
 }
 
 export default function LessonResourceManager({
-  courseId,
+  trackId,
+  phaseId,
   moduleId,
   lessonId,
   resources,
@@ -67,7 +69,7 @@ export default function LessonResourceManager({
       }
 
       const res = await fetch(
-        `/api/courses/${courseId}/modules/${moduleId}/lessons/${lessonId}/resources`,
+        `/api/tracks/${trackId}/phases/${phaseId}/modules/${moduleId}/lessons/${lessonId}/resources`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -102,7 +104,7 @@ export default function LessonResourceManager({
 
     try {
       const res = await fetch(
-        `/api/courses/${courseId}/modules/${moduleId}/lessons/${lessonId}/resources/${resourceId}`,
+        `/api/tracks/${trackId}/phases/${phaseId}/modules/${moduleId}/lessons/${lessonId}/resources/${resourceId}`,
         {
           method: "DELETE",
         }
@@ -128,7 +130,7 @@ export default function LessonResourceManager({
     <div className="mt-4 border-t pt-4">
       <h6 className="font-bold text-foreground flex items-center gap-2 mb-3">
         <FileText size={16} className="text-brand-primary" />
-        Course Materials & Attachments
+        Track Materials & Attachments
       </h6>
 
       {resources.length > 0 && (

@@ -9,7 +9,7 @@ import {
   NotificationList,
   NotificationItem,
 } from "@/components/animate-ui/components/community/notification-list";
-import StripedRowsTable, { Course } from "@/components/ui/StripedRowsTable";
+import StripedRowsTable, { Track } from "@/components/ui/StripedRowsTable";
 import { RevenueChart } from "@/components/ui/RevenueChart";
 import {
   Users,
@@ -31,10 +31,10 @@ import {
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-type CourseStatus = "DRAFT" | "PUBLISHED";
+type TrackStatus = "DRAFT" | "PUBLISHED";
 
-type DashboardCourse = Course & {
-  status?: CourseStatus;
+type DashboardCourse = Track & {
+  status?: TrackStatus;
   categoryId?: string | null;
   thumbnail?: string | null;
 };
@@ -97,14 +97,14 @@ export default function InstructorDashboard() {
   const { user, isLoading, logout } = useAuth();
   const router = useRouter();
 
-  const [courses, setCourses] = useState<DashboardCourse[]>([]);
+  const [tracks, setCourses] = useState<DashboardCourse[]>([]);
   const [loadingCourses, setLoadingCourses] = useState(true);
   const [editingCourse, setEditingCourse] = useState<DashboardCourse | null>(null);
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
-  const [status, setStatus] = useState<CourseStatus>("DRAFT");
+  const [status, setStatus] = useState<TrackStatus>("DRAFT");
   const [categoryId, setCategoryId] = useState("");
   const [categories, setCategories] = useState<{id: string, name: string}[]>([]);
   const [thumbnail, setThumbnail] = useState("");
@@ -133,20 +133,20 @@ export default function InstructorDashboard() {
     try {
       setLoadingCourses(true);
 
-      const res = await fetch("/api/courses", { cache: "no-store" });
+      const res = await fetch("/api/tracks", { cache: "no-store" });
 
       if (res.ok) {
         const data = await res.json();
 
-        const normalizedCourses: DashboardCourse[] = Array.isArray(data?.courses)
-          ? data.courses.map((course: DashboardCourse) => ({
-              ...course,
+        const normalizedCourses: DashboardCourse[] = Array.isArray(data?.tracks)
+          ? data.tracks.map((track: DashboardCourse) => ({
+              ...track,
               status:
-                course.status === "PUBLISHED" || course.status === "DRAFT"
-                  ? course.status
+                track.status === "PUBLISHED" || track.status === "DRAFT"
+                  ? track.status
                   : "DRAFT",
-              categoryId: typeof course.categoryId === "string" ? course.categoryId : null,
-              thumbnail: typeof course.thumbnail === "string" ? course.thumbnail : null,
+              categoryId: typeof track.categoryId === "string" ? track.categoryId : null,
+              thumbnail: typeof track.thumbnail === "string" ? track.thumbnail : null,
             }))
           : [];
 
@@ -197,7 +197,7 @@ export default function InstructorDashboard() {
       const formData = new FormData();
       formData.append("file", file);
 
-      const res = await fetch("/api/uploads/course-thumbnail", {
+      const res = await fetch("/api/uploads/track-thumbnail", {
         method: "POST",
         body: formData,
       });
@@ -214,7 +214,7 @@ export default function InstructorDashboard() {
       }
     } catch (error) {
       console.error(error);
-      alert("An error occurred while uploading the course thumbnail");
+      alert("An error occurred while uploading the track thumbnail");
     } finally {
       setUploadingThumbnail(false);
       e.target.value = "";
@@ -232,7 +232,7 @@ export default function InstructorDashboard() {
     if (!editingCourse) return;
 
     try {
-      const res = await fetch(`/api/courses/${editingCourse.id}`, {
+      const res = await fetch(`/api/tracks/${editingCourse.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -250,44 +250,44 @@ export default function InstructorDashboard() {
         await fetchCourses();
       } else {
         const data = await res.json().catch(() => null);
-        alert(data?.error || "Failed to update course");
+        alert(data?.error || "Failed to update track");
       }
     } catch (error) {
       console.error(error);
-      alert("An error occurred while updating the course");
+      alert("An error occurred while updating the track");
     }
   };
 
   const deleteCourse = async (id: string): Promise<void> => {
     const confirmed = window.confirm(
-      "Are you sure you want to delete this course?"
+      "Are you sure you want to delete this track?"
     );
     if (!confirmed) return;
 
     try {
-      const res = await fetch(`/api/courses/${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/tracks/${id}`, { method: "DELETE" });
       if (res.ok) {
         await fetchCourses();
       } else {
         const data = await res.json().catch(() => null);
-        alert(data?.error || "Failed to delete course");
+        alert(data?.error || "Failed to delete track");
       }
     } catch (error) {
       console.error(error);
-      alert("An error occurred while deleting the course");
+      alert("An error occurred while deleting the track");
     }
   };
 
 
 
-  const openEditModal = (course: DashboardCourse): void => {
-    setEditingCourse(course);
-    setTitle(course.title);
-    setDescription(course.description);
-    setPrice(course.price.toString());
-    setStatus(course.status === "PUBLISHED" ? "PUBLISHED" : "DRAFT");
-    setCategoryId(course.categoryId || "");
-    setThumbnail(course.thumbnail || "");
+  const openEditModal = (track: DashboardCourse): void => {
+    setEditingCourse(track);
+    setTitle(track.title);
+    setDescription(track.description);
+    setPrice(track.price.toString());
+    setStatus(track.status === "PUBLISHED" ? "PUBLISHED" : "DRAFT");
+    setCategoryId(track.categoryId || "");
+    setThumbnail(track.thumbnail || "");
   };
 
   if (isLoading) {
@@ -305,7 +305,7 @@ export default function InstructorDashboard() {
   }
 
   const stats = [
-    { title: "Total Students", value: realStats ? realStats.totalStudents.toLocaleString() : "—", icon: Users, trend: "Across all courses" },
+    { title: "Total Students", value: realStats ? realStats.totalStudents.toLocaleString() : "—", icon: Users, trend: "Across all tracks" },
     { title: "Avg. Completion", value: realStats ? `${realStats.avgCompletion}%` : "—", icon: BookOpen, trend: "Lesson completion" },
     { title: "Total Revenue", value: realStats ? `$${realStats.totalRevenue.toLocaleString()}` : "—", icon: Wallet, trend: "Completed payments" },
     { title: "Unanswered Q&A", value: realStats ? realStats.unansweredQA.toString() : "—", icon: Activity, trend: "Needs reply" },
@@ -328,7 +328,7 @@ export default function InstructorDashboard() {
               Welcome back, {user?.name || "Instructor"}
             </h1>
             <p className="text-muted-foreground mt-1">
-              Here is what&apos;s happening with your courses today.
+              Here is what&apos;s happening with your tracks today.
             </p>
           </div>
 
@@ -437,7 +437,7 @@ export default function InstructorDashboard() {
                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-brand-primary to-brand-accent" />
                 <CardHeader>
                   <CardTitle>
-                    Edit Course
+                    Edit Track
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -447,7 +447,7 @@ export default function InstructorDashboard() {
                   >
                     <div className="space-y-2">
                       <label className="text-sm font-medium text-foreground">
-                        Course Title
+                        Track Title
                       </label>
                       <input
                         type="text"
@@ -511,7 +511,7 @@ export default function InstructorDashboard() {
                       </label>
                       <select
                         value={status}
-                        onChange={(e) => setStatus(e.target.value as CourseStatus)}
+                        onChange={(e) => setStatus(e.target.value as TrackStatus)}
                         className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
                       >
                         <option value="DRAFT">Draft</option>
@@ -521,7 +521,7 @@ export default function InstructorDashboard() {
 
                     <div className="space-y-3">
                       <label className="text-sm font-medium text-foreground">
-                        Course Thumbnail
+                        Track Thumbnail
                       </label>
 
                       <div className="flex items-center gap-3 flex-wrap">
@@ -565,7 +565,7 @@ export default function InstructorDashboard() {
                               {/* eslint-disable-next-line @next/next/no-img-element */}
                               <img
                                 src={thumbnail}
-                                alt="Course thumbnail"
+                                alt="Track thumbnail"
                                 className="w-full h-full object-cover"
                               />
                             </div>
@@ -609,10 +609,10 @@ export default function InstructorDashboard() {
           <div className="xl:col-span-2 space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <h2 className="text-xl font-semibold text-foreground">
-                Your Courses
+                Your Tracks
               </h2>
               <AnimatedTabs
-                tabs={["All Courses", "Published", "Drafts"]}
+                tabs={["All Tracks", "Published", "Drafts"]}
                 variant="default"
               />
             </div>
@@ -620,11 +620,11 @@ export default function InstructorDashboard() {
             <div className="bg-background rounded-xl shadow-sm overflow-hidden">
               {loadingCourses ? (
                 <div className="p-8 text-center text-muted-foreground animate-pulse">
-                  Loading courses...
+                  Loading tracks...
                 </div>
               ) : (
                 <StripedRowsTable
-                  courses={courses}
+                  tracks={tracks}
                   onEdit={openEditModal}
                   onDelete={deleteCourse}
                 />

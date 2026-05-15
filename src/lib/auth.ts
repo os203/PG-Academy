@@ -49,7 +49,7 @@ import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 
-export async function getAuthorizedCourse(courseId: string) {
+export async function getAuthorizedCourse(trackId: string) {
   const cookieStore = await cookies();
   const token = cookieStore.get("token")?.value;
 
@@ -76,21 +76,21 @@ export async function getAuthorizedCourse(courseId: string) {
     };
   }
 
-  const course = await db.course.findFirst({
+  const track = await db.track.findFirst({
     where:
       decoded.role === "ADMIN"
-        ? { id: courseId }
+        ? { id: trackId }
         : {
-            id: courseId,
+            id: trackId,
             instructorId: decoded.userId,
           },
   });
 
-  if (!course) {
+  if (!track) {
     return {
       ok: false as const,
       response: NextResponse.json(
-        { error: "Course not found or forbidden" },
+        { error: "Track not found or forbidden" },
         { status: 403 }
       ),
     };
@@ -98,7 +98,7 @@ export async function getAuthorizedCourse(courseId: string) {
 
   return {
     ok: true as const,
-    course,
+    track,
     decoded,
   };
 }

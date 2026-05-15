@@ -45,13 +45,13 @@ export default function MyCoursesPage() {
 
     const fetchStudentCourses = async () => {
       try {
-        const res = await fetch("/api/student/courses");
+        const res = await fetch("/api/student/tracks");
         if (res.ok) {
           const data = await res.json();
-          setStudentCourses(data.courses || []);
+          setStudentCourses(data.tracks || []);
         }
       } catch (err) {
-        console.error("Failed to fetch enrolled courses", err);
+        console.error("Failed to fetch enrolled tracks", err);
       } finally {
         setIsCoursesLoading(false);
       }
@@ -59,10 +59,10 @@ export default function MyCoursesPage() {
 
     const fetchInstructorCourses = async () => {
       try {
-        const res = await fetch("/api/courses", { cache: "no-store" });
+        const res = await fetch("/api/tracks", { cache: "no-store" });
         if (res.ok) {
           const data = await res.json();
-          setInstructorCourses(data.courses || []);
+          setInstructorCourses(data.tracks || []);
         }
       } catch (e) {
         console.error(e);
@@ -82,66 +82,66 @@ export default function MyCoursesPage() {
     return (
       <div className="flex flex-col gap-3 justify-center items-center min-h-[50vh] text-muted-foreground">
         <Loader2 className="h-8 w-8 animate-spin text-brand-primary" />
-        <p>Loading your courses...</p>
+        <p>Loading your tracks...</p>
       </div>
     );
   }
 
   const isInstructor = user?.role === "INSTRUCTOR";
-  const courses = isInstructor ? instructorCourses : studentCourses;
+  const tracks = isInstructor ? instructorCourses : studentCourses;
 
   return (
     <div className="flex flex-col w-full px-6 max-w-7xl mx-auto space-y-8 pb-12">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">My Courses</h1>
+        <h1 className="text-3xl font-bold tracking-tight">My Tracks</h1>
         <p className="text-muted-foreground mt-2">
           {isInstructor
-            ? "Manage your courses and upload content."
+            ? "Manage your tracks and upload content."
             : "Pick up where you left off and track your progress."}
         </p>
       </div>
 
-      {courses.length === 0 ? (
+      {tracks.length === 0 ? (
         <div className="text-center py-16 mt-8 text-muted-foreground border border-dashed border-border rounded-lg max-w-4xl mx-auto w-full">
-          You haven&apos;t {isInstructor ? "been assigned" : "enrolled in"} any courses yet.
+          You haven&apos;t {isInstructor ? "been assigned" : "enrolled in"} any tracks yet.
         </div>
       ) : isInstructor ? (
         <div className="grid gap-6 gap-y-8 justify-items-center" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(350px, 1fr))" }}>
-          {instructorCourses.map((course) => {
-            const totalLessons = (course.modules || []).reduce(
+          {instructorCourses.map((track) => {
+            const totalLessons = (track.modules || []).reduce(
               (sum, m) => sum + (m._count?.lessons || 0),
               0
             );
             return (
               <MyCourseCard
-                key={course.id}
-                thumbnail={course.thumbnail || "/taco3.jpg"}
-                courseName={course.title}
-                instructor={course.instructor?.name || user?.name || "Instructor"}
-                category={course.category || "General"}
+                key={track.id}
+                thumbnail={track.thumbnail || "/taco3.jpg"}
+                courseName={track.title}
+                instructor={track.instructor?.name || user?.name || "Instructor"}
+                category={track.category || "General"}
                 progress={0}
                 totalLessons={totalLessons}
-                studentCount={course._count?.enrollments || 0}
-                statusBadge={course.status}
+                studentCount={track._count?.enrollments || 0}
+                statusBadge={track.status}
                 buttonLabel="Manage Content"
-                onContinue={() => router.push(`/dashboard/instructor/${course.id}`)}
+                onContinue={() => router.push(`/dashboard/instructor/${track.id}`)}
               />
             );
           })}
         </div>
       ) : (
         <div className="grid gap-6 gap-y-8 justify-items-center" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(350px, 1fr))" }}>
-          {studentCourses.map((course) => (
+          {studentCourses.map((track) => (
             <MyCourseCard
-              key={course.id}
-              thumbnail={course.thumbnail || "/taco3.jpg"}
-              courseName={course.title}
-              instructor={course.instructorName || "Instructor"}
-              category={course.category || "General"}
-              progress={course.progressPercentage || 0}
-              totalLessons={course.totalLessons || 0}
-              completedLessons={course.completedLessons || 0}
-              onContinue={() => router.push(`/dashboard/student/courses/${course.id}`)}
+              key={track.id}
+              thumbnail={track.thumbnail || "/taco3.jpg"}
+              courseName={track.title}
+              instructor={track.instructorName || "Instructor"}
+              category={track.category || "General"}
+              progress={track.progressPercentage || 0}
+              totalLessons={track.totalLessons || 0}
+              completedLessons={track.completedLessons || 0}
+              onContinue={() => router.push(`/dashboard/student/tracks/${track.id}`)}
             />
           ))}
         </div>
