@@ -40,6 +40,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
+
     const trackId =
       typeof body.trackId === "string" ? body.trackId.trim() : "";
 
@@ -69,10 +70,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Block direct enrollment for paid tracks
+    // Paid track must go through Stripe checkout
     if (track.price > 0) {
       return NextResponse.json(
-        { error: "This track requires payment. Please use the checkout process." },
+        {
+          error:
+            "This track requires payment. Please use the checkout process.",
+        },
         { status: 402 }
       );
     }
@@ -82,22 +86,41 @@ export async function POST(req: NextRequest) {
         userId: currentUser.id,
         trackId,
       },
-      select: {
-        id: true,
-      },
     });
 
+    // If enrollment already exists
     if (existingEnrollment) {
+      // If free track and enrollment is still pending/rejected, approve it
+      if (existingEnrollment.status !== "APPROVED") {
+        const updatedEnrollment = await db.enrollment.update({
+          where: {
+            id: existingEnrollment.id,
+          },
+          data: {
+            status: "APPROVED",
+          },
+        });
+
+        return NextResponse.json({
+          message: "Enrollment approved successfully",
+          enrollment: updatedEnrollment,
+          alreadyEnrolled: true,
+        });
+      }
+
       return NextResponse.json({
         message: "You are already enrolled in this track",
+        enrollment: existingEnrollment,
         alreadyEnrolled: true,
       });
     }
 
+    // Free track enrollment should be approved immediately
     const enrollment = await db.enrollment.create({
       data: {
         userId: currentUser.id,
         trackId,
+        status: "APPROVED",
       },
     });
 

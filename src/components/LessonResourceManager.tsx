@@ -23,7 +23,7 @@ export default function LessonResourceManager({
 }: LessonResourceManagerProps) {
   const [loading, setLoading] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  
+
   const [name, setName] = useState("");
   const [url, setUrl] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -48,7 +48,7 @@ export default function LessonResourceManager({
     setLoading(true);
 
     try {
-      let finalUrl = url;
+      let finalUrl = url.trim();
 
       if (uploadMode === "file" && file) {
         const formData = new FormData();
@@ -60,8 +60,8 @@ export default function LessonResourceManager({
         });
 
         if (!uploadRes.ok) {
-          const err = await uploadRes.json();
-          throw new Error(err.error || "File upload failed");
+          const err = await uploadRes.json().catch(() => null);
+          throw new Error(err?.error || "File upload failed");
         }
 
         const uploadData = await uploadRes.json();
@@ -73,18 +73,19 @@ export default function LessonResourceManager({
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name, url: finalUrl }),
+          body: JSON.stringify({ name: name.trim(), url: finalUrl }),
         }
       );
 
       if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Failed to add resource");
+        const err = await res.json().catch(() => null);
+        throw new Error(err?.error || "Failed to add resource");
       }
 
       setName("");
       setUrl("");
       setFile(null);
+      setUploadMode("url");
       onChanged();
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -98,7 +99,9 @@ export default function LessonResourceManager({
   };
 
   const handleDeleteResource = async (resourceId: string) => {
-    if (!confirm("Are you sure you want to delete this resource?")) return;
+    if (!window.confirm("Are you sure you want to delete this resource?")) {
+      return;
+    }
 
     setDeletingId(resourceId);
 
@@ -111,7 +114,8 @@ export default function LessonResourceManager({
       );
 
       if (!res.ok) {
-        throw new Error("Failed to delete resource");
+        const err = await res.json().catch(() => null);
+        throw new Error(err?.error || "Failed to delete resource");
       }
 
       onChanged();
@@ -141,7 +145,10 @@ export default function LessonResourceManager({
               className="flex items-center justify-between bg-muted/30 border border-border rounded-lg p-2 px-3"
             >
               <div className="flex items-center gap-2 overflow-hidden">
-                <LinkIcon size={14} className="text-muted-foreground shrink-0" />
+                <LinkIcon
+                  size={14}
+                  className="text-muted-foreground shrink-0"
+                />
                 <a
                   href={res.url}
                   target="_blank"
@@ -151,8 +158,10 @@ export default function LessonResourceManager({
                   {res.name}
                 </a>
               </div>
+
               <button
-                onClick={() => handleDeleteResource(res.id)}
+                type="button"
+                onClick={() => void handleDeleteResource(res.id)}
                 disabled={deletingId === res.id}
                 className="text-muted-foreground hover:text-red-500 p-1 rounded transition disabled:opacity-50"
                 title="Delete Material"
@@ -171,19 +180,28 @@ export default function LessonResourceManager({
       <div className="bg-muted/30 p-3 rounded-xl border border-border">
         <div className="flex gap-2 mb-3">
           <button
-            onClick={() => setUploadMode("url")}
+            type="button"
+            onClick={() => {
+              setUploadMode("url");
+              setFile(null);
+            }}
             className={`text-xs px-3 py-1.5 font-medium rounded-full transition ${
-               uploadMode === "url"
+              uploadMode === "url"
                 ? "bg-brand-primary/15 text-brand-primary"
                 : "bg-muted text-muted-foreground border border-border hover:bg-muted/80"
             }`}
           >
             Link URL
           </button>
+
           <button
-            onClick={() => setUploadMode("file")}
+            type="button"
+            onClick={() => {
+              setUploadMode("file");
+              setUrl("");
+            }}
             className={`text-xs px-3 py-1.5 font-medium rounded-full transition ${
-               uploadMode === "file"
+              uploadMode === "file"
                 ? "bg-brand-primary/15 text-brand-primary"
                 : "bg-muted text-muted-foreground border border-border hover:bg-muted/80"
             }`}
@@ -196,31 +214,40 @@ export default function LessonResourceManager({
           <input
             type="text"
             placeholder="Material name (e.g. Slides)"
-            value={name}
+            value={name ?? ""}
             onChange={(e) => setName(e.target.value)}
             className="flex-1 text-sm border border-border rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-brand-primary bg-background text-foreground"
           />
+
           {uploadMode === "url" ? (
             <input
+              key="url-input"
               type="text"
               placeholder="https://..."
-              value={url}
+              value={url ?? ""}
               onChange={(e) => setUrl(e.target.value)}
               className="flex-1 text-sm border border-border rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-brand-primary bg-background text-foreground"
             />
           ) : (
             <input
+              key="file-input"
               type="file"
               onChange={(e) => setFile(e.target.files?.[0] || null)}
               className="flex-1 text-sm border border-border rounded-lg px-3 py-1.5 outline-none focus:ring-2 focus:ring-brand-primary bg-background text-foreground"
             />
           )}
+
           <button
-            onClick={handleAddResource}
+            type="button"
+            onClick={() => void handleAddResource()}
             disabled={loading}
             className="bg-brand-primary text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-brand-primary/90 transition disabled:opacity-50 flex items-center justify-center gap-2"
           >
-            {loading ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
+            {loading ? (
+              <Loader2 size={14} className="animate-spin" />
+            ) : (
+              <Plus size={14} />
+            )}
             Add
           </button>
         </div>

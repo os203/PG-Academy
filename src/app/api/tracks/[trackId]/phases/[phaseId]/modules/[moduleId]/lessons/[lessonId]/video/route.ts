@@ -20,6 +20,7 @@ type RouteParams = {
 };
 
 const DEFAULT_MAX_UPLOAD_MB = 500;
+
 const DEFAULT_ALLOWED_TYPES = [
   "video/mp4",
   "video/webm",
@@ -32,12 +33,7 @@ function normalizePathForDb(filePath: string): string {
 
 function getFileExtension(fileName: string): string {
   const ext = path.extname(fileName || "").toLowerCase();
-
-  if (ext) {
-    return ext;
-  }
-
-  return ".mp4";
+  return ext || ".mp4";
 }
 
 function getAllowedTypes(): string[] {
@@ -55,8 +51,8 @@ function getAllowedTypes(): string[] {
 
 function getMaxUploadBytes(): number {
   const value = Number(process.env.VIDEO_MAX_UPLOAD_MB || DEFAULT_MAX_UPLOAD_MB);
-
-  const maxMb = Number.isFinite(value) && value > 0 ? value : DEFAULT_MAX_UPLOAD_MB;
+  const maxMb =
+    Number.isFinite(value) && value > 0 ? value : DEFAULT_MAX_UPLOAD_MB;
 
   return maxMb * 1024 * 1024;
 }
@@ -157,30 +153,34 @@ async function getAuthorizedLesson(
     };
   }
 
-  const track = await db.track.findFirst({
-    where:
-      decoded.role === "ADMIN"
-        ? {
-            id: trackId,
-          }
-        : {
-            id: trackId,
-            instructorId: decoded.userId,
-          },
-    include: {
-      phases: {
-        where: { id: phaseId },
-        include: {
-          modules: {
-            where: {
-              id: moduleId,
-            },
-            include: {
-              lessons: {
-                where: {
-                  id: lessonId,
+  const lesson = await db.lesson.findFirst({
+    where: {
+      id: lessonId,
+      moduleId,
+      module: {
+        id: moduleId,
+        phaseId,
+        phase: {
+          id: phaseId,
+          trackId,
+          track:
+            decoded.role === "ADMIN"
+              ? {
+                  id: trackId,
+                }
+              : {
+                  id: trackId,
+                  instructorId: decoded.userId,
                 },
-              },
+        },
+      },
+    },
+    include: {
+      module: {
+        include: {
+          phase: {
+            include: {
+              track: true,
             },
           },
         },
@@ -188,13 +188,21 @@ async function getAuthorizedLesson(
     },
   });
 
-  const lesson = track?.phases[0]?.modules[0]?.lessons[0];
-
-  if (!track || !lesson) {
+  if (!lesson) {
     return {
       ok: false as const,
       response: NextResponse.json(
-        { error: "Lesson not found or access denied" },
+        {
+          error: "Lesson not found or access denied",
+          debug: {
+            trackId,
+            phaseId,
+            moduleId,
+            lessonId,
+            userId: decoded.userId,
+            role: decoded.role,
+          },
+        },
         { status: 404 }
       ),
     };
@@ -204,7 +212,7 @@ async function getAuthorizedLesson(
     ok: true as const,
     userId: decoded.userId,
     role: decoded.role,
-    track,
+    track: lesson.module.phase.track,
     lesson,
   };
 }
@@ -216,7 +224,12 @@ export async function POST(
   const { trackId, phaseId, moduleId, lessonId } = await params;
 
   try {
-    const authResult = await getAuthorizedLesson(trackId, phaseId, moduleId, lessonId);
+    const authResult = await getAuthorizedLesson(
+      trackId,
+      phaseId,
+      moduleId,
+      lessonId
+    );
 
     if (!authResult.ok) {
       return authResult.response;
@@ -258,15 +271,29 @@ export async function POST(
     }
 
     const storageRoot = process.env.VIDEO_STORAGE_ROOT || "./private/videos";
+
     const originalsRoot =
       process.env.VIDEO_ORIGINALS_DIR || path.join(storageRoot, "originals");
-    const hlsRoot =
-      process.env.VIDEO_HLS_DIR || path.join(storageRoot, "hls");
+
+    const hlsRoot = process.env.VIDEO_HLS_DIR || path.join(storageRoot, "hls");
 
     const extension = getFileExtension(uploadedFile.name);
 
-    const originalDir = path.join(originalsRoot, phaseId, moduleId, lessonId);
-    const hlsOutputDir = path.join(hlsRoot, phaseId, moduleId, lessonId);
+    const originalDir = path.join(
+      originalsRoot,
+      trackId,
+      phaseId,
+      moduleId,
+      lessonId
+    );
+
+    const hlsOutputDir = path.join(
+      hlsRoot,
+      trackId,
+      phaseId,
+      moduleId,
+      lessonId
+    );
 
     await ensureDirectory(originalDir);
     await removeDirectoryIfExists(hlsOutputDir);

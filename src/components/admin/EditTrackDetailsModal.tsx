@@ -105,18 +105,18 @@ export default function EditTrackDetailsModal({
     try {
       const formData = new FormData();
       formData.append("file", file);
-      const res = await fetch("/api/uploads/track-thumbnail", {
-        method: "POST",
-        body: formData,
-      });
+     const res = await fetch("/api/upload", {
+  method: "POST",
+  body: formData,
+});
       const data = await res.json().catch(() => null);
       if (!res.ok) {
         alert(data?.error || "Failed to upload thumbnail");
         return;
       }
-      if (data?.file?.url) {
-        setThumbnail(data.file.url);
-      }
+     if (data?.url) {
+  setThumbnail(data.url);
+}
     } catch (error) {
       console.error(error);
       alert("An error occurred while uploading the thumbnail");
