@@ -32,25 +32,36 @@ import { useEffect, useState } from "react";
 
 type TrackStatus = "DRAFT" | "PUBLISHED";
 
+type CategoryValue =
+  | string
+  | {
+      id?: string;
+      name?: string;
+      slug?: string;
+    }
+  | null
+  | undefined;
+
 type DashboardCourse = Track & {
   status?: TrackStatus;
+  category?: CategoryValue;
   categoryId?: string | null;
   thumbnail?: string | null;
 };
 
 interface UploadResponse {
   message?: string;
+  url?: string;
+  name?: string;
   file?: {
-    storageKey: string;
-    url: string;
-    contentType: string;
-    size: number;
-    filename: string;
+    storageKey?: string;
+    url?: string;
+    contentType?: string;
+    size?: number;
+    filename?: string;
   };
   error?: string;
 }
-
-
 
 const containerVariants: Variants = {
   hidden: { opacity: 0 },
@@ -92,25 +103,51 @@ const instructorNotifications: NotificationItem[] = [
   },
 ];
 
+function getCategoryName(category: CategoryValue): string {
+  if (typeof category === "string") {
+    return category || "Uncategorized";
+  }
+
+  return category?.name || "Uncategorized";
+}
+
+function getCategoryId(
+  categoryId: unknown,
+  category: CategoryValue
+): string | null {
+  if (typeof categoryId === "string") {
+    return categoryId;
+  }
+
+  if (typeof category === "object" && category?.id) {
+    return category.id;
+  }
+
+  return null;
+}
+
 export default function InstructorDashboard() {
   const { user, isLoading, logout } = useAuth();
   const router = useRouter();
 
   const [tracks, setCourses] = useState<DashboardCourse[]>([]);
   const [loadingCourses, setLoadingCourses] = useState(true);
-  const [editingCourse, setEditingCourse] = useState<DashboardCourse | null>(null);
+  const [editingCourse, setEditingCourse] = useState<DashboardCourse | null>(
+    null
+  );
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
   const [status, setStatus] = useState<TrackStatus>("DRAFT");
   const [categoryId, setCategoryId] = useState("");
-  const [categories, setCategories] = useState<{id: string, name: string}[]>([]);
+  const [categories, setCategories] = useState<{ id: string; name: string }[]>(
+    []
+  );
   const [thumbnail, setThumbnail] = useState("");
 
   const [uploadingThumbnail, setUploadingThumbnail] = useState(false);
 
-  // Real stats from API
   const [realStats, setRealStats] = useState<{
     totalStudents: number;
     totalRevenue: number;
@@ -140,12 +177,18 @@ export default function InstructorDashboard() {
         const normalizedCourses: DashboardCourse[] = Array.isArray(data?.tracks)
           ? data.tracks.map((track: DashboardCourse) => ({
               ...track,
+
+              category: getCategoryName(track.category),
+
+              categoryId: getCategoryId(track.categoryId, track.category),
+
               status:
                 track.status === "PUBLISHED" || track.status === "DRAFT"
                   ? track.status
                   : "DRAFT",
-              categoryId: typeof track.categoryId === "string" ? track.categoryId : null,
-              thumbnail: typeof track.thumbnail === "string" ? track.thumbnail : null,
+
+              thumbnail:
+                typeof track.thumbnail === "string" ? track.thumbnail : null,
             }))
           : [];
 
@@ -170,16 +213,23 @@ export default function InstructorDashboard() {
   useEffect(() => {
     if (user) {
       void fetchCourses();
-      // Fetch categories
+
       fetch("/api/categories")
-        .then((r) => r.ok ? r.json() : null)
-        .then((data) => { if (data?.categories) setCategories(data.categories); })
+        .then((response) => (response.ok ? response.json() : null))
+        .then((data) => {
+          if (data?.categories) {
+            setCategories(data.categories);
+          }
+        })
         .catch(console.error);
-        
-      // Fetch real stats
+
       fetch("/api/instructor/stats")
-        .then((r) => r.ok ? r.json() : null)
-        .then((data) => { if (data) setRealStats(data); })
+        .then((response) => (response.ok ? response.json() : null))
+        .then((data) => {
+          if (data) {
+            setRealStats(data);
+          }
+        })
         .catch(console.error);
     }
   }, [user]);
@@ -188,6 +238,7 @@ export default function InstructorDashboard() {
     e: React.ChangeEvent<HTMLInputElement>
   ): Promise<void> => {
     const file = e.target.files?.[0];
+
     if (!file) return;
 
     setUploadingThumbnail(true);
@@ -196,7 +247,7 @@ export default function InstructorDashboard() {
       const formData = new FormData();
       formData.append("file", file);
 
-      const res = await fetch("/api/uploads/track-thumbnail", {
+      const res = await fetch("/api/upload", {
         method: "POST",
         body: formData,
       });
@@ -208,8 +259,12 @@ export default function InstructorDashboard() {
         return;
       }
 
-      if (data?.file?.url) {
-        setThumbnail(data.file.url);
+      const uploadedUrl = data?.url || data?.file?.url;
+
+      if (uploadedUrl) {
+        setThumbnail(uploadedUrl);
+      } else {
+        alert("Upload succeeded but no image URL was returned");
       }
     } catch (error) {
       console.error(error);
@@ -224,10 +279,11 @@ export default function InstructorDashboard() {
     setThumbnail("");
   };
 
-
-
-  const handleEditCourse = async (e: React.FormEvent): Promise<void> => {
+  const handleEditCourse = async (
+    e: React.FormEvent
+  ): Promise<void> => {
     e.preventDefault();
+
     if (!editingCourse) return;
 
     try {
@@ -261,10 +317,12 @@ export default function InstructorDashboard() {
     const confirmed = window.confirm(
       "Are you sure you want to delete this track?"
     );
+
     if (!confirmed) return;
 
     try {
       const res = await fetch(`/api/tracks/${id}`, { method: "DELETE" });
+
       if (res.ok) {
         await fetchCourses();
       } else {
@@ -276,8 +334,6 @@ export default function InstructorDashboard() {
       alert("An error occurred while deleting the track");
     }
   };
-
-
 
   const openEditModal = (track: DashboardCourse): void => {
     setEditingCourse(track);
@@ -304,10 +360,30 @@ export default function InstructorDashboard() {
   }
 
   const stats = [
-    { title: "Total Students", value: realStats ? realStats.totalStudents.toLocaleString() : "—", icon: Users, trend: "Across all tracks" },
-    { title: "Avg. Completion", value: realStats ? `${realStats.avgCompletion}%` : "—", icon: BookOpen, trend: "Lesson completion" },
-    { title: "Total Revenue", value: realStats ? `$${realStats.totalRevenue.toLocaleString()}` : "—", icon: Wallet, trend: "Completed payments" },
-    { title: "Unanswered Q&A", value: realStats ? realStats.unansweredQA.toString() : "—", icon: Activity, trend: "Needs reply" },
+    {
+      title: "Total Students",
+      value: realStats ? realStats.totalStudents.toLocaleString() : "—",
+      icon: Users,
+      trend: "Across all tracks",
+    },
+    {
+      title: "Avg. Completion",
+      value: realStats ? `${realStats.avgCompletion}%` : "—",
+      icon: BookOpen,
+      trend: "Lesson completion",
+    },
+    {
+      title: "Total Revenue",
+      value: realStats ? `$${realStats.totalRevenue.toLocaleString()}` : "—",
+      icon: Wallet,
+      trend: "Completed payments",
+    },
+    {
+      title: "Unanswered Q&A",
+      value: realStats ? realStats.unansweredQA.toString() : "—",
+      icon: Activity,
+      trend: "Needs reply",
+    },
   ];
 
   return (
@@ -342,23 +418,29 @@ export default function InstructorDashboard() {
 
             <Button
               variant="outline"
-              onClick={() => router.push("/dashboard/instructor/send-notification")}
+              onClick={() =>
+                router.push("/dashboard/instructor/send-notification")
+              }
               className="hidden sm:flex items-center gap-2"
             >
               <Megaphone className="h-4 w-4" /> Announce
             </Button>
-
           </div>
         </motion.div>
 
-        <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <motion.div
+          variants={itemVariants}
+          className="grid grid-cols-1 md:grid-cols-3 gap-4"
+        >
           <div
             onClick={() => router.push("/dashboard/instructor/qa")}
             className="flex items-center justify-between p-4 rounded-xl border border-amber-500/20 bg-amber-500/10 text-amber-600 dark:text-amber-400 cursor-pointer hover:bg-amber-500/20 transition-colors group"
           >
             <div className="flex items-center gap-3">
               <MessageSquare className="h-5 w-5 shrink-0" />
-              <div className="text-sm font-medium">{realStats ? realStats.unansweredQA : 0} unanswered Q&amp;A</div>
+              <div className="text-sm font-medium">
+                {realStats ? realStats.unansweredQA : 0} unanswered Q&amp;A
+              </div>
             </div>
             <ArrowRight className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity" />
           </div>
@@ -369,7 +451,9 @@ export default function InstructorDashboard() {
           >
             <div className="flex items-center gap-3">
               <CheckSquare className="h-5 w-5 shrink-0" />
-              <div className="text-sm font-medium">5 pending assignments</div>
+              <div className="text-sm font-medium">
+                5 pending assignments
+              </div>
             </div>
             <ArrowRight className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity" />
           </div>
@@ -435,15 +519,10 @@ export default function InstructorDashboard() {
               <Card className="border-brand-primary/50 shadow-2xl relative overflow-hidden bg-background">
                 <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-brand-primary to-brand-accent" />
                 <CardHeader>
-                  <CardTitle>
-                    Edit Track
-                  </CardTitle>
+                  <CardTitle>Edit Track</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <form
-                    onSubmit={handleEditCourse}
-                    className="space-y-4"
-                  >
+                  <form onSubmit={handleEditCourse} className="space-y-4">
                     <div className="space-y-2">
                       <label className="text-sm font-medium text-foreground">
                         Track Title
@@ -510,7 +589,9 @@ export default function InstructorDashboard() {
                       </label>
                       <select
                         value={status}
-                        onChange={(e) => setStatus(e.target.value as TrackStatus)}
+                        onChange={(e) =>
+                          setStatus(e.target.value as TrackStatus)
+                        }
                         className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
                       >
                         <option value="DRAFT">Draft</option>
@@ -583,7 +664,11 @@ export default function InstructorDashboard() {
                     </div>
 
                     <div className="flex justify-end gap-3 pt-4">
-                      <Button type="button" variant="outline" onClick={resetForm}>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={resetForm}
+                      >
                         Cancel
                       </Button>
 
@@ -638,7 +723,9 @@ export default function InstructorDashboard() {
             <div className="flex justify-start">
               <NotificationList
                 notifications={instructorNotifications}
-                onViewAll={() => router.push("/dashboard/instructor/notifications")}
+                onViewAll={() =>
+                  router.push("/dashboard/instructor/notifications")
+                }
               />
             </div>
           </div>

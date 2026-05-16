@@ -12,14 +12,12 @@ import {
   FolderTree,
   Eye,
   EyeOff,
+  Upload,
+  CheckCircle2,
 } from "lucide-react";
 import LessonQuizManager, { QuizMeta } from "@/components/LessonQuizManager";
 import LessonResourceManager from "@/components/LessonResourceManager";
 import EditTrackDetailsModal from "@/components/admin/EditTrackDetailsModal";
-import dynamic from 'next/dynamic';
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const ReactPlayer = dynamic(() => import('react-player'), { ssr: false }) as any;
 
 interface Lesson {
   id: string;
@@ -114,6 +112,18 @@ interface ApiMessageResponse {
   details?: string;
 }
 
+interface VideoUploadResponse extends ApiMessageResponse {
+  videoAsset?: {
+    id: string;
+    lessonId: string;
+    originalPath?: string | null;
+    hlsManifestPath?: string | null;
+    duration?: number | null;
+    status?: "PROCESSING" | "READY" | "FAILED";
+    errorMessage?: string | null;
+  };
+}
+
 async function readJsonSafely<T>(res: Response): Promise<T | null> {
   const contentType = res.headers.get("content-type") || "";
   const text = await res.text();
@@ -142,7 +152,9 @@ export default function InstructorTrackManager({
   const [phaseDrafts, setPhaseDrafts] = useState<Record<string, string>>({});
   const [savingPhaseId, setSavingPhaseId] = useState<string | null>(null);
 
-  const [newModuleInputs, setNewModuleInputs] = useState<Record<string, string>>({});
+  const [newModuleInputs, setNewModuleInputs] = useState<
+    Record<string, string>
+  >({});
   const [addingModuleFor, setAddingModuleFor] = useState<string | null>(null);
 
   const [newLessonInputs, setNewLessonInputs] = useState<
@@ -161,6 +173,9 @@ export default function InstructorTrackManager({
   const [savingLessonId, setSavingLessonId] = useState<string | null>(null);
   const [deletingLessonId, setDeletingLessonId] = useState<string | null>(null);
   const [showEditDetailsModal, setShowEditDetailsModal] = useState(false);
+  const [uploadingVideoLessonId, setUploadingVideoLessonId] = useState<
+    string | null
+  >(null);
 
   const fetchCourseData = useCallback(async (): Promise<void> => {
     try {
@@ -200,7 +215,10 @@ export default function InstructorTrackManager({
                           title: lesson.title ?? "",
                           notes: lesson.notes ?? null,
                           videoPath: lesson.videoPath ?? null,
-                          order: typeof lesson.order === "number" ? lesson.order : 0,
+                          order:
+                            typeof lesson.order === "number"
+                              ? lesson.order
+                              : 0,
                           isPublished: !!lesson.isPublished,
                           quizzes: Array.isArray(lesson.quizzes)
                             ? lesson.quizzes.map((quiz): QuizMeta => ({
@@ -218,11 +236,17 @@ export default function InstructorTrackManager({
                               }))
                             : [],
                           resources: Array.isArray(lesson.resources)
-                            ? lesson.resources.map((res: { id?: string; name?: string; url?: string }) => ({
-                                id: res.id ?? "",
-                                name: res.name ?? "",
-                                url: res.url ?? "",
-                              }))
+                            ? lesson.resources.map(
+                                (res: {
+                                  id?: string;
+                                  name?: string;
+                                  url?: string;
+                                }) => ({
+                                  id: res.id ?? "",
+                                  name: res.name ?? "",
+                                  url: res.url ?? "",
+                                })
+                              )
                             : [],
                         }))
                       : [],
@@ -278,7 +302,9 @@ export default function InstructorTrackManager({
   };
 
   const deletePhase = async (phaseId: string): Promise<void> => {
-    const confirmed = window.confirm("Are you sure you want to delete this phase?");
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this phase?"
+    );
     if (!confirmed) return;
 
     try {
@@ -338,6 +364,7 @@ export default function InstructorTrackManager({
 
   const addModule = async (phaseId: string): Promise<void> => {
     const title = newModuleInputs[phaseId] || "";
+
     if (!title.trim()) {
       alert("Module title is required");
       return;
@@ -346,11 +373,14 @@ export default function InstructorTrackManager({
     setAddingModuleFor(phaseId);
 
     try {
-      const res = await fetch(`/api/tracks/${trackId}/phases/${phaseId}/modules`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: title.trim() }),
-      });
+      const res = await fetch(
+        `/api/tracks/${trackId}/phases/${phaseId}/modules`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ title: title.trim() }),
+        }
+      );
 
       const data = await readJsonSafely<ApiMessageResponse>(res);
 
@@ -369,14 +399,22 @@ export default function InstructorTrackManager({
     }
   };
 
-  const deleteModule = async (phaseId: string, moduleId: string): Promise<void> => {
-    const confirmed = window.confirm("Are you sure you want to delete this module?");
+  const deleteModule = async (
+    phaseId: string,
+    moduleId: string
+  ): Promise<void> => {
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this module?"
+    );
     if (!confirmed) return;
 
     try {
-      const res = await fetch(`/api/tracks/${trackId}/phases/${phaseId}/modules/${moduleId}`, {
-        method: "DELETE",
-      });
+      const res = await fetch(
+        `/api/tracks/${trackId}/phases/${phaseId}/modules/${moduleId}`,
+        {
+          method: "DELETE",
+        }
+      );
 
       const data = await readJsonSafely<ApiMessageResponse>(res);
 
@@ -394,7 +432,10 @@ export default function InstructorTrackManager({
     }
   };
 
-  const saveModuleEdit = async (phaseId: string, moduleId: string): Promise<void> => {
+  const saveModuleEdit = async (
+    phaseId: string,
+    moduleId: string
+  ): Promise<void> => {
     const draftTitle = moduleDrafts[moduleId]?.trim() || "";
 
     if (!draftTitle) {
@@ -405,11 +446,14 @@ export default function InstructorTrackManager({
     setSavingModuleId(moduleId);
 
     try {
-      const res = await fetch(`/api/tracks/${trackId}/phases/${phaseId}/modules/${moduleId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: draftTitle }),
-      });
+      const res = await fetch(
+        `/api/tracks/${trackId}/phases/${phaseId}/modules/${moduleId}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ title: draftTitle }),
+        }
+      );
 
       const data = await readJsonSafely<ApiMessageResponse>(res);
 
@@ -428,7 +472,11 @@ export default function InstructorTrackManager({
     }
   };
 
-  const toggleModulePublish = async (phaseId: string, moduleId: string, currentStatus: boolean) => {
+  const toggleModulePublish = async (
+    phaseId: string,
+    moduleId: string,
+    currentStatus: boolean
+  ): Promise<void> => {
     try {
       const res = await fetch(
         `/api/tracks/${trackId}/phases/${phaseId}/modules/${moduleId}`,
@@ -440,6 +488,7 @@ export default function InstructorTrackManager({
       );
 
       const data = await readJsonSafely<ApiMessageResponse>(res);
+
       if (!res.ok) {
         alert(data?.error || "Failed to update module status");
         return;
@@ -452,7 +501,10 @@ export default function InstructorTrackManager({
     }
   };
 
-  const addLesson = async (phaseId: string, moduleId: string): Promise<void> => {
+  const addLesson = async (
+    phaseId: string,
+    moduleId: string
+  ): Promise<void> => {
     const current: LessonFormState = newLessonInputs[moduleId] || {
       title: "",
       notes: "",
@@ -546,7 +598,12 @@ export default function InstructorTrackManager({
     }
   };
 
-  const toggleLessonPublish = async (phaseId: string, moduleId: string, lessonId: string, currentStatus: boolean) => {
+  const toggleLessonPublish = async (
+    phaseId: string,
+    moduleId: string,
+    lessonId: string,
+    currentStatus: boolean
+  ): Promise<void> => {
     try {
       const res = await fetch(
         `/api/tracks/${trackId}/phases/${phaseId}/modules/${moduleId}/lessons/${lessonId}`,
@@ -558,6 +615,7 @@ export default function InstructorTrackManager({
       );
 
       const data = await readJsonSafely<ApiMessageResponse>(res);
+
       if (!res.ok) {
         alert(data?.error || "Failed to update lesson status");
         return;
@@ -575,7 +633,9 @@ export default function InstructorTrackManager({
     moduleId: string,
     lessonId: string
   ): Promise<void> => {
-    const confirmed = window.confirm("Are you sure you want to delete this lesson?");
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this lesson?"
+    );
     if (!confirmed) return;
 
     setDeletingLessonId(lessonId);
@@ -603,6 +663,45 @@ export default function InstructorTrackManager({
       alert("An error occurred while deleting the lesson");
     } finally {
       setDeletingLessonId(null);
+    }
+  };
+
+  const handleLessonVideoUpload = async (
+    phaseId: string,
+    moduleId: string,
+    lessonId: string,
+    file: File | null
+  ): Promise<void> => {
+    if (!file) return;
+
+    setUploadingVideoLessonId(lessonId);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch(
+        `/api/tracks/${trackId}/phases/${phaseId}/modules/${moduleId}/lessons/${lessonId}/video`,
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
+
+      const data = await readJsonSafely<VideoUploadResponse>(res);
+
+      if (!res.ok) {
+        alert(data?.error || "Failed to upload lesson video");
+        return;
+      }
+
+      alert("Video uploaded and converted successfully");
+      await fetchCourseData();
+    } catch (error) {
+      console.error(error);
+      alert("An error occurred while uploading the lesson video");
+    } finally {
+      setUploadingVideoLessonId(null);
     }
   };
 
@@ -647,7 +746,9 @@ export default function InstructorTrackManager({
               {track.description || "No description for this track"}
             </p>
           </div>
+
           <button
+            type="button"
             onClick={() => setShowEditDetailsModal(true)}
             className="shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white text-sm font-semibold transition-all border border-white/20"
           >
@@ -663,13 +764,16 @@ export default function InstructorTrackManager({
             <h3 className="font-bold mb-4 text-foreground flex items-center gap-2">
               <Plus size={18} className="text-brand-primary" /> Add New Phase
             </h3>
+
             <input
               value={newPhaseTitle}
               onChange={(e) => setNewPhaseTitle(e.target.value)}
               className="w-full border border-border rounded-xl px-4 py-3 mb-3 outline-none focus:ring-2 focus:ring-brand-primary text-foreground placeholder:text-muted-foreground bg-background"
               placeholder="Phase title..."
             />
+
             <button
+              type="button"
               onClick={() => void addPhase()}
               disabled={addingPhase}
               className="w-full bg-brand-primary text-white font-bold py-3 rounded-xl hover:bg-brand-primary/90 transition-all disabled:opacity-70"
@@ -687,30 +791,43 @@ export default function InstructorTrackManager({
 
           {normalizedPhases.length > 0 ? (
             normalizedPhases.map((phase, phaseIndex) => (
-              <div key={phase.id} className="bg-card border border-border rounded-2xl p-6 shadow-sm space-y-6">
+              <div
+                key={phase.id}
+                className="bg-card border border-border rounded-2xl p-6 shadow-sm space-y-6"
+              >
                 <div className="flex justify-between items-start gap-4 pb-4 border-b border-border">
                   <div className="flex items-start gap-4 flex-1">
                     <div className="flex items-center justify-center bg-brand-primary/10 text-brand-primary rounded-xl h-10 w-10 shrink-0 font-black">
                       P{phaseIndex + 1}
                     </div>
+
                     <div className="flex-1">
                       {editingPhaseId === phase.id ? (
                         <div className="space-y-3 mt-1">
                           <input
                             value={phaseDrafts[phase.id] || ""}
-                            onChange={(e) => setPhaseDrafts((prev) => ({ ...prev, [phase.id]: e.target.value }))}
+                            onChange={(e) =>
+                              setPhaseDrafts((prev) => ({
+                                ...prev,
+                                [phase.id]: e.target.value,
+                              }))
+                            }
                             className="w-full border border-border rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-brand-primary bg-background text-foreground"
                             placeholder="Phase title"
                           />
+
                           <div className="flex items-center gap-2">
                             <button
+                              type="button"
                               onClick={() => void savePhaseEdit(phase.id)}
                               disabled={savingPhaseId === phase.id}
                               className="inline-flex items-center gap-2 bg-brand-primary text-white px-4 py-2 rounded-xl font-bold hover:bg-brand-primary/90 transition disabled:opacity-70 text-sm"
                             >
                               {savingPhaseId === phase.id ? "Saving..." : "Save"}
                             </button>
+
                             <button
+                              type="button"
                               onClick={() => setEditingPhaseId(null)}
                               className="inline-flex items-center gap-2 bg-muted text-muted-foreground px-4 py-2 rounded-xl font-bold hover:bg-muted/80 transition text-sm"
                             >
@@ -720,25 +837,36 @@ export default function InstructorTrackManager({
                         </div>
                       ) : (
                         <div>
-                          <h3 className="font-bold text-lg text-foreground mt-1">{phase.title}</h3>
-                          <p className="text-sm text-muted-foreground mt-1">Modules: {phase.modules.length}</p>
+                          <h3 className="font-bold text-lg text-foreground mt-1">
+                            {phase.title}
+                          </h3>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            Modules: {phase.modules.length}
+                          </p>
                         </div>
                       )}
                     </div>
                   </div>
+
                   {editingPhaseId !== phase.id && (
                     <div className="flex items-center gap-2 shrink-0">
                       <button
+                        type="button"
                         onClick={() => {
                           setEditingPhaseId(phase.id);
-                          setPhaseDrafts((prev) => ({ ...prev, [phase.id]: phase.title }));
+                          setPhaseDrafts((prev) => ({
+                            ...prev,
+                            [phase.id]: phase.title,
+                          }));
                         }}
                         className="p-2 text-muted-foreground hover:text-brand-primary transition-colors"
                         title="Edit Phase"
                       >
                         <Pencil size={18} />
                       </button>
+
                       <button
+                        type="button"
                         onClick={() => void deletePhase(phase.id)}
                         className="p-2 text-muted-foreground hover:text-red-500 transition-colors"
                         title="Delete Phase"
@@ -749,32 +877,51 @@ export default function InstructorTrackManager({
                   )}
                 </div>
 
-                {/* Modules List */}
                 <div className="space-y-4 pl-4 border-l-2 border-brand-primary/20">
                   {phase.modules.length > 0 ? (
                     phase.modules.map((module, moduleIndex) => (
-                      <div key={module.id} className="bg-muted/20 border border-border rounded-xl p-5 space-y-4">
+                      <div
+                        key={module.id}
+                        className="bg-muted/20 border border-border rounded-xl p-5 space-y-4"
+                      >
                         <div className="flex justify-between items-start gap-4">
                           <div className="flex items-start gap-3 flex-1">
-                            <FolderTree size={18} className="text-muted-foreground mt-1 shrink-0" />
+                            <FolderTree
+                              size={18}
+                              className="text-muted-foreground mt-1 shrink-0"
+                            />
+
                             <div className="flex-1">
                               {editingModuleId === module.id ? (
                                 <div className="space-y-3">
                                   <input
                                     value={moduleDrafts[module.id] || ""}
-                                    onChange={(e) => setModuleDrafts((prev) => ({ ...prev, [module.id]: e.target.value }))}
+                                    onChange={(e) =>
+                                      setModuleDrafts((prev) => ({
+                                        ...prev,
+                                        [module.id]: e.target.value,
+                                      }))
+                                    }
                                     className="w-full border border-border rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-brand-primary bg-background text-foreground"
                                     placeholder="Module title"
                                   />
+
                                   <div className="flex items-center gap-2">
                                     <button
-                                      onClick={() => void saveModuleEdit(phase.id, module.id)}
+                                      type="button"
+                                      onClick={() =>
+                                        void saveModuleEdit(phase.id, module.id)
+                                      }
                                       disabled={savingModuleId === module.id}
                                       className="inline-flex items-center gap-2 bg-brand-primary text-white px-3 py-1.5 rounded-lg font-bold hover:bg-brand-primary/90 transition disabled:opacity-70 text-xs"
                                     >
-                                      {savingModuleId === module.id ? "Saving..." : "Save"}
+                                      {savingModuleId === module.id
+                                        ? "Saving..."
+                                        : "Save"}
                                     </button>
+
                                     <button
+                                      type="button"
                                       onClick={() => setEditingModuleId(null)}
                                       className="inline-flex items-center gap-2 bg-muted text-muted-foreground px-3 py-1.5 rounded-lg font-bold hover:bg-muted/80 transition text-xs"
                                     >
@@ -787,33 +934,65 @@ export default function InstructorTrackManager({
                                   <h4 className="font-bold text-foreground">
                                     M{moduleIndex + 1}: {module.title}
                                   </h4>
-                                  <p className="text-xs text-muted-foreground mt-0.5">Lessons: {module.lessons.length}</p>
+                                  <p className="text-xs text-muted-foreground mt-0.5">
+                                    Lessons: {module.lessons.length}
+                                  </p>
                                 </div>
                               )}
                             </div>
                           </div>
+
                           {editingModuleId !== module.id && (
                             <div className="flex items-center gap-1 shrink-0">
                               <button
-                                onClick={() => void toggleModulePublish(phase.id, module.id, module.isPublished)}
-                                className={`p-1.5 transition-colors flex items-center gap-1 rounded-md text-xs font-semibold ${module.isPublished ? 'text-emerald-600 hover:bg-emerald-50' : 'text-amber-600 hover:bg-amber-50'}`}
-                                title={module.isPublished ? "Published" : "Draft"}
+                                type="button"
+                                onClick={() =>
+                                  void toggleModulePublish(
+                                    phase.id,
+                                    module.id,
+                                    module.isPublished
+                                  )
+                                }
+                                className={`p-1.5 transition-colors flex items-center gap-1 rounded-md text-xs font-semibold ${
+                                  module.isPublished
+                                    ? "text-emerald-600 hover:bg-emerald-50"
+                                    : "text-amber-600 hover:bg-amber-50"
+                                }`}
+                                title={
+                                  module.isPublished ? "Published" : "Draft"
+                                }
                               >
-                                {module.isPublished ? <Eye size={16} /> : <EyeOff size={16} />}
-                                <span className="hidden sm:inline">{module.isPublished ? "Published" : "Draft"}</span>
+                                {module.isPublished ? (
+                                  <Eye size={16} />
+                                ) : (
+                                  <EyeOff size={16} />
+                                )}
+                                <span className="hidden sm:inline">
+                                  {module.isPublished ? "Published" : "Draft"}
+                                </span>
                               </button>
-                              <div className="w-px h-4 bg-border mx-1"></div>
+
+                              <div className="w-px h-4 bg-border mx-1" />
+
                               <button
+                                type="button"
                                 onClick={() => {
                                   setEditingModuleId(module.id);
-                                  setModuleDrafts((prev) => ({ ...prev, [module.id]: module.title }));
+                                  setModuleDrafts((prev) => ({
+                                    ...prev,
+                                    [module.id]: module.title,
+                                  }));
                                 }}
                                 className="p-1.5 text-muted-foreground hover:text-brand-primary transition-colors"
                               >
                                 <Pencil size={16} />
                               </button>
+
                               <button
-                                onClick={() => void deleteModule(phase.id, module.id)}
+                                type="button"
+                                onClick={() =>
+                                  void deleteModule(phase.id, module.id)
+                                }
                                 className="p-1.5 text-muted-foreground hover:text-red-500 transition-colors"
                               >
                                 <Trash2 size={16} />
@@ -822,91 +1001,94 @@ export default function InstructorTrackManager({
                           )}
                         </div>
 
-                        {/* Lessons List */}
                         <div className="space-y-3">
                           {module.lessons.length > 0 ? (
                             module.lessons.map((lesson, lessonIndex) => {
-                              const lessonIsEditing = editingLessonId === lesson.id;
-                              const lessonDraft = lessonEditInputs[lesson.id] || {
+                              const lessonIsEditing =
+                                editingLessonId === lesson.id;
+
+                              const lessonDraft = lessonEditInputs[
+                                lesson.id
+                              ] || {
                                 title: lesson.title,
                                 notes: lesson.notes || "",
                                 videoPath: lesson.videoPath || "",
                               };
 
                               return (
-                                <div key={lesson.id} className="border border-border/50 rounded-lg p-4 bg-background shadow-sm space-y-4">
+                                <div
+                                  key={lesson.id}
+                                  className="border border-border/50 rounded-lg p-4 bg-background shadow-sm space-y-4"
+                                >
                                   {lessonIsEditing ? (
                                     <div className="space-y-3">
                                       <input
                                         value={lessonDraft.title}
-                                        onChange={(e) => setLessonEditInputs((prev) => ({
-                                          ...prev,
-                                          [lesson.id]: { ...prev[lesson.id], title: e.target.value }
-                                        }))}
+                                        onChange={(e) =>
+                                          setLessonEditInputs((prev) => ({
+                                            ...prev,
+                                            [lesson.id]: {
+                                              ...prev[lesson.id],
+                                              title: e.target.value,
+                                            },
+                                          }))
+                                        }
                                         placeholder="Lesson title"
                                         className="w-full border border-border rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-brand-primary bg-background text-sm"
                                       />
+
                                       <textarea
                                         value={lessonDraft.notes}
-                                        onChange={(e) => setLessonEditInputs((prev) => ({
-                                          ...prev,
-                                          [lesson.id]: { ...prev[lesson.id], notes: e.target.value }
-                                        }))}
+                                        onChange={(e) =>
+                                          setLessonEditInputs((prev) => ({
+                                            ...prev,
+                                            [lesson.id]: {
+                                              ...prev[lesson.id],
+                                              notes: e.target.value,
+                                            },
+                                          }))
+                                        }
                                         placeholder="Notes"
                                         rows={2}
                                         className="w-full border border-border rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-brand-primary resize-none bg-background text-sm"
                                       />
+
                                       <div className="space-y-1">
-                                        <label className="text-xs font-semibold text-muted-foreground">Video</label>
-                                        {lessonDraft.videoPath ? (
-                                          <div className="flex items-center gap-2 bg-muted/30 border border-border rounded-lg px-3 py-2">
-                                            <Video size={14} className="text-brand-primary shrink-0" />
-                                            <span className="text-xs text-brand-primary font-medium truncate flex-1">{lessonDraft.videoPath.split('/').pop()}</span>
-                                            <button type="button" onClick={() => setLessonEditInputs((prev) => ({
-                                              ...prev, [lesson.id]: { ...prev[lesson.id], videoPath: "" }
-                                            }))} className="text-red-400 hover:text-red-500 text-xs">Remove</button>
-                                          </div>
-                                        ) : (
-                                          <div className="flex items-center gap-2">
-                                            <label className="flex-1 cursor-pointer border border-dashed border-border rounded-lg px-3 py-2 text-center hover:border-brand-primary/50 transition">
-                                              <input type="file" accept="video/*" className="hidden" onChange={async (e) => {
-                                                const f = e.target.files?.[0];
-                                                if (!f) return;
-                                                const fd = new FormData();
-                                                fd.append("file", f);
-                                                try {
-                                                  const uploadRes = await fetch("/api/upload", { method: "POST", body: fd });
-                                                  if (!uploadRes.ok) throw new Error("Upload failed");
-                                                  const data = await uploadRes.json();
-                                                  setLessonEditInputs((prev) => ({
-                                                    ...prev, [lesson.id]: { ...prev[lesson.id], videoPath: data.url }
-                                                  }));
-                                                } catch { alert("Video upload failed"); }
-                                              }} />
-                                              <span className="text-xs text-muted-foreground">📁 Click to upload video</span>
-                                            </label>
-                                            <span className="text-xs text-muted-foreground">or</span>
-                                            <input
-                                              value={lessonDraft.videoPath}
-                                              onChange={(e) => setLessonEditInputs((prev) => ({
-                                                ...prev, [lesson.id]: { ...prev[lesson.id], videoPath: e.target.value }
-                                              }))}
-                                              placeholder="Paste URL..."
-                                              className="flex-1 border border-border rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-brand-primary bg-background text-xs"
-                                            />
-                                          </div>
-                                        )}
+                                        <label className="text-xs font-semibold text-muted-foreground">
+                                          Video
+                                        </label>
+
+                                        <div className="text-xs text-muted-foreground bg-muted/30 border border-border rounded-lg px-3 py-2">
+                                          Lesson videos should be uploaded from
+                                          the dedicated Upload Video button
+                                          outside edit mode. This keeps videos
+                                          private and converts them to HLS.
+                                        </div>
                                       </div>
+
                                       <div className="flex items-center gap-2">
                                         <button
-                                          onClick={() => void saveLessonEdit(phase.id, module.id, lesson.id)}
+                                          type="button"
+                                          onClick={() =>
+                                            void saveLessonEdit(
+                                              phase.id,
+                                              module.id,
+                                              lesson.id
+                                            )
+                                          }
                                           disabled={savingLessonId === lesson.id}
                                           className="bg-brand-primary text-white px-3 py-1.5 rounded-md font-bold hover:bg-brand-primary/90 text-xs"
                                         >
-                                          {savingLessonId === lesson.id ? "Saving..." : "Save"}
+                                          {savingLessonId === lesson.id
+                                            ? "Saving..."
+                                            : "Save"}
                                         </button>
+
                                         <button
-                                          onClick={() => setEditingLessonId(null)}
+                                          type="button"
+                                          onClick={() =>
+                                            setEditingLessonId(null)
+                                          }
                                           className="bg-muted text-muted-foreground px-3 py-1.5 rounded-md font-bold hover:bg-muted/80 text-xs"
                                         >
                                           Cancel
@@ -920,64 +1102,155 @@ export default function InstructorTrackManager({
                                           <div className="bg-brand-primary/10 text-brand-primary p-2 rounded-md">
                                             <Video size={14} />
                                           </div>
+
                                           <div>
                                             <h5 className="font-bold text-sm text-foreground">
                                               {lessonIndex + 1}. {lesson.title}
                                             </h5>
                                           </div>
                                         </div>
+
                                         <div className="flex items-center gap-1 shrink-0">
                                           <button
-                                            onClick={() => void toggleLessonPublish(phase.id, module.id, lesson.id, lesson.isPublished)}
-                                            className={`p-1 transition-colors flex items-center gap-1 rounded-md text-xs font-semibold ${lesson.isPublished ? 'text-emerald-600 hover:bg-emerald-50' : 'text-amber-600 hover:bg-amber-50'}`}
-                                            title={lesson.isPublished ? "Published" : "Draft"}
+                                            type="button"
+                                            onClick={() =>
+                                              void toggleLessonPublish(
+                                                phase.id,
+                                                module.id,
+                                                lesson.id,
+                                                lesson.isPublished
+                                              )
+                                            }
+                                            className={`p-1 transition-colors flex items-center gap-1 rounded-md text-xs font-semibold ${
+                                              lesson.isPublished
+                                                ? "text-emerald-600 hover:bg-emerald-50"
+                                                : "text-amber-600 hover:bg-amber-50"
+                                            }`}
+                                            title={
+                                              lesson.isPublished
+                                                ? "Published"
+                                                : "Draft"
+                                            }
                                           >
-                                            {lesson.isPublished ? <Eye size={14} /> : <EyeOff size={14} />}
+                                            {lesson.isPublished ? (
+                                              <Eye size={14} />
+                                            ) : (
+                                              <EyeOff size={14} />
+                                            )}
                                           </button>
-                                          <div className="w-px h-3 bg-border mx-1"></div>
+
+                                          <div className="w-px h-3 bg-border mx-1" />
+
                                           <button
+                                            type="button"
                                             onClick={() => {
                                               setEditingLessonId(lesson.id);
                                               setLessonEditInputs((prev) => ({
                                                 ...prev,
-                                                [lesson.id]: { title: lesson.title, notes: lesson.notes || "", videoPath: lesson.videoPath || "" }
+                                                [lesson.id]: {
+                                                  title: lesson.title,
+                                                  notes: lesson.notes || "",
+                                                  videoPath:
+                                                    lesson.videoPath || "",
+                                                },
                                               }));
                                             }}
                                             className="p-1 text-muted-foreground hover:text-brand-primary"
                                           >
                                             <Pencil size={14} />
                                           </button>
+
                                           <button
-                                            onClick={() => void deleteLesson(phase.id, module.id, lesson.id)}
-                                            disabled={deletingLessonId === lesson.id}
+                                            type="button"
+                                            onClick={() =>
+                                              void deleteLesson(
+                                                phase.id,
+                                                module.id,
+                                                lesson.id
+                                              )
+                                            }
+                                            disabled={
+                                              deletingLessonId === lesson.id
+                                            }
                                             className="p-1 text-muted-foreground hover:text-red-500 disabled:opacity-50"
                                           >
-                                            {deletingLessonId === lesson.id ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                                            {deletingLessonId === lesson.id ? (
+                                              <Loader2
+                                                size={14}
+                                                className="animate-spin"
+                                              />
+                                            ) : (
+                                              <Trash2 size={14} />
+                                            )}
                                           </button>
                                         </div>
                                       </div>
-                                      
-                                      {lesson.videoPath && (
-                                        <div className="mt-2 mb-2 w-full max-w-sm rounded-lg overflow-hidden bg-black aspect-video border border-border">
-                                          <ReactPlayer
-                                            url={`/api/videos/hls/${track.id}/${module.id}/${lesson.id}/index.m3u8`}
-                                            width="100%"
-                                            height="100%"
-                                            controls
-                                            config={{
-                                              file: {
-                                                forceHLS: true,
-                                                hlsOptions: {
-                                                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                                  xhrSetup: function (xhr: any) { xhr.withCredentials = true; },
-                                                },
-                                              },
-                                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                            } as any}
-                                          />
+
+                                      <div className="mt-3 border border-dashed border-brand-primary/30 rounded-lg p-3 bg-muted/10">
+                                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                                          <div>
+                                            <p className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                                              {lesson.videoPath ? (
+                                                <CheckCircle2
+                                                  size={14}
+                                                  className="text-emerald-500"
+                                                />
+                                              ) : (
+                                                <Video size={14} />
+                                              )}
+                                              Lesson Video
+                                            </p>
+
+                                            <p className="text-xs text-muted-foreground mt-1">
+                                              {lesson.videoPath
+                                                ? "A lesson video is uploaded and converted."
+                                                : "No lesson video uploaded yet."}
+                                            </p>
+                                          </div>
+
+                                          <label className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-brand-primary text-white text-xs font-bold hover:bg-brand-primary/90 cursor-pointer transition">
+                                            {uploadingVideoLessonId ===
+                                            lesson.id ? (
+                                              <>
+                                                <Loader2
+                                                  size={14}
+                                                  className="animate-spin"
+                                                />
+                                                Uploading...
+                                              </>
+                                            ) : (
+                                              <>
+                                                <Upload size={14} />
+                                                Upload Video
+                                              </>
+                                            )}
+
+                                            <input
+                                              type="file"
+                                              accept="video/mp4,video/webm,video/quicktime"
+                                              className="hidden"
+                                              disabled={
+                                                uploadingVideoLessonId ===
+                                                lesson.id
+                                              }
+                                              onChange={(e) => {
+                                                const selectedFile =
+                                                  e.target.files?.[0] || null;
+
+                                                void handleLessonVideoUpload(
+                                                  phase.id,
+                                                  module.id,
+                                                  lesson.id,
+                                                  selectedFile
+                                                );
+
+                                                e.target.value = "";
+                                              }}
+                                            />
+                                          </label>
                                         </div>
-                                      )}
-                                      
+                                      </div>
+
                                       {lesson.notes && (
                                         <div className="text-xs text-muted-foreground bg-muted/30 border border-border rounded-md p-2">
                                           {lesson.notes}
@@ -994,6 +1267,7 @@ export default function InstructorTrackManager({
                                     initialQuiz={lesson.quizzes[0] ?? null}
                                     onChanged={fetchCourseData}
                                   />
+
                                   <LessonResourceManager
                                     trackId={trackId}
                                     phaseId={phase.id}
@@ -1012,27 +1286,42 @@ export default function InstructorTrackManager({
                           )}
                         </div>
 
-                        {/* Add Lesson Form */}
                         <div className="pt-3 mt-3 border-t border-border/50 space-y-2">
                           <h6 className="font-semibold text-xs flex items-center gap-1.5 text-foreground">
-                            <Plus size={14} className="text-brand-primary" /> Add Lesson to {module.title}
+                            <Plus size={14} className="text-brand-primary" />{" "}
+                            Add Lesson to {module.title}
                           </h6>
+
                           <div className="flex flex-col sm:flex-row gap-2">
                             <input
                               value={newLessonInputs[module.id]?.title || ""}
-                              onChange={(e) => setNewLessonInputs((prev) => ({
-                                ...prev,
-                                [module.id]: { ...(prev[module.id] || { notes: "", videoPath: "" }), title: e.target.value }
-                              }))}
+                              onChange={(e) =>
+                                setNewLessonInputs((prev) => ({
+                                  ...prev,
+                                  [module.id]: {
+                                    ...(prev[module.id] || {
+                                      notes: "",
+                                      videoPath: "",
+                                    }),
+                                    title: e.target.value,
+                                  },
+                                }))
+                              }
                               placeholder="Lesson title"
                               className="flex-1 border border-border rounded-lg px-3 py-1.5 outline-none focus:ring-2 focus:ring-brand-primary bg-background text-sm"
                             />
+
                             <button
-                              onClick={() => void addLesson(phase.id, module.id)}
+                              type="button"
+                              onClick={() =>
+                                void addLesson(phase.id, module.id)
+                              }
                               disabled={addingLessonFor === module.id}
                               className="bg-brand-primary text-white px-3 py-1.5 rounded-lg font-semibold hover:bg-brand-primary/90 disabled:opacity-70 text-xs shrink-0 whitespace-nowrap"
                             >
-                              {addingLessonFor === module.id ? "Adding..." : "Add"}
+                              {addingLessonFor === module.id
+                                ? "Adding..."
+                                : "Add"}
                             </button>
                           </div>
                         </div>
@@ -1043,25 +1332,35 @@ export default function InstructorTrackManager({
                       No modules in this phase yet.
                     </div>
                   )}
-                  
-                  {/* Add Module Form */}
+
                   <div className="bg-muted/10 border border-dashed border-brand-primary/30 rounded-xl p-4 mt-4">
                     <h5 className="font-semibold text-sm mb-2 text-foreground flex items-center gap-1.5">
-                      <Plus size={14} className="text-brand-primary" /> Add Module to {phase.title}
+                      <Plus size={14} className="text-brand-primary" /> Add
+                      Module to {phase.title}
                     </h5>
+
                     <div className="flex flex-col sm:flex-row gap-2">
                       <input
                         value={newModuleInputs[phase.id] || ""}
-                        onChange={(e) => setNewModuleInputs((prev) => ({ ...prev, [phase.id]: e.target.value }))}
+                        onChange={(e) =>
+                          setNewModuleInputs((prev) => ({
+                            ...prev,
+                            [phase.id]: e.target.value,
+                          }))
+                        }
                         placeholder="Module title"
                         className="flex-1 border border-border rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-brand-primary bg-background text-sm"
                       />
+
                       <button
+                        type="button"
                         onClick={() => void addModule(phase.id)}
                         disabled={addingModuleFor === phase.id}
                         className="bg-brand-primary text-white px-4 py-2 rounded-lg font-semibold hover:bg-brand-primary/90 disabled:opacity-70 text-sm whitespace-nowrap"
                       >
-                        {addingModuleFor === phase.id ? "Adding..." : "Add Module"}
+                        {addingModuleFor === phase.id
+                          ? "Adding..."
+                          : "Add Module"}
                       </button>
                     </div>
                   </div>
