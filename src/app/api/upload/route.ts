@@ -9,7 +9,7 @@ export async function POST(request: Request) {
     const cookieStore = await cookies();
     const token = cookieStore.get("token")?.value;
     if (!token) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "ِUnauthorized" }, { status: 401 });
     }
     const user = await verifyToken(token);
     if (!user || (user.role !== "ADMIN" && user.role !== "INSTRUCTOR")) {

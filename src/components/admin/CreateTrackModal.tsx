@@ -86,10 +86,10 @@ export default function CreateTrackModal({ onClose, onSuccess }: CreateTrackModa
       const formData = new FormData();
       formData.append("file", file);
 
-      const res = await fetch("/api/uploads/track-thumbnail", {
-        method: "POST",
-        body: formData,
-      });
+     const res = await fetch("/api/upload", {
+  method: "POST",
+  body: formData,
+});
 
       const data = await res.json().catch(() => null);
 
@@ -98,9 +98,9 @@ export default function CreateTrackModal({ onClose, onSuccess }: CreateTrackModa
         return;
       }
 
-      if (data?.file?.url) {
-        setThumbnail(data.file.url);
-      }
+     if (data?.url) {
+  setThumbnail(data.url);
+}
     } catch (error) {
       console.error(error);
       alert("An error occurred while uploading the track thumbnail");

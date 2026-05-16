@@ -19,6 +19,7 @@
     "embla-carousel": "^8.6.0",
     "embla-carousel-react": "^8.6.0",
     "framer-motion": "^12.38.0",
+    "hls.js": "^1.6.16",
     "jose": "^6.2.2",
     "lucide-react": "^1.14.0",
     "motion": "^12.38.0",
