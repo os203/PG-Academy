@@ -1,13 +1,14 @@
 "use client";
 
 import { Heart } from "lucide-react";
+import Image from "next/image";
 
 type TrackCardForSaleProps = {
     thumbnail: string;
     category: string;
     title: string;
     instructor: string;
-    rating: number; // من 5
+    rating: number;
     studentsCount?: number;
     price: number;
     isWishlisted?: boolean;
@@ -18,7 +19,7 @@ type TrackCardForSaleProps = {
 };
 
 export default function TrackCardForSale({
-    thumbnail ,
+    thumbnail,
     category,
     title,
     instructor,
@@ -27,80 +28,79 @@ export default function TrackCardForSale({
     price,
     isWishlisted,
     isEnrolled,
-    isProcessing,
     onToggleWishlist,
     onEnroll,
 }: TrackCardForSaleProps) {
     return (
-        <div className="min-w-[350px] w-full h-106 max-w-md bg-gray-100 dark:bg-gray-900 shadow-md dark:shadow-brand-accent/20 overflow-hidden flex flex-col hover:-translate-y-4 duration-300">
-            <div className="relative">
-                <img
+        <div className="w-full max-w-md bg-card border border-border rounded-2xl overflow-hidden flex flex-col shadow-sm hover:-translate-y-2 hover:shadow-xl dark:hover:shadow-purple-500/10 duration-300 group">
+            {/* Thumbnail */}
+            <div className="relative h-52 w-full overflow-hidden">
+                <Image
                     src={thumbnail}
                     alt={title}
-                    className="w-full h-56 object-cover"
-                    loading="lazy"
+                    fill
+                    className="object-cover group-hover:scale-105 transition-transform duration-500"
                 />
-
-                {/* ❤️ Wishlist */}
+                {/* Wishlist */}
                 <button
                     onClick={onToggleWishlist}
-                    className="absolute top-3 right-3 bg-white/80 dark:bg-gray-800 p-2 rounded-full shadow hover:scale-110 transition"
+                    className="absolute top-3 right-3 bg-white/90 dark:bg-black/50 backdrop-blur-sm p-2.5 rounded-full shadow-lg hover:scale-110 transition border border-white/20"
                 >
                     <Heart
-                        className={`w-5 h-5 ${isWishlisted
+                        className={`w-4 h-4 ${isWishlisted
                             ? "fill-red-500 text-red-500"
-                            : "text-gray-600 dark:text-gray-300"
+                            : "text-gray-500 dark:text-gray-300"
                             }`}
                     />
                 </button>
             </div>
 
             {/* Content */}
-            <div className="p-4 flex flex-col gap-3 flex-grow">
-
+            <div className="p-5 flex flex-col gap-3 grow">
                 {/* Category */}
-                <span className="text-xs text-brand-accent font-medium p-1 px-3 rounded-xl bg-brand-accent/20 dark:bg-brand-accent/10 w-fit">
+                <span className="text-[10px] uppercase tracking-wider font-bold text-brand-accent bg-brand-accent/10 px-3 py-1 rounded-full w-fit">
                     {category}
                 </span>
 
                 {/* Title + Instructor */}
                 <div>
-                    <h2 className="text-lg font-semibold line-clamp-2">
+                    <h2 className="text-base font-bold text-foreground line-clamp-2 leading-tight">
                         {title}
                     </h2>
-                    <p className="text-sm text-gray-500">{instructor}</p>
+                    <p className="text-sm text-muted-foreground mt-1">{instructor}</p>
                 </div>
 
                 {/* Rating + StudentsCount */}
                 <div className="flex items-center justify-between text-sm">
-
-                    {/* ⭐ Rating */}
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-0.5">
                         {Array.from({ length: 5 }).map((_, i) => (
-                            <span key={i}>
-                                {i < Math.round(rating) ? "⭐" : "☆"}
+                            <span key={i} className={`text-xs ${i < Math.round(rating) ? "text-yellow-500" : "text-gray-300 dark:text-gray-600"}`}>
+                                ★
                             </span>
                         ))}
-                        <span className="ml-1 text-gray-500">
+                        <span className="ml-1.5 text-xs text-muted-foreground">
                             ({rating})
                         </span>
                     </div>
-
-                    {/*  StudentsCount */}
-                    <span className="text-gray-500">
+                    <span className="text-xs text-muted-foreground font-medium">
                         {studentsCount?.toLocaleString() || "0"} 👥
                     </span>
                 </div>
-                <div className="flex items-center  justify-between">
-                    <div className="text-lg font-bold text-brand-accent">
+
+                {/* Price + CTA */}
+                <div className="flex items-center justify-between mt-auto pt-3 border-t border-border">
+                    <div className="text-xl font-black text-brand-accent">
                         ${price}
                     </div>
-
                     <button
                         onClick={onEnroll}
-                        className={`bg-brand-primary text-white font-medium transition-all duration-300 p-2 hover:bg-brand-hover`}
+                        className={`text-sm font-bold px-5 py-2.5 rounded-xl transition-all ${
+                            isEnrolled
+                                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
+                                : "bg-brand-primary text-white hover:bg-brand-hover shadow-sm"
+                        }`}
                     >
-                        {isEnrolled ? "Enrolled (View Details)" : "View Details"}
+                        {isEnrolled ? "Enrolled ✓" : "View Details"}
                     </button>
                 </div>
             </div>

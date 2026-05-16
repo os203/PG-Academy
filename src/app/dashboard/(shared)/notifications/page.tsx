@@ -60,7 +60,6 @@ export default function NotificationsPage() {
       });
     } catch (error) {
       console.error("Failed to mark as read:", error);
-      // Optional: revert optimistic update here if needed
     }
   };
 
@@ -85,11 +84,11 @@ export default function NotificationsPage() {
 
   const getIconForType = (type: string) => {
     switch (type) {
-      case "welcome": return <Sparkles className="w-5 h-5 text-indigo-400" />;
-      case "course_update": return <BookOpen className="w-5 h-5 text-purple-400" />;
-      case "enrollment": return <CheckCircle2 className="w-5 h-5 text-emerald-400" />;
-      case "alert": return <AlertCircle className="w-5 h-5 text-red-400" />;
-      default: return <Info className="w-5 h-5 text-blue-400" />;
+      case "welcome": return <Sparkles className="w-5 h-5 text-indigo-500 dark:text-indigo-400" />;
+      case "course_update": return <BookOpen className="w-5 h-5 text-purple-500 dark:text-purple-400" />;
+      case "enrollment": return <CheckCircle2 className="w-5 h-5 text-emerald-500 dark:text-emerald-400" />;
+      case "alert": return <AlertCircle className="w-5 h-5 text-red-500 dark:text-red-400" />;
+      default: return <Info className="w-5 h-5 text-blue-500 dark:text-blue-400" />;
     }
   };
 
@@ -97,11 +96,11 @@ export default function NotificationsPage() {
     <div className="p-6 max-w-4xl mx-auto w-full min-h-screen">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4">
         <div>
-          <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-linear-to-r from-white to-neutral-400 flex items-center gap-3">
+          <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
             <Bell className="w-8 h-8 text-indigo-500" />
             Notifications
           </h1>
-          <p className="text-neutral-400 mt-2">
+          <p className="text-muted-foreground mt-2">
             Stay updated with your learning progress and system alerts.
           </p>
         </div>
@@ -109,7 +108,7 @@ export default function NotificationsPage() {
         {unreadCount > 0 && (
           <button
             onClick={markAllAsRead}
-            className="flex items-center gap-2 text-sm font-medium text-indigo-400 hover:text-indigo-300 transition-colors bg-indigo-500/10 hover:bg-indigo-500/20 px-4 py-2 rounded-full"
+            className="flex items-center gap-2 text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 dark:hover:text-indigo-300 transition-colors bg-indigo-500/10 hover:bg-indigo-500/20 px-4 py-2 rounded-full"
           >
             <Check className="w-4 h-4" />
             Mark all as read
@@ -118,13 +117,13 @@ export default function NotificationsPage() {
       </div>
 
       {/* Filters */}
-      <div className="flex gap-2 mb-6 border-b border-white/10 pb-4">
+      <div className="flex gap-2 mb-6 border-b border-border pb-4">
         <button
           onClick={() => setFilter("all")}
           className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
             filter === "all" 
-              ? "bg-white/10 text-white" 
-              : "text-neutral-400 hover:text-white hover:bg-white/5"
+              ? "bg-primary/10 text-primary dark:bg-white/10 dark:text-white" 
+              : "text-muted-foreground hover:text-foreground hover:bg-muted"
           }`}
         >
           All
@@ -133,8 +132,8 @@ export default function NotificationsPage() {
           onClick={() => setFilter("unread")}
           className={`px-4 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-2 ${
             filter === "unread" 
-              ? "bg-indigo-500/20 text-indigo-300" 
-              : "text-neutral-400 hover:text-white hover:bg-white/5"
+              ? "bg-indigo-500/15 text-indigo-600 dark:text-indigo-300" 
+              : "text-muted-foreground hover:text-foreground hover:bg-muted"
           }`}
         >
           Unread
@@ -156,13 +155,13 @@ export default function NotificationsPage() {
           <motion.div 
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-center py-16 bg-white/5 border border-white/10 rounded-2xl"
+            className="text-center py-16 bg-muted/50 border border-border rounded-2xl"
           >
-            <div className="bg-white/5 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-              <CheckCircle2 className="w-8 h-8 text-neutral-500" />
+            <div className="bg-muted w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+              <CheckCircle2 className="w-8 h-8 text-muted-foreground" />
             </div>
-            <h3 className="text-xl font-medium text-white mb-2">You&apos;re all caught up!</h3>
-            <p className="text-neutral-400">
+            <h3 className="text-xl font-medium text-foreground mb-2">You&apos;re all caught up!</h3>
+            <p className="text-muted-foreground">
               {filter === "unread" 
                 ? "You don't have any unread notifications." 
                 : "You don't have any notifications yet."}
@@ -178,28 +177,28 @@ export default function NotificationsPage() {
                 exit={{ opacity: 0, scale: 0.95 }}
                 className={`relative flex items-start gap-4 p-5 rounded-2xl border transition-all duration-200 group ${
                   notification.isRead 
-                    ? "bg-white/5 border-white/5" 
-                    : "bg-indigo-500/5 border-indigo-500/20 shadow-[0_0_15px_rgba(99,102,241,0.05)]"
+                    ? "bg-card border-border" 
+                    : "bg-indigo-500/5 border-indigo-500/20 shadow-sm"
                 }`}
               >
                 {!notification.isRead && (
                   <div className="absolute top-1/2 -translate-y-1/2 left-0 w-1 h-12 bg-indigo-500 rounded-r-full" />
                 )}
                 
-                <div className={`p-3 rounded-xl shrink-0 ${notification.isRead ? 'bg-white/5' : 'bg-indigo-500/10'}`}>
+                <div className={`p-3 rounded-xl shrink-0 ${notification.isRead ? 'bg-muted' : 'bg-indigo-500/10'}`}>
                   {getIconForType(notification.type)}
                 </div>
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-4 mb-1">
-                    <h3 className={`text-base font-semibold truncate ${notification.isRead ? 'text-neutral-200' : 'text-white'}`}>
+                    <h3 className={`text-base font-semibold truncate ${notification.isRead ? 'text-foreground/70' : 'text-foreground'}`}>
                       {notification.title}
                     </h3>
-                    <span className="text-xs font-medium text-neutral-500 shrink-0 whitespace-nowrap">
+                    <span className="text-xs font-medium text-muted-foreground shrink-0 whitespace-nowrap">
                       {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
                     </span>
                   </div>
-                  <p className={`text-sm ${notification.isRead ? 'text-neutral-400' : 'text-neutral-300'}`}>
+                  <p className={`text-sm ${notification.isRead ? 'text-muted-foreground' : 'text-foreground/70'}`}>
                     {notification.subtitle}
                   </p>
                 </div>
@@ -207,7 +206,7 @@ export default function NotificationsPage() {
                 {!notification.isRead && (
                   <button
                     onClick={() => markAsRead(notification.id)}
-                    className="opacity-0 group-hover:opacity-100 transition-opacity p-2 hover:bg-white/10 rounded-full shrink-0 absolute right-4 top-1/2 -translate-y-1/2 md:relative md:right-auto md:top-auto md:translate-y-0"
+                    className="opacity-0 group-hover:opacity-100 transition-opacity p-2 hover:bg-muted rounded-full shrink-0 absolute right-4 top-1/2 -translate-y-1/2 md:relative md:right-auto md:top-auto md:translate-y-0"
                     title="Mark as read"
                   >
                     <div className="w-2.5 h-2.5 bg-indigo-500 rounded-full" />

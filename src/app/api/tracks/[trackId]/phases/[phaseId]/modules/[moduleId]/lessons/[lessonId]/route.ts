@@ -47,12 +47,12 @@ export async function PATCH(
 
     const body = await req.json();
 
-    const title = typeof body.title === "string" ? body.title.trim() : "";
-    const notes = typeof body.notes === "string" ? body.notes.trim() : "";
-    const videoPath = typeof body.videoPath === "string" ? body.videoPath.trim() : "";
+    const title = body.title !== undefined ? (typeof body.title === "string" ? body.title.trim() : "") : undefined;
+    const notes = body.notes !== undefined ? (typeof body.notes === "string" ? body.notes.trim() : "") : undefined;
+    const videoPath = body.videoPath !== undefined ? (typeof body.videoPath === "string" ? body.videoPath.trim() : "") : undefined;
     const isPublished = body.isPublished;
 
-    if (!title) {
+    if (title !== undefined && !title) {
       return NextResponse.json(
         { error: "Lesson title is required" },
         { status: 400 }
@@ -62,9 +62,9 @@ export async function PATCH(
     const updatedLesson = await db.lesson.update({
       where: { id: lessonId },
       data: {
-        title,
-        notes: notes || null,
-        videoPath: videoPath || null,
+        ...(title !== undefined && { title }),
+        ...(notes !== undefined && { notes: notes || null }),
+        ...(videoPath !== undefined && { videoPath: videoPath || null }),
         ...(isPublished !== undefined && { isPublished }),
       },
     });

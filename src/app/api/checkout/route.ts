@@ -131,7 +131,7 @@ export async function POST(req: NextRequest) {
         originalPrice: String(track.price),
         finalPrice: String(finalPrice),
       },
-      success_url: `${appUrl}/payment/success?session_id={CHECKOUT_SESSION_ID}&trackId=${trackId}`,
+      success_url: `${appUrl}/dashboard/student/${trackId}?payment_success=true&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${appUrl}/payment/cancel?trackId=${trackId}`,
     });
 

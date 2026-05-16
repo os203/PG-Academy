@@ -55,10 +55,10 @@ export default function LoginPage() {
       <AuthLayout>
         <div className="min-h-[calc(100vh-80px)] flex flex-1 items-center justify-center p-4 relative overflow-hidden">
           {/* Abstract decorative blobs */}
-          <div className="absolute top-[10%] left-[-10%] w-[500px] h-[500px] rounded-full bg-brand-accent/20 blur-[100px] mix-blend-screen pointer-events-none" />
-          <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] rounded-full bg-brand-primary/20 blur-[100px] mix-blend-screen pointer-events-none" />
+          <div className="absolute top-[10%] left-[-10%] w-[500px] h-[500px] rounded-full bg-brand-accent/30 dark:bg-brand-accent/20 blur-[100px] dark:mix-blend-screen pointer-events-none" />
+          <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] rounded-full bg-brand-primary/30 dark:bg-brand-primary/20 blur-[100px] dark:mix-blend-screen pointer-events-none" />
 
-          <div className="w-full max-w-md p-8 rounded-2xl glass border border-white/10 shadow-2xl relative z-10 hover-lift">
+          <div className="w-full max-w-md p-8 rounded-2xl glass border border-border shadow-2xl relative z-10 hover-lift">
             <div className="text-center mb-8">
               <h1 className="text-3xl font-bold mb-2 tracking-tight">Welcome Back</h1>
               <p className="text-muted-foreground">Enter your credentials to access your account</p>

@@ -48,8 +48,7 @@ export const AccordionFAQDark: React.FC<AccordionFAQDarkProps> = ({
 
     return (
         <div
-            className="w-full max-w-2xl rounded-2xl p-6"
-            style={{ background: "#0f0f12" }}
+            className="w-full max-w-2xl rounded-2xl p-6 bg-card border border-border"
         >
             {/* Header */}
             <div className="mb-7">
@@ -59,7 +58,7 @@ export const AccordionFAQDark: React.FC<AccordionFAQDarkProps> = ({
                 >
                     {eyebrow}
                 </p>
-                <h2 className="text-white text-2xl font-bold tracking-tight">{title}</h2>
+                <h2 className="text-foreground text-2xl font-bold tracking-tight">{title}</h2>
             </div>
 
             {/* Items */}
@@ -67,40 +66,37 @@ export const AccordionFAQDark: React.FC<AccordionFAQDarkProps> = ({
                 {items.map((item, i) => {
                     const isActive = active === i;
                     return (
-                        <motion.div
-                            key={i}
-                            layout
-                            className="rounded-xl overflow-hidden cursor-pointer"
-                            style={{
-                                background: isActive ? "#18181c" : "#141417",
-                                border: `1px solid ${isActive ? accentColor + "35" : "#ffffff0c"}`,
-                                boxShadow: isActive
-                                    ? `0 0 0 1px ${accentColor}15, 0 4px 20px ${accentColor}08`
-                                    : "none",
-                                transition: "border-color 0.2s, box-shadow 0.2s, background 0.2s",
-                            }}
+                            <motion.div
+                                key={i}
+                                layout
+                                className={`rounded-xl overflow-hidden cursor-pointer transition-all duration-200 ${isActive ? 'bg-muted/80' : 'bg-muted/30'}`}
+                                style={{
+                                    border: `1px solid ${isActive ? accentColor + "35" : "transparent"}`,
+                                    boxShadow: isActive
+                                        ? `0 0 0 1px ${accentColor}15, 0 4px 20px ${accentColor}08`
+                                        : "none",
+                                }}
                             onClick={() => setActive(isActive ? null : i)}
                         >
                             {/* Trigger */}
                             <button className="w-full flex items-center justify-between px-4 py-3.5 text-left">
                                 <span
-                                    className="text-sm font-medium pr-4 leading-snug transition-colors duration-200"
-                                    style={{ color: isActive ? "#ffffff" : "#a1a1aa" }}
+                                    className={`text-sm font-medium pr-4 leading-snug transition-colors duration-200 ${isActive ? 'text-foreground' : 'text-muted-foreground'}`}
                                 >
                                     {item.question}
                                 </span>
                                 <motion.div
                                     animate={{ rotate: isActive ? 45 : 0 }}
                                     transition={{ duration: 0.2, ease: "easeInOut" }}
-                                    className="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-full"
+                                    className="shrink-0 w-6 h-6 flex items-center justify-center rounded-full"
                                     style={{
                                         background: isActive ? accentColor + "18" : "transparent",
                                         border: `1px solid ${isActive ? accentColor + "50" : "#2a2a30"}`,
                                     }}
                                 >
                                     <span
-                                        className="text-sm font-bold leading-none"
-                                        style={{ color: isActive ? accentColor : "#52525b" }}
+                                        className={`text-sm font-bold leading-none ${isActive ? '' : 'text-muted-foreground'}`}
+                                        style={isActive ? { color: accentColor } : {}}
                                     >
                                         +
                                     </span>
@@ -122,7 +118,7 @@ export const AccordionFAQDark: React.FC<AccordionFAQDarkProps> = ({
                                                 className="h-px mb-3"
                                                 style={{ background: accentColor + "20" }}
                                             />
-                                            <p className="text-sm leading-relaxed" style={{ color: "#71717a" }}>
+                                            <p className="text-sm leading-relaxed text-muted-foreground">
                                                 {item.answer}
                                             </p>
                                             <button

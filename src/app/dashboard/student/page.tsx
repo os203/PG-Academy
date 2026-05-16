@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import DashCard from "@/components/ui/dashCard";
-import MyCourseCard from "@/components/ui/myCouaseCard";
+import Image from "next/image";
 import { useAuth } from "@/context/AuthContext";
 import {
   BookOpen,
@@ -137,7 +137,7 @@ export default function StudentDashboard() {
       {/* Header & Notifications */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center w-full gap-4">
         <div>
-          <h1 className="font-bold text-3xl mb-1 tracking-tight">
+          <h1 className="font-black text-3xl mb-1 tracking-tight text-foreground">
             Welcome back, {user?.name?.split(" ")[0] || "Student"}! 👋
           </h1>
           <p className="text-muted-foreground">
@@ -159,13 +159,14 @@ export default function StudentDashboard() {
 
       {/* Continue Learning Hero Card */}
       {!isCoursesLoading && continueLearning && (
-        <div className="relative overflow-hidden rounded-3xl border border-indigo-200 bg-linear-to-br from-indigo-900 to-indigo-950 text-white shadow-xl">
-          <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
+        <div className="relative overflow-hidden rounded-3xl border border-purple-500/20 bg-linear-to-br from-[#1a0a2e] via-[#0f0520] to-[#0d0f1a] text-white shadow-2xl shadow-purple-500/10">
+          <div className="absolute top-0 right-0 p-8 opacity-[0.06] pointer-events-none">
             <BookOpen size={180} />
           </div>
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(168,85,247,0.15)_0%,transparent_50%)]" />
           <div className="relative z-10 p-8 md:p-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-8">
             <div className="space-y-4 max-w-2xl">
-              <div className="inline-flex items-center rounded-full bg-indigo-800/50 px-3 py-1 text-sm font-medium text-indigo-200 border border-indigo-700">
+              <div className="inline-flex items-center rounded-full bg-purple-500/15 px-3 py-1 text-sm font-bold text-purple-300 border border-purple-500/20">
                 <PlayCircle size={14} className="mr-2" />
                 Up Next
               </div>
@@ -173,7 +174,7 @@ export default function StudentDashboard() {
                 <h2 className="text-3xl font-black mb-2 leading-tight">
                   {continueLearning.lessonTitle}
                 </h2>
-                <div className="flex flex-wrap items-center gap-2 text-indigo-200 text-sm font-medium">
+                <div className="flex flex-wrap items-center gap-2 text-purple-200/60 text-sm font-medium">
                   <span>{continueLearning.trackTitle}</span>
                   <span className="opacity-50">•</span>
                   <span>{continueLearning.phaseTitle}</span>
@@ -185,7 +186,7 @@ export default function StudentDashboard() {
             
             <button
               onClick={() => window.location.href = `/dashboard/student/${continueLearning.trackId}`}
-              className="shrink-0 inline-flex items-center gap-2 bg-yellow-400 hover:bg-yellow-500 text-indigo-950 font-black px-8 py-4 rounded-2xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(250,204,21,0.3)]"
+              className="shrink-0 inline-flex items-center gap-2 bg-linear-to-r from-[#E5C158] to-[#f1d06e] hover:from-[#f1d06e] hover:to-[#E5C158] text-[#0d0f1a] font-black px-8 py-4 rounded-2xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_30px_rgba(229,193,88,0.25)]"
             >
               Resume Lesson
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
@@ -209,7 +210,10 @@ export default function StudentDashboard() {
         />
       </div>
 
-      <span className="pt-16 text-2xl font-bold">Your Enrolled Tracks</span>
+      <div className="pt-12">
+        <h2 className="text-2xl font-black text-foreground">Your Enrolled Tracks</h2>
+        <p className="text-muted-foreground text-sm mt-1">Pick up where you left off and track your progress.</p>
+      </div>
 
       {isCoursesLoading ? (
         <div className="flex justify-center p-12 text-muted-foreground">
@@ -227,7 +231,7 @@ export default function StudentDashboard() {
               <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-border pb-4">
                 <div className="flex items-center gap-4">
                   {track.thumbnail && (
-                    <img src={track.thumbnail} alt={track.title} className="w-16 h-16 rounded-xl object-cover shadow-md" />
+                    <Image src={track.thumbnail} alt={track.title} width={64} height={64} className="w-16 h-16 rounded-xl object-cover shadow-md" />
                   )}
                   <div>
                     <h3 className="text-2xl font-black">{track.title}</h3>
@@ -243,33 +247,33 @@ export default function StudentDashboard() {
               </div>
 
               {/* Phase Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {track.phases?.map((phase) => (
                   <div 
                     key={phase.id} 
-                    className={`relative flex flex-col p-6 rounded-2xl border ${phase.isLocked ? 'bg-muted/30 border-muted opacity-80' : 'bg-card border-border shadow-sm'} transition-all`}
+                    className={`relative flex flex-col p-5 rounded-2xl border transition-all ${phase.isLocked ? 'bg-muted/30 border-border opacity-60' : 'bg-card border-border hover:border-primary/30 dark:hover:border-purple-400/30 hover:shadow-lg dark:hover:shadow-purple-500/5'}`}
                   >
                     {/* Lock Icon */}
                     {phase.isLocked && (
                       <div className="absolute top-4 right-4 text-muted-foreground">
-                        <Lock size={20} />
+                        <Lock size={18} />
                       </div>
                     )}
                     
-                    <div className="mb-6">
-                      <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Phase {phase.order}</span>
-                      <h4 className="text-lg font-bold mt-1 line-clamp-1">{phase.title}</h4>
+                    <div className="mb-5">
+                      <span className="text-[10px] font-black text-primary/60 dark:text-purple-400/60 uppercase tracking-widest">Phase {phase.order}</span>
+                      <h4 className="text-base font-bold mt-1 line-clamp-1 text-foreground">{phase.title}</h4>
                     </div>
 
-                    <div className="mt-auto space-y-3">
-                      <div className="flex justify-between text-sm font-medium">
+                    <div className="mt-auto space-y-2">
+                      <div className="flex justify-between text-xs font-medium">
                         <span className="text-muted-foreground">{phase.completedLessons}/{phase.totalLessons} lessons</span>
-                        <span className={phase.progressPercentage === 100 ? "text-yellow-500" : ""}>{phase.progressPercentage}%</span>
+                        <span className={phase.progressPercentage === 100 ? "text-emerald-500 font-bold" : "text-primary dark:text-purple-300"}>{phase.progressPercentage}%</span>
                       </div>
                       
-                      <div className="w-full h-2.5 bg-muted rounded-full overflow-hidden">
+                      <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
                         <div
-                          className={`h-full rounded-full transition-all duration-500 ${phase.progressPercentage === 100 ? 'bg-yellow-400 shadow-[0_0_10px_rgba(250,204,21,0.5)]' : 'bg-brand-primary'}`}
+                          className={`h-full rounded-full transition-all duration-500 ${phase.progressPercentage === 100 ? 'bg-emerald-500' : 'bg-primary dark:bg-purple-500'}`}
                           style={{ width: `${phase.progressPercentage}%` }}
                         />
                       </div>

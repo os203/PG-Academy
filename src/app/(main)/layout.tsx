@@ -13,7 +13,7 @@ export default function MainLayout({
   return (
     <>
       <Navbar />
-      <main className="grow pt-20 flex flex-col">
+      <main className="grow flex flex-col">
         {children}
       </main>
       <Footer />

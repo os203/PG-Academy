@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
-import { Loader2, Plus, Trash2, FileText, Link as LinkIcon } from "lucide-react";
+import React, { useRef, useState } from "react";
+import { Loader2, Plus, Trash2, FileText, Link as LinkIcon, Upload } from "lucide-react";
 import { Resource } from "./InstructorTrackManager";
 
 interface LessonResourceManagerProps {
@@ -23,6 +23,7 @@ export default function LessonResourceManager({
 }: LessonResourceManagerProps) {
   const [loading, setLoading] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [name, setName] = useState("");
   const [url, setUrl] = useState("");
@@ -41,7 +42,8 @@ export default function LessonResourceManager({
     }
 
     if (uploadMode === "file" && !file) {
-      alert("Please select a file to upload");
+      // Instead of showing an error, open the file picker
+      fileInputRef.current?.click();
       return;
     }
 
@@ -229,12 +231,27 @@ export default function LessonResourceManager({
               className="flex-1 text-sm border border-border rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-brand-primary bg-background text-foreground"
             />
           ) : (
-            <input
-              key="file-input"
-              type="file"
-              onChange={(e) => setFile(e.target.files?.[0] || null)}
-              className="flex-1 text-sm border border-border rounded-lg px-3 py-1.5 outline-none focus:ring-2 focus:ring-brand-primary bg-background text-foreground"
-            />
+            <div className="flex-1">
+              <input
+                key="file-input"
+                ref={fileInputRef}
+                type="file"
+                onChange={(e) => setFile(e.target.files?.[0] || null)}
+                className="hidden"
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="w-full text-sm border border-dashed border-border rounded-lg px-3 py-2 outline-none hover:border-brand-primary/50 bg-background text-foreground flex items-center gap-2 transition"
+              >
+                <Upload size={14} className="text-muted-foreground" />
+                {file ? (
+                  <span className="text-brand-primary font-medium truncate">{file.name}</span>
+                ) : (
+                  <span className="text-muted-foreground">Click to choose a file...</span>
+                )}
+              </button>
+            </div>
           )}
 
           <button

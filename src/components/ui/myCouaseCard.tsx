@@ -28,51 +28,66 @@ export default function MyCourseCard({
     onContinue,
 }: MyCourseCardProps) {
     const isNotStarted = progress === 0;
-    const label = buttonLabel ?? (isNotStarted ? "Start" : "Continue Track");
+    const isComplete = progress === 100;
+    const label = buttonLabel ?? (isComplete ? "Review Track" : isNotStarted ? "Start Track" : "Continue Track");
 
     return (
-        <div className="min-w-[350px] w-full h-106 max-w-md bg-gray-100 dark:bg-gray-900 shadow-md dark:shadow-brand-accent/20 overflow-hidden flex flex-col hover:-translate-y-4 duration-300">
+        <div className="min-w-[320px] w-full max-w-md bg-card border border-border rounded-2xl overflow-hidden flex flex-col shadow-sm hover:-translate-y-2 hover:shadow-xl dark:hover:border-purple-500/30 dark:hover:shadow-purple-500/10 duration-300 group">
+            {/* Thumbnail */}
+            <div className="relative overflow-hidden">
+                <img
+                    src={thumbnail}
+                    alt={courseName}
+                    className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-500"
+                />
+                {isComplete && (
+                    <div className="absolute top-3 right-3 bg-emerald-500 text-white text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-full shadow-lg">
+                        ✓ Complete
+                    </div>
+                )}
+            </div>
 
-            <img
-                src={thumbnail}
-                alt={courseName}
-                className="w-full h-56 object-cover"
-            />
-
-            <div className="p-4 flex flex-col gap-2 flex-grow">
+            <div className="p-5 flex flex-col gap-3 grow">
+                {/* Category + Status */}
                 <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-xs text-brand-accent font-medium p-1 px-3 rounded-xl bg-brand-accent/20 dark:bg-brand-accent/10 w-fit">
+                    <span className="text-[10px] uppercase tracking-wider font-bold text-brand-accent bg-brand-accent/15 px-3 py-1 rounded-full">
                         {category ?? "General"}
                     </span>
                     {statusBadge && (
-                        <span className={`text-xs font-medium p-1 px-3 rounded-xl w-fit ${
+                        <span className={`text-[10px] uppercase tracking-wider font-bold px-3 py-1 rounded-full ${
                             statusBadge === "PUBLISHED"
-                                ? "bg-emerald-500/20 text-emerald-500"
-                                : "bg-amber-500/20 text-amber-500"
+                                ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                                : "bg-amber-500/15 text-amber-600 dark:text-amber-400"
                         }`}>
                             {statusBadge === "PUBLISHED" ? "Published" : "Draft"}
                         </span>
                     )}
                 </div>
+
+                {/* Title + Instructor */}
                 <div>
-                    <h2 className="text-lg font-semibold">{courseName}</h2>
-                    <p className="text-sm text-gray-500">{instructor}</p>
+                    <h2 className="text-lg font-bold text-foreground leading-tight line-clamp-1">{courseName}</h2>
+                    <p className="text-sm text-muted-foreground mt-0.5">{instructor}</p>
                 </div>
 
                 {/* Progress Section */}
-                <div className="flex flex-col gap-1">
-                    <div className="flex justify-between text-sm">
-                        <span>
+                <div className="flex flex-col gap-2 mt-auto">
+                    <div className="flex justify-between text-xs font-medium">
+                        <span className="text-muted-foreground">
                             {studentCount !== undefined
                                 ? `${studentCount} student${studentCount !== 1 ? "s" : ""}`
                                 : `${completedLessons}/${totalLessons} lessons`}
                         </span>
-                        <span>{progress}%</span>
+                        <span className={isComplete ? "text-emerald-500 font-bold" : "text-primary dark:text-purple-300 font-bold"}>{progress}%</span>
                     </div>
 
-                    <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
                         <div
-                            className="h-full bg-brand-primary transition-all duration-300"
+                            className={`h-full rounded-full transition-all duration-500 ${
+                                isComplete
+                                    ? 'bg-emerald-500'
+                                    : 'bg-primary dark:bg-purple-500'
+                            }`}
                             style={{ width: `${progress}%` }}
                         />
                     </div>
@@ -81,13 +96,11 @@ export default function MyCourseCard({
                 {/* Button */}
                 <button
                     onClick={onContinue}
-                    className={`mt-auto w-full py-2 font-medium transition-all shadow-brand-primary/25
-            ${buttonLabel
-                            ? "bg-brand-primary hover:bg-brand-hover text-white"
-                            : isNotStarted
-                                ? "bg-green-500 hover:bg-green-600 text-white"
-                                : "bg-brand-primary hover:bg-brand-hover text-white"
-                        }`}
+                    className={`w-full py-3 rounded-xl font-bold text-sm transition-all mt-2 ${
+                        isComplete
+                            ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/20"
+                            : "bg-brand-primary text-white hover:bg-brand-hover shadow-sm"
+                    }`}
                 >
                     {label}
                 </button>

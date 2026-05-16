@@ -1,0 +1,3001 @@
+﻿diff --git a/package-lock.json b/package-lock.json
+index eafcae0..7327356 100644
+--- a/package-lock.json
++++ b/package-lock.json
+@@ -18,6 +18,7 @@
+         "embla-carousel": "^8.6.0",
+         "embla-carousel-react": "^8.6.0",
+         "framer-motion": "^12.38.0",
++        "hls.js": "^1.6.16",
+         "jose": "^6.2.2",
+         "lucide-react": "^1.14.0",
+         "motion": "^12.38.0",
+@@ -4709,7 +4710,6 @@
+       "resolved": "https://registry.npmjs.org/@types/node/-/node-20.19.39.tgz",
+       "integrity": "sha512-orrrD74MBUyK8jOAD/r0+lfa1I2MO6I+vAkmAWzMYbCcgrN4lCrmK52gRFQq/JRxfYPfonkr4b0jcY7Olqdqbw==",
+       "license": "MIT",
+-      "peer": true,
+       "dependencies": {
+         "undici-types": "~6.21.0"
+       }
+diff --git a/package.json b/package.json
+index bad638c..1e695bc 100644
+--- a/package.json
++++ b/package.json
+@@ -19,6 +19,7 @@
+     "embla-carousel": "^8.6.0",
+     "embla-carousel-react": "^8.6.0",
+     "framer-motion": "^12.38.0",
++    "hls.js": "^1.6.16",
+     "jose": "^6.2.2",
+     "lucide-react": "^1.14.0",
+     "motion": "^12.38.0",
+diff --git a/src/app/(main)/tracks/[trackId]/page.tsx b/src/app/(main)/tracks/[trackId]/page.tsx
+index e713e0c..01a9071 100644
+--- a/src/app/(main)/tracks/[trackId]/page.tsx
++++ b/src/app/(main)/tracks/[trackId]/page.tsx
+@@ -39,6 +39,13 @@ interface Module {
+   lessons: Lesson[];
+ }
+ 
++interface Phase {
++  id: string;
++  title?: string;
++  order?: number;
++  modules?: Module[];
++}
++
+ interface Instructor {
+   id: string;
+   name: string;
+@@ -73,7 +80,28 @@ interface CourseDetails {
+   studentsCount: number;
+   rating: number;
+   reviewCount: number;
+-  modules: Module[];
++
++  // Old structure fallback
++  modules?: Module[];
++
++  // New structure
++  phases?: Phase[];
++}
++
++function flattenModules(track: CourseDetails | null): Module[] {
++  if (!track) return [];
++
++  if (Array.isArray(track.modules)) {
++    return track.modules;
++  }
++
++  if (Array.isArray(track.phases)) {
++    return track.phases.flatMap((phase) =>
++      Array.isArray(phase.modules) ? phase.modules : []
++    );
++  }
++
++  return [];
+ }
+ 
+ function formatDuration(seconds: number): string {
+@@ -100,9 +128,12 @@ function renderStars(rating: number) {
+   const full = Math.floor(rating);
+   const half = rating % 1 >= 0.3;
+   const stars = [];
++
+   for (let i = 0; i < 5; i++) {
+     if (i < full) {
+-      stars.push(<Star key={i} className="w-4 h-4 fill-amber-400 text-amber-400" />);
++      stars.push(
++        <Star key={i} className="w-4 h-4 fill-amber-400 text-amber-400" />
++      );
+     } else if (i === full && half) {
+       stars.push(
+         <div key={i} className="relative w-4 h-4">
+@@ -116,6 +147,7 @@ function renderStars(rating: number) {
+       stars.push(<Star key={i} className="w-4 h-4 text-amber-400/30" />);
+     }
+   }
++
+   return stars;
+ }
+ 
+@@ -134,20 +166,33 @@ export default function CoursePreviewPage() {
+   const [enrollError, setEnrollError] = useState<string | null>(null);
+   const [isEnrolled, setIsEnrolled] = useState(false);
+ 
+-  const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set());
++  const [expandedModules, setExpandedModules] = useState<Set<string>>(
++    new Set()
++  );
+   const [showFullDescription, setShowFullDescription] = useState(false);
+   const [showFullAudience, setShowFullAudience] = useState(false);
+ 
++  const modules = flattenModules(track);
++
++  const learningObjectives = track?.learningObjectives ?? [];
++  const requirements = track?.requirements ?? [];
++  const targetAudience = track?.targetAudience ?? [];
++  const tags = track?.tags ?? [];
++
+   useEffect(() => {
+     const fetchCourseDetails = async () => {
+       try {
+         const res = await fetch(`/api/public/tracks/${trackId}`);
+         const data = await res.json();
++
+         if (res.ok) {
+-          setCourse(data.track);
+-          // Expand first module by default
+-          if (data.track?.modules?.length > 0) {
+-            setExpandedModules(new Set([data.track.modules[0].id]));
++          const fetchedTrack: CourseDetails = data.track;
++          setCourse(fetchedTrack);
++
++          const flatModules = flattenModules(fetchedTrack);
++
++          if (flatModules.length > 0) {
++            setExpandedModules(new Set([flatModules[0].id]));
+           }
+         } else {
+           setError(data.error || "Failed to load track details.");
+@@ -161,11 +206,15 @@ export default function CoursePreviewPage() {
+ 
+     const checkEnrollmentStatus = async () => {
+       if (!user) return;
++
+       try {
+         const res = await fetch("/api/student/tracks", { cache: "no-store" });
+         const data = await res.json();
++
+         if (res.ok && Array.isArray(data?.tracks)) {
+-          setIsEnrolled(data.tracks.some((c: { id: string }) => c.id === trackId));
++          setIsEnrolled(
++            data.tracks.some((c: { id: string }) => c.id === trackId)
++          );
+         }
+       } catch {
+         // Ignore error
+@@ -239,6 +288,7 @@ export default function CoursePreviewPage() {
+       }
+ 
+       setIsEnrolled(true);
++
+       if (!data?.alreadyEnrolled) {
+         router.push(`/dashboard/student/tracks/${trackId}`);
+       }
+@@ -252,18 +302,20 @@ export default function CoursePreviewPage() {
+   const toggleModule = (moduleId: string) => {
+     setExpandedModules((prev) => {
+       const next = new Set(prev);
++
+       if (next.has(moduleId)) {
+         next.delete(moduleId);
+       } else {
+         next.add(moduleId);
+       }
++
+       return next;
+     });
+   };
+ 
+   const expandAll = () => {
+     if (!track) return;
+-    setExpandedModules(new Set(track.modules.map((m) => m.id)));
++    setExpandedModules(new Set(modules.map((m) => m.id)));
+   };
+ 
+   if (loading) {
+@@ -279,7 +331,9 @@ export default function CoursePreviewPage() {
+       <div className="max-w-4xl mx-auto p-8 text-center text-destructive border border-destructive/20 rounded-xl bg-destructive/5 mt-12">
+         <h2 className="text-xl font-bold mb-2">Error Loading Track</h2>
+         <p>{error || "Track not found"}</p>
+-        <Button onClick={() => router.back()} className="mt-4" variant="outline">Go Back</Button>
++        <Button onClick={() => router.back()} className="mt-4" variant="outline">
++          Go Back
++        </Button>
+       </div>
+     );
+   }
+@@ -291,11 +345,16 @@ export default function CoursePreviewPage() {
+         <div className="max-w-[1340px] mx-auto px-6 py-8 lg:pr-[420px]">
+           {/* Breadcrumb */}
+           <div className="flex items-center gap-2 text-sm mb-4">
+-            <button onClick={() => router.back()} className="text-violet-400 hover:text-violet-300 flex items-center gap-1 transition-colors">
++            <button
++              onClick={() => router.back()}
++              className="text-violet-400 hover:text-violet-300 flex items-center gap-1 transition-colors"
++            >
+               <ArrowLeft className="w-4 h-4" /> Back
+             </button>
+             <span className="text-gray-500">ΓÇ║</span>
+-            <span className="text-violet-400 hover:text-violet-300 cursor-pointer">{track.category}</span>
++            <span className="text-violet-400 hover:text-violet-300 cursor-pointer">
++              {track.category}
++            </span>
+           </div>
+ 
+           {/* Title */}
+@@ -314,11 +373,16 @@ export default function CoursePreviewPage() {
+           <div className="flex items-center flex-wrap gap-x-4 gap-y-2 text-sm mb-4">
+             {track.rating > 0 && (
+               <div className="flex items-center gap-1.5">
+-                <span className="font-bold text-amber-400 text-base">{track.rating}</span>
++                <span className="font-bold text-amber-400 text-base">
++                  {track.rating}
++                </span>
+                 <div className="flex items-center">{renderStars(track.rating)}</div>
+-                <span className="text-violet-400 underline cursor-default">({track.reviewCount.toLocaleString()} ratings)</span>
++                <span className="text-violet-400 underline cursor-default">
++                  ({track.reviewCount.toLocaleString()} ratings)
++                </span>
+               </div>
+             )}
++
+             <div className="flex items-center gap-1.5 text-gray-300">
+               <Users className="w-4 h-4" />
+               {track.studentsCount.toLocaleString()} students
+@@ -328,11 +392,21 @@ export default function CoursePreviewPage() {
+           {/* Instructor & meta */}
+           <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-gray-300">
+             <span>
+-              Created by <span className="text-violet-400 underline cursor-default">{track.instructorName}</span>
++              Created by{" "}
++              <span className="text-violet-400 underline cursor-default">
++                {track.instructorName}
++              </span>
++            </span>
++            <span className="flex items-center gap-1">
++              <Calendar className="w-3.5 h-3.5" /> Last updated{" "}
++              {formatDate(track.updatedAt)}
++            </span>
++            <span className="flex items-center gap-1">
++              <Globe className="w-3.5 h-3.5" /> {track.language}
++            </span>
++            <span className="flex items-center gap-1">
++              <BarChart3 className="w-3.5 h-3.5" /> {track.level}
+             </span>
+-            <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" /> Last updated {formatDate(track.updatedAt)}</span>
+-            <span className="flex items-center gap-1"><Globe className="w-3.5 h-3.5" /> {track.language}</span>
+-            <span className="flex items-center gap-1"><BarChart3 className="w-3.5 h-3.5" /> {track.level}</span>
+           </div>
+         </div>
+       </div>
+@@ -342,14 +416,18 @@ export default function CoursePreviewPage() {
+         <div className="lg:pr-[420px]">
+           {/* LEFT COLUMN */}
+           <div className="py-8 space-y-10 min-w-0">
+-
+             {/* ΓöÇΓöÇ WHAT YOU'LL LEARN ΓöÇΓöÇ */}
+-            {track.learningObjectives.length > 0 && (
++            {learningObjectives.length > 0 && (
+               <div className="border border-border rounded-lg p-6 bg-card">
+-                <h2 className="text-xl font-bold text-foreground mb-4">What you&apos;ll learn</h2>
++                <h2 className="text-xl font-bold text-foreground mb-4">
++                  What you&apos;ll learn
++                </h2>
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3">
+-                  {track.learningObjectives.map((obj, i) => (
+-                    <div key={i} className="flex gap-3 text-sm text-foreground/90">
++                  {learningObjectives.map((obj, i) => (
++                    <div
++                      key={i}
++                      className="flex gap-3 text-sm text-foreground/90"
++                    >
+                       <Check className="w-4 h-4 text-brand-primary shrink-0 mt-0.5" />
+                       <span>{obj}</span>
+                     </div>
+@@ -359,12 +437,17 @@ export default function CoursePreviewPage() {
+             )}
+ 
+             {/* ΓöÇΓöÇ EXPLORE RELATED TOPICS (Tags) ΓöÇΓöÇ */}
+-            {track.tags.length > 0 && (
++            {tags.length > 0 && (
+               <div>
+-                <h2 className="text-xl font-bold text-foreground mb-3">Explore related topics</h2>
++                <h2 className="text-xl font-bold text-foreground mb-3">
++                  Explore related topics
++                </h2>
+                 <div className="flex flex-wrap gap-2">
+-                  {track.tags.map((tag, i) => (
+-                    <span key={i} className="px-4 py-2 text-sm font-medium rounded-full border border-border bg-card text-foreground hover:bg-muted transition-colors cursor-default">
++                  {tags.map((tag, i) => (
++                    <span
++                      key={i}
++                      className="px-4 py-2 text-sm font-medium rounded-full border border-border bg-card text-foreground hover:bg-muted transition-colors cursor-default"
++                    >
+                       {tag}
+                     </span>
+                   ))}
+@@ -375,24 +458,32 @@ export default function CoursePreviewPage() {
+             {/* ΓöÇΓöÇ TRACK CONTENT ΓöÇΓöÇ */}
+             <div>
+               <div className="flex items-center justify-between mb-2">
+-                <h2 className="text-xl font-bold text-foreground">Track content</h2>
+-                <button onClick={expandAll} className="text-sm font-semibold text-brand-primary hover:underline">
++                <h2 className="text-xl font-bold text-foreground">
++                  Track content
++                </h2>
++                <button
++                  onClick={expandAll}
++                  className="text-sm font-semibold text-brand-primary hover:underline"
++                >
+                   Expand all sections
+                 </button>
+               </div>
++
+               <div className="text-sm text-muted-foreground mb-4">
+                 {track.modulesCount} sections ΓÇó {track.lessonsCount} lectures
+-                {track.totalDuration > 0 && ` ΓÇó ${formatDuration(track.totalDuration)} total length`}
++                {track.totalDuration > 0 &&
++                  ` ΓÇó ${formatDuration(track.totalDuration)} total length`}
+               </div>
+ 
+               <div className="border border-border rounded-lg overflow-hidden divide-y divide-border">
+-                {track.modules.length === 0 ? (
++                {modules.length === 0 ? (
+                   <div className="p-8 text-center text-muted-foreground">
+                     No content available yet.
+                   </div>
+                 ) : (
+-                  track.modules.map((mod) => {
++                  modules.map((mod) => {
+                     const isExpanded = expandedModules.has(mod.id);
++
+                     return (
+                       <div key={mod.id}>
+                         <button
+@@ -400,25 +491,36 @@ export default function CoursePreviewPage() {
+                           className="w-full flex items-center justify-between p-4 bg-muted/40 hover:bg-muted/60 transition-colors text-left"
+                         >
+                           <div className="flex items-center gap-2 font-semibold text-foreground text-sm">
+-                            {isExpanded ? <ChevronUp className="w-4 h-4 shrink-0" /> : <ChevronDown className="w-4 h-4 shrink-0" />}
++                            {isExpanded ? (
++                              <ChevronUp className="w-4 h-4 shrink-0" />
++                            ) : (
++                              <ChevronDown className="w-4 h-4 shrink-0" />
++                            )}
+                             {mod.title}
+                           </div>
+                           <span className="text-xs text-muted-foreground shrink-0 ml-4">
+                             {mod.lessonsCount} lectures
+-                            {mod.totalDuration > 0 && ` ΓÇó ${formatDuration(mod.totalDuration)}`}
++                            {mod.totalDuration > 0 &&
++                              ` ΓÇó ${formatDuration(mod.totalDuration)}`}
+                           </span>
+                         </button>
++
+                         {isExpanded && (
+                           <div className="divide-y divide-border/50">
+-                            {mod.lessons.map((lesson) => (
+-                              <div key={lesson.id} className="flex items-center justify-between px-4 py-3 pl-10 text-sm hover:bg-muted/20 transition-colors">
++                            {(mod.lessons || []).map((lesson) => (
++                              <div
++                                key={lesson.id}
++                                className="flex items-center justify-between px-4 py-3 pl-10 text-sm hover:bg-muted/20 transition-colors"
++                              >
+                                 <div className="flex items-center gap-3 text-foreground/80">
+                                   <PlayCircle className="w-4 h-4 text-muted-foreground shrink-0" />
+                                   {lesson.title}
+                                 </div>
+                                 <div className="flex items-center gap-3 text-muted-foreground shrink-0">
+                                   {lesson.duration ? (
+-                                    <span className="text-xs">{formatDurationShort(lesson.duration)}</span>
++                                    <span className="text-xs">
++                                      {formatDurationShort(lesson.duration)}
++                                    </span>
+                                   ) : null}
+                                   <Lock className="w-3.5 h-3.5" />
+                                 </div>
+@@ -434,12 +536,17 @@ export default function CoursePreviewPage() {
+             </div>
+ 
+             {/* ΓöÇΓöÇ REQUIREMENTS ΓöÇΓöÇ */}
+-            {track.requirements.length > 0 && (
++            {requirements.length > 0 && (
+               <div>
+-                <h2 className="text-xl font-bold text-foreground mb-3">Requirements</h2>
++                <h2 className="text-xl font-bold text-foreground mb-3">
++                  Requirements
++                </h2>
+                 <ul className="space-y-2 pl-1">
+-                  {track.requirements.map((req, i) => (
+-                    <li key={i} className="flex items-start gap-3 text-sm text-foreground/90">
++                  {requirements.map((req, i) => (
++                    <li
++                      key={i}
++                      className="flex items-start gap-3 text-sm text-foreground/90"
++                    >
+                       <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-foreground/60 shrink-0" />
+                       {req}
+                     </li>
+@@ -450,46 +557,76 @@ export default function CoursePreviewPage() {
+ 
+             {/* ΓöÇΓöÇ DESCRIPTION ΓöÇΓöÇ */}
+             <div>
+-              <h2 className="text-xl font-bold text-foreground mb-3">Description</h2>
+-              <div className={`text-sm text-foreground/80 leading-relaxed whitespace-pre-line ${!showFullDescription && track.description.length > 400 ? "max-h-40 overflow-hidden relative" : ""}`}>
++              <h2 className="text-xl font-bold text-foreground mb-3">
++                Description
++              </h2>
++              <div
++                className={`text-sm text-foreground/80 leading-relaxed whitespace-pre-line ${
++                  !showFullDescription && track.description.length > 400
++                    ? "max-h-40 overflow-hidden relative"
++                    : ""
++                }`}
++              >
+                 {track.description}
+                 {!showFullDescription && track.description.length > 400 && (
+                   <div className="absolute bottom-0 left-0 right-0 h-16 bg-linear-to-t from-background to-transparent" />
+                 )}
+               </div>
++
+               {track.description.length > 400 && (
+                 <button
+                   onClick={() => setShowFullDescription(!showFullDescription)}
+                   className="flex items-center gap-1 mt-2 text-sm font-semibold text-brand-primary hover:underline"
+                 >
+                   {showFullDescription ? "Show less" : "Show more"}
+-                  {showFullDescription ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
++                  {showFullDescription ? (
++                    <ChevronUp className="w-4 h-4" />
++                  ) : (
++                    <ChevronDown className="w-4 h-4" />
++                  )}
+                 </button>
+               )}
+             </div>
+ 
+             {/* ΓöÇΓöÇ WHO THIS TRACK IS FOR ΓöÇΓöÇ */}
+-            {track.targetAudience.length > 0 && (
++            {targetAudience.length > 0 && (
+               <div>
+-                <h2 className="text-xl font-bold text-foreground mb-3">Who this track is for:</h2>
+-                <div className={`space-y-2 ${!showFullAudience && track.targetAudience.length > 4 ? "max-h-32 overflow-hidden relative" : ""}`}>
+-                  {track.targetAudience.map((item, i) => (
+-                    <div key={i} className="flex items-start gap-3 text-sm text-foreground/90">
++                <h2 className="text-xl font-bold text-foreground mb-3">
++                  Who this track is for:
++                </h2>
++                <div
++                  className={`space-y-2 ${
++                    !showFullAudience && targetAudience.length > 4
++                      ? "max-h-32 overflow-hidden relative"
++                      : ""
++                  }`}
++                >
++                  {targetAudience.map((item, i) => (
++                    <div
++                      key={i}
++                      className="flex items-start gap-3 text-sm text-foreground/90"
++                    >
+                       <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-foreground/60 shrink-0" />
+                       {item}
+                     </div>
+                   ))}
+-                  {!showFullAudience && track.targetAudience.length > 4 && (
++
++                  {!showFullAudience && targetAudience.length > 4 && (
+                     <div className="absolute bottom-0 left-0 right-0 h-12 bg-linear-to-t from-background to-transparent" />
+                   )}
+                 </div>
+-                {track.targetAudience.length > 4 && (
++
++                {targetAudience.length > 4 && (
+                   <button
+                     onClick={() => setShowFullAudience(!showFullAudience)}
+                     className="flex items-center gap-1 mt-2 text-sm font-semibold text-brand-primary hover:underline"
+                   >
+                     {showFullAudience ? "Show less" : "Show more"}
+-                    {showFullAudience ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
++                    {showFullAudience ? (
++                      <ChevronUp className="w-4 h-4" />
++                    ) : (
++                      <ChevronDown className="w-4 h-4" />
++                    )}
+                   </button>
+                 )}
+               </div>
+@@ -497,15 +634,18 @@ export default function CoursePreviewPage() {
+ 
+             {/* ΓöÇΓöÇ INSTRUCTOR ΓöÇΓöÇ */}
+             <div>
+-              <h2 className="text-xl font-bold text-foreground mb-1">Instructor</h2>
++              <h2 className="text-xl font-bold text-foreground mb-1">
++                Instructor
++              </h2>
+               <p className="text-brand-primary font-semibold text-lg mb-1 hover:underline cursor-default">
+                 {track.instructor.name}
+               </p>
++
+               <div className="flex items-start gap-5 mt-3">
+-                {/* Avatar placeholder */}
+                 <div className="w-24 h-24 rounded-full bg-linear-to-br from-brand-primary to-brand-accent flex items-center justify-center text-white text-3xl font-bold shrink-0 shadow-lg">
+                   {track.instructor.name.charAt(0).toUpperCase()}
+                 </div>
++
+                 <div className="space-y-1 text-sm text-foreground/80">
+                   {track.instructor.rating > 0 && (
+                     <div className="flex items-center gap-2">
+@@ -513,22 +653,30 @@ export default function CoursePreviewPage() {
+                       <span>{track.instructor.rating} Instructor Rating</span>
+                     </div>
+                   )}
++
+                   {track.instructor.reviewCount > 0 && (
+                     <div className="flex items-center gap-2">
+                       <MessageSquare className="w-4 h-4 text-muted-foreground" />
+-                      <span>{track.instructor.reviewCount.toLocaleString()} Reviews</span>
++                      <span>
++                        {track.instructor.reviewCount.toLocaleString()} Reviews
++                      </span>
+                     </div>
+                   )}
++
+                   <div className="flex items-center gap-2">
+                     <Users className="w-4 h-4 text-muted-foreground" />
+-                    <span>{track.instructor.studentsCount.toLocaleString()} Students</span>
++                    <span>
++                      {track.instructor.studentsCount.toLocaleString()} Students
++                    </span>
+                   </div>
++
+                   <div className="flex items-center gap-2">
+                     <BookOpen className="w-4 h-4 text-muted-foreground" />
+                     <span>{track.instructor.coursesCount} Tracks</span>
+                   </div>
+                 </div>
+               </div>
++
+               {track.instructor.bio && (
+                 <p className="mt-4 text-sm text-foreground/70 leading-relaxed whitespace-pre-line">
+                   {track.instructor.bio}
+@@ -540,20 +688,34 @@ export default function CoursePreviewPage() {
+       </div>
+ 
+       {/* ΓòÉΓòÉΓòÉ RIGHT STICKY SIDEBAR ΓòÉΓòÉΓòÉ */}
+-      <div className="hidden lg:block fixed top-20 right-0 w-[380px] z-20 pointer-events-none" style={{ height: "calc(100vh - 5rem)" }}>
+-        <div className="h-full flex justify-center" style={{ maxWidth: "calc((100vw - 1340px) / 2 + 380px + 24px)", marginLeft: "auto" }}>
++      <div
++        className="hidden lg:block fixed top-20 right-0 w-[380px] z-20 pointer-events-none"
++        style={{ height: "calc(100vh - 5rem)" }}
++      >
++        <div
++          className="h-full flex justify-center"
++          style={{
++            maxWidth: "calc((100vw - 1340px) / 2 + 380px + 24px)",
++            marginLeft: "auto",
++          }}
++        >
+           <div className="w-[340px] pointer-events-auto pt-6 pb-6 overflow-y-auto scrollbar-none">
+             <div className="bg-card rounded-lg shadow-2xl border border-border overflow-hidden">
+               {/* Thumbnail / Preview Video */}
+               <div className="relative w-full aspect-video bg-muted group">
+                 {track.thumbnail ? (
+                   // eslint-disable-next-line @next/next/no-img-element
+-                  <img src={track.thumbnail} alt={track.title} className="w-full h-full object-cover" />
++                  <img
++                    src={track.thumbnail}
++                    alt={track.title}
++                    className="w-full h-full object-cover"
++                  />
+                 ) : (
+                   <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                     No Thumbnail
+                   </div>
+                 )}
++
+                 {track.previewVideoUrl && (
+                   <a
+                     href={track.previewVideoUrl}
+@@ -564,7 +726,9 @@ export default function CoursePreviewPage() {
+                     <div className="w-16 h-16 rounded-full bg-white/90 flex items-center justify-center shadow-lg">
+                       <PlayCircle className="w-8 h-8 text-[#1c1d1f]" />
+                     </div>
+-                    <span className="absolute bottom-4 text-white font-semibold text-sm">Preview this track</span>
++                    <span className="absolute bottom-4 text-white font-semibold text-sm">
++                      Preview this track
++                    </span>
+                   </a>
+                 )}
+               </div>
+@@ -572,7 +736,9 @@ export default function CoursePreviewPage() {
+               <div className="p-6 space-y-4">
+                 {/* Price */}
+                 <div className="text-3xl font-extrabold text-foreground">
+-                  {track.price === 0 ? "Free" : `$${Number(track.price).toFixed(2)}`}
++                  {track.price === 0
++                    ? "Free"
++                    : `$${Number(track.price).toFixed(2)}`}
+                 </div>
+ 
+                 {/* Enroll Error */}
+@@ -586,12 +752,17 @@ export default function CoursePreviewPage() {
+                 {isEnrolled ? (
+                   <Button
+                     className="w-full bg-brand-accent hover:bg-brand-accent/90 text-white font-bold py-6 text-base"
+-                    onClick={() => router.push(`/dashboard/student/tracks/${trackId}`)}
++                    onClick={() =>
++                      router.push(`/dashboard/student/tracks/${trackId}`)
++                    }
+                   >
+                     Go to Track
+                   </Button>
+                 ) : user && user.role !== "STUDENT" ? (
+-                  <Button className="w-full bg-muted text-muted-foreground font-bold py-6 text-base cursor-not-allowed" disabled>
++                  <Button
++                    className="w-full bg-muted text-muted-foreground font-bold py-6 text-base cursor-not-allowed"
++                    disabled
++                  >
+                     Only Students Can Enroll
+                   </Button>
+                 ) : (
+@@ -600,32 +771,43 @@ export default function CoursePreviewPage() {
+                     onClick={handleEnroll}
+                     disabled={isEnrolling}
+                   >
+-                    {isEnrolling ? <Loader2 className="animate-spin mr-2 h-5 w-5" /> : null}
+-                    {track.price > 0 ? `Buy Now ΓÇö $${Number(track.price).toFixed(2)}` : "Enroll Now ΓÇö Free"}
++                    {isEnrolling ? (
++                      <Loader2 className="animate-spin mr-2 h-5 w-5" />
++                    ) : null}
++                    {track.price > 0
++                      ? `Buy Now ΓÇö $${Number(track.price).toFixed(2)}`
++                      : "Enroll Now ΓÇö Free"}
+                   </Button>
+                 )}
+ 
+                 {/* Track includes */}
+                 <div className="pt-2 space-y-3 text-sm text-foreground/80">
+-                  <p className="font-semibold text-foreground">This track includes:</p>
++                  <p className="font-semibold text-foreground">
++                    This track includes:
++                  </p>
++
+                   {track.totalDuration > 0 && (
+                     <div className="flex items-center gap-3">
+                       <Clock className="w-4 h-4 text-muted-foreground shrink-0" />
+                       {formatDuration(track.totalDuration)} of video content
+                     </div>
+                   )}
++
+                   <div className="flex items-center gap-3">
+                     <BookOpen className="w-4 h-4 text-muted-foreground shrink-0" />
+                     {track.lessonsCount} lectures
+                   </div>
++
+                   <div className="flex items-center gap-3">
+                     <BarChart3 className="w-4 h-4 text-muted-foreground shrink-0" />
+                     {track.level}
+                   </div>
++
+                   <div className="flex items-center gap-3">
+                     <Award className="w-4 h-4 text-muted-foreground shrink-0" />
+                     Certificate of completion
+                   </div>
++
+                   <div className="flex items-center gap-3">
+                     <Globe className="w-4 h-4 text-muted-foreground shrink-0" />
+                     Full lifetime access
+@@ -641,9 +823,12 @@ export default function CoursePreviewPage() {
+       <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-card border-t border-border p-4 flex items-center justify-between gap-4 z-50 shadow-lg">
+         <div>
+           <div className="text-xl font-extrabold text-foreground">
+-            {track.price === 0 ? "Free" : `$${Number(track.price).toFixed(2)}`}
++            {track.price === 0
++              ? "Free"
++              : `$${Number(track.price).toFixed(2)}`}
+           </div>
+         </div>
++
+         {isEnrolled ? (
+           <Button
+             className="bg-brand-accent hover:bg-brand-accent/90 text-white font-bold py-3 px-8"
+@@ -657,11 +842,15 @@ export default function CoursePreviewPage() {
+             onClick={handleEnroll}
+             disabled={isEnrolling}
+           >
+-            {isEnrolling ? <Loader2 className="animate-spin mr-2 h-5 w-5" /> : null}
+-            {track.price > 0 ? `Buy Now ΓÇö $${Number(track.price).toFixed(2)}` : "Enroll Now ΓÇö Free"}
++            {isEnrolling ? (
++              <Loader2 className="animate-spin mr-2 h-5 w-5" />
++            ) : null}
++            {track.price > 0
++              ? `Buy Now ΓÇö $${Number(track.price).toFixed(2)}`
++              : "Enroll Now ΓÇö Free"}
+           </Button>
+         )}
+       </div>
+     </div>
+   );
+-}
++}
+\ No newline at end of file
+diff --git a/src/app/api/student/enroll/route.ts b/src/app/api/student/enroll/route.ts
+index 504c0fb..6d45eb3 100644
+--- a/src/app/api/student/enroll/route.ts
++++ b/src/app/api/student/enroll/route.ts
+@@ -40,6 +40,7 @@ export async function POST(req: NextRequest) {
+     }
+ 
+     const body = await req.json();
++
+     const trackId =
+       typeof body.trackId === "string" ? body.trackId.trim() : "";
+ 
+@@ -69,10 +70,13 @@ export async function POST(req: NextRequest) {
+       );
+     }
+ 
+-    // Block direct enrollment for paid tracks
++    // Paid track must go through Stripe checkout
+     if (track.price > 0) {
+       return NextResponse.json(
+-        { error: "This track requires payment. Please use the checkout process." },
++        {
++          error:
++            "This track requires payment. Please use the checkout process.",
++        },
+         { status: 402 }
+       );
+     }
+@@ -82,22 +86,41 @@ export async function POST(req: NextRequest) {
+         userId: currentUser.id,
+         trackId,
+       },
+-      select: {
+-        id: true,
+-      },
+     });
+ 
++    // If enrollment already exists
+     if (existingEnrollment) {
++      // If free track and enrollment is still pending/rejected, approve it
++      if (existingEnrollment.status !== "APPROVED") {
++        const updatedEnrollment = await db.enrollment.update({
++          where: {
++            id: existingEnrollment.id,
++          },
++          data: {
++            status: "APPROVED",
++          },
++        });
++
++        return NextResponse.json({
++          message: "Enrollment approved successfully",
++          enrollment: updatedEnrollment,
++          alreadyEnrolled: true,
++        });
++      }
++
+       return NextResponse.json({
+         message: "You are already enrolled in this track",
++        enrollment: existingEnrollment,
+         alreadyEnrolled: true,
+       });
+     }
+ 
++    // Free track enrollment should be approved immediately
+     const enrollment = await db.enrollment.create({
+       data: {
+         userId: currentUser.id,
+         trackId,
++        status: "APPROVED",
+       },
+     });
+ 
+@@ -113,4 +136,4 @@ export async function POST(req: NextRequest) {
+     console.error("[STUDENT_ENROLL_ERROR]", error);
+     return NextResponse.json({ error: "Internal Error" }, { status: 500 });
+   }
+-}
++}
+\ No newline at end of file
+diff --git a/src/app/api/student/lessons/[lessonId]/video/[...file]/route.ts b/src/app/api/student/lessons/[lessonId]/video/[...file]/route.ts
+new file mode 100644
+index 0000000..2a13846
+--- /dev/null
++++ b/src/app/api/student/lessons/[lessonId]/video/[...file]/route.ts
+@@ -0,0 +1,136 @@
++import { NextRequest, NextResponse } from "next/server";
++import { cookies } from "next/headers";
++import path from "path";
++import fs from "fs/promises";
++import { db } from "@/lib/db";
++import { verifyToken } from "@/lib/auth";
++
++export const runtime = "nodejs";
++export const dynamic = "force-dynamic";
++
++type RouteParams = {
++  lessonId: string;
++  file: string[];
++};
++
++function getContentType(fileName: string): string {
++  if (fileName.endsWith(".m3u8")) {
++    return "application/vnd.apple.mpegurl";
++  }
++
++  if (fileName.endsWith(".ts")) {
++    return "video/mp2t";
++  }
++
++  if (fileName.endsWith(".mp4")) {
++    return "video/mp4";
++  }
++
++  return "application/octet-stream";
++}
++
++function normalizeStoredPath(filePath: string): string {
++  return filePath.replace(/\\/g, "/");
++}
++
++export async function GET(
++  _req: NextRequest,
++  { params }: { params: Promise<RouteParams> }
++) {
++  try {
++    const { lessonId, file } = await params;
++
++    const requestedFile = file.join("/");
++
++    if (!requestedFile || requestedFile.includes("..")) {
++      return NextResponse.json({ error: "Invalid file path" }, { status: 400 });
++    }
++
++    const cookieStore = await cookies();
++    const token = cookieStore.get("token")?.value;
++
++    if (!token) {
++      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
++    }
++
++    const decoded = await verifyToken(token);
++
++    if (!decoded?.userId || !decoded?.role) {
++      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
++    }
++
++    const videoAsset = await db.videoAsset.findUnique({
++      where: {
++        lessonId,
++      },
++      include: {
++        lesson: {
++          include: {
++            module: {
++              include: {
++                phase: {
++                  include: {
++                    track: {
++                      include: {
++                        enrollments: {
++                          where: {
++                            userId: decoded.userId,
++                            status: "APPROVED",
++                          },
++                          select: {
++                            id: true,
++                          },
++                        },
++                      },
++                    },
++                  },
++                },
++              },
++            },
++          },
++        },
++      },
++    });
++
++    if (!videoAsset || videoAsset.status !== "READY" || !videoAsset.hlsManifestPath) {
++      return NextResponse.json(
++        { error: "Video not found or not ready" },
++        { status: 404 }
++      );
++    }
++
++    const track = videoAsset.lesson.module.phase.track;
++
++    const isAdmin = decoded.role === "ADMIN";
++    const isInstructor =
++      decoded.role === "INSTRUCTOR" && track.instructorId === decoded.userId;
++    const isApprovedStudent =
++      decoded.role === "STUDENT" && track.enrollments.length > 0;
++
++    if (!isAdmin && !isInstructor && !isApprovedStudent) {
++      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
++    }
++
++    const manifestPath = normalizeStoredPath(videoAsset.hlsManifestPath);
++    const hlsDirectory = path.resolve(path.dirname(manifestPath));
++    const targetPath = path.resolve(hlsDirectory, requestedFile);
++
++    if (!targetPath.startsWith(hlsDirectory)) {
++      return NextResponse.json({ error: "Invalid file path" }, { status: 400 });
++    }
++
++    const fileBuffer = await fs.readFile(targetPath);
++    const contentType = getContentType(requestedFile);
++
++    return new NextResponse(fileBuffer, {
++      status: 200,
++      headers: {
++        "Content-Type": contentType,
++        "Cache-Control": "private, no-store",
++      },
++    });
++  } catch (error) {
++    console.error("[SECURE_LESSON_VIDEO_ERROR]", error);
++    return NextResponse.json({ error: "Internal Error" }, { status: 500 });
++  }
++}
+\ No newline at end of file
+diff --git a/src/app/api/student/progress/complete/route.ts b/src/app/api/student/progress/complete/route.ts
+new file mode 100644
+index 0000000..63a7a72
+--- /dev/null
++++ b/src/app/api/student/progress/complete/route.ts
+@@ -0,0 +1,166 @@
++import { NextRequest, NextResponse } from "next/server";
++import { cookies } from "next/headers";
++import { db } from "@/lib/db";
++import { verifyToken } from "@/lib/auth";
++
++export const runtime = "nodejs";
++export const dynamic = "force-dynamic";
++
++export async function POST(req: NextRequest) {
++  try {
++    const cookieStore = await cookies();
++    const token = cookieStore.get("token")?.value;
++
++    if (!token) {
++      return NextResponse.json(
++        { error: "You must be logged in" },
++        { status: 401 }
++      );
++    }
++
++    const decoded = await verifyToken(token);
++
++    if (!decoded?.userId) {
++      return NextResponse.json(
++        { error: "You must be logged in" },
++        { status: 401 }
++      );
++    }
++
++    const currentUser = await db.user.findUnique({
++      where: {
++        id: decoded.userId,
++      },
++      select: {
++        id: true,
++        role: true,
++      },
++    });
++
++    if (!currentUser || currentUser.role !== "STUDENT") {
++      return NextResponse.json(
++        { error: "Only students can complete lessons" },
++        { status: 403 }
++      );
++    }
++
++    const body = await req.json();
++
++    const lessonId =
++      typeof body.lessonId === "string" ? body.lessonId.trim() : "";
++
++    if (!lessonId) {
++      return NextResponse.json(
++        { error: "Lesson ID is required" },
++        { status: 400 }
++      );
++    }
++
++    const lesson = await db.lesson.findUnique({
++      where: {
++        id: lessonId,
++      },
++      include: {
++        quizzes: {
++          include: {
++            attempts: {
++              where: {
++                userId: currentUser.id,
++              },
++              orderBy: {
++                createdAt: "desc",
++              },
++            },
++          },
++        },
++        module: {
++          include: {
++            phase: {
++              include: {
++                track: {
++                  include: {
++                    enrollments: {
++                      where: {
++                        userId: currentUser.id,
++                        status: "APPROVED",
++                      },
++                      select: {
++                        id: true,
++                      },
++                    },
++                  },
++                },
++              },
++            },
++          },
++        },
++      },
++    });
++
++    if (!lesson) {
++      return NextResponse.json(
++        { error: "Lesson not found" },
++        { status: 404 }
++      );
++    }
++
++    const track = lesson.module.phase.track;
++
++    if (!track.enrollments.length) {
++      return NextResponse.json(
++        { error: "Track not found or enrollment not approved" },
++        { status: 403 }
++      );
++    }
++
++    const hasQuiz = lesson.quizzes.length > 0;
++
++    if (hasQuiz) {
++      const allQuizzesPassed = lesson.quizzes.every((quiz) =>
++        quiz.attempts.some((attempt) => attempt.passed)
++      );
++
++      if (!allQuizzesPassed) {
++        return NextResponse.json(
++          { error: "You must pass the lesson quiz before completing this lesson" },
++          { status: 400 }
++        );
++      }
++    }
++
++    const progress = await db.progress.upsert({
++      where: {
++        userId_lessonId: {
++          userId: currentUser.id,
++          lessonId,
++        },
++      },
++      create: {
++        userId: currentUser.id,
++        lessonId,
++        watchedPercent: 100,
++        lastPosition: 0,
++        isCompleted: true,
++      },
++      update: {
++        watchedPercent: 100,
++        isCompleted: true,
++      },
++    });
++
++    return NextResponse.json(
++      {
++        message: "Lesson marked as complete",
++        progress,
++      },
++      { status: 200 }
++    );
++  } catch (error) {
++    console.error("[MARK_LESSON_COMPLETE_ERROR]", error);
++
++    return NextResponse.json(
++      { error: "Internal Error" },
++      { status: 500 }
++    );
++  }
++}
+\ No newline at end of file
+diff --git a/src/app/api/tracks/[trackId]/phases/[phaseId]/modules/[moduleId]/lessons/[lessonId]/video/route.ts b/src/app/api/tracks/[trackId]/phases/[phaseId]/modules/[moduleId]/lessons/[lessonId]/video/route.ts
+index 7f17b7b..4f8fc97 100644
+--- a/src/app/api/tracks/[trackId]/phases/[phaseId]/modules/[moduleId]/lessons/[lessonId]/video/route.ts
++++ b/src/app/api/tracks/[trackId]/phases/[phaseId]/modules/[moduleId]/lessons/[lessonId]/video/route.ts
+@@ -20,6 +20,7 @@ type RouteParams = {
+ };
+ 
+ const DEFAULT_MAX_UPLOAD_MB = 500;
++
+ const DEFAULT_ALLOWED_TYPES = [
+   "video/mp4",
+   "video/webm",
+@@ -32,12 +33,7 @@ function normalizePathForDb(filePath: string): string {
+ 
+ function getFileExtension(fileName: string): string {
+   const ext = path.extname(fileName || "").toLowerCase();
+-
+-  if (ext) {
+-    return ext;
+-  }
+-
+-  return ".mp4";
++  return ext || ".mp4";
+ }
+ 
+ function getAllowedTypes(): string[] {
+@@ -55,8 +51,8 @@ function getAllowedTypes(): string[] {
+ 
+ function getMaxUploadBytes(): number {
+   const value = Number(process.env.VIDEO_MAX_UPLOAD_MB || DEFAULT_MAX_UPLOAD_MB);
+-
+-  const maxMb = Number.isFinite(value) && value > 0 ? value : DEFAULT_MAX_UPLOAD_MB;
++  const maxMb =
++    Number.isFinite(value) && value > 0 ? value : DEFAULT_MAX_UPLOAD_MB;
+ 
+   return maxMb * 1024 * 1024;
+ }
+@@ -157,30 +153,34 @@ async function getAuthorizedLesson(
+     };
+   }
+ 
+-  const track = await db.track.findFirst({
+-    where:
+-      decoded.role === "ADMIN"
+-        ? {
+-            id: trackId,
+-          }
+-        : {
+-            id: trackId,
+-            instructorId: decoded.userId,
+-          },
++  const lesson = await db.lesson.findFirst({
++    where: {
++      id: lessonId,
++      moduleId,
++      module: {
++        id: moduleId,
++        phaseId,
++        phase: {
++          id: phaseId,
++          trackId,
++          track:
++            decoded.role === "ADMIN"
++              ? {
++                  id: trackId,
++                }
++              : {
++                  id: trackId,
++                  instructorId: decoded.userId,
++                },
++        },
++      },
++    },
+     include: {
+-      phases: {
+-        where: { id: phaseId },
++      module: {
+         include: {
+-          modules: {
+-            where: {
+-              id: moduleId,
+-            },
++          phase: {
+             include: {
+-              lessons: {
+-                where: {
+-                  id: lessonId,
+-                },
+-              },
++              track: true,
+             },
+           },
+         },
+@@ -188,13 +188,21 @@ async function getAuthorizedLesson(
+     },
+   });
+ 
+-  const lesson = track?.phases[0]?.modules[0]?.lessons[0];
+-
+-  if (!track || !lesson) {
++  if (!lesson) {
+     return {
+       ok: false as const,
+       response: NextResponse.json(
+-        { error: "Lesson not found or access denied" },
++        {
++          error: "Lesson not found or access denied",
++          debug: {
++            trackId,
++            phaseId,
++            moduleId,
++            lessonId,
++            userId: decoded.userId,
++            role: decoded.role,
++          },
++        },
+         { status: 404 }
+       ),
+     };
+@@ -204,7 +212,7 @@ async function getAuthorizedLesson(
+     ok: true as const,
+     userId: decoded.userId,
+     role: decoded.role,
+-    track,
++    track: lesson.module.phase.track,
+     lesson,
+   };
+ }
+@@ -216,7 +224,12 @@ export async function POST(
+   const { trackId, phaseId, moduleId, lessonId } = await params;
+ 
+   try {
+-    const authResult = await getAuthorizedLesson(trackId, phaseId, moduleId, lessonId);
++    const authResult = await getAuthorizedLesson(
++      trackId,
++      phaseId,
++      moduleId,
++      lessonId
++    );
+ 
+     if (!authResult.ok) {
+       return authResult.response;
+@@ -258,15 +271,29 @@ export async function POST(
+     }
+ 
+     const storageRoot = process.env.VIDEO_STORAGE_ROOT || "./private/videos";
++
+     const originalsRoot =
+       process.env.VIDEO_ORIGINALS_DIR || path.join(storageRoot, "originals");
+-    const hlsRoot =
+-      process.env.VIDEO_HLS_DIR || path.join(storageRoot, "hls");
++
++    const hlsRoot = process.env.VIDEO_HLS_DIR || path.join(storageRoot, "hls");
+ 
+     const extension = getFileExtension(uploadedFile.name);
+ 
+-    const originalDir = path.join(originalsRoot, phaseId, moduleId, lessonId);
+-    const hlsOutputDir = path.join(hlsRoot, phaseId, moduleId, lessonId);
++    const originalDir = path.join(
++      originalsRoot,
++      trackId,
++      phaseId,
++      moduleId,
++      lessonId
++    );
++
++    const hlsOutputDir = path.join(
++      hlsRoot,
++      trackId,
++      phaseId,
++      moduleId,
++      lessonId
++    );
+ 
+     await ensureDirectory(originalDir);
+     await removeDirectoryIfExists(hlsOutputDir);
+diff --git a/src/app/api/upload/route.ts b/src/app/api/upload/route.ts
+index 09b7b71..bb36c09 100644
+--- a/src/app/api/upload/route.ts
++++ b/src/app/api/upload/route.ts
+@@ -9,7 +9,7 @@ export async function POST(request: Request) {
+     const cookieStore = await cookies();
+     const token = cookieStore.get("token")?.value;
+     if (!token) {
+-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
++      return NextResponse.json({ error: "┘ÉUnauthorized" }, { status: 401 });
+     }
+     const user = await verifyToken(token);
+     if (!user || (user.role !== "ADMIN" && user.role !== "INSTRUCTOR")) {
+diff --git a/src/components/InstructorTrackManager.tsx b/src/components/InstructorTrackManager.tsx
+index 449e083..a5bf5db 100644
+--- a/src/components/InstructorTrackManager.tsx
++++ b/src/components/InstructorTrackManager.tsx
+@@ -9,23 +9,20 @@ import {
+   Video,
+   Layers,
+   Pencil,
+-  Save,
+-  X,
+   FolderTree,
++  Upload,
++  CheckCircle2,
+ } from "lucide-react";
+ import LessonQuizManager, { QuizMeta } from "@/components/LessonQuizManager";
+ import LessonResourceManager from "@/components/LessonResourceManager";
+ import EditTrackDetailsModal from "@/components/admin/EditTrackDetailsModal";
+-import dynamic from 'next/dynamic';
+-
+-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+-const ReactPlayer = dynamic(() => import('react-player'), { ssr: false }) as any;
+ 
+ interface Lesson {
+   id: string;
+   title: string;
+   notes: string | null;
+   videoPath: string | null;
++  duration?: number | null;
+   order: number;
+   quizzes: QuizMeta[];
+   resources: Resource[];
+@@ -77,6 +74,7 @@ interface ApiLesson {
+   title?: string;
+   notes?: string | null;
+   videoPath?: string | null;
++  duration?: number | null;
+   order?: number;
+   quizzes?: ApiQuiz[];
+   resources?: Resource[];
+@@ -110,6 +108,18 @@ interface ApiMessageResponse {
+   details?: string;
+ }
+ 
++interface VideoUploadResponse extends ApiMessageResponse {
++  videoAsset?: {
++    id: string;
++    lessonId: string;
++    originalPath?: string | null;
++    hlsManifestPath?: string | null;
++    duration?: number | null;
++    status?: "PROCESSING" | "READY" | "FAILED";
++    errorMessage?: string | null;
++  };
++}
++
+ async function readJsonSafely<T>(res: Response): Promise<T | null> {
+   const contentType = res.headers.get("content-type") || "";
+   const text = await res.text();
+@@ -138,7 +148,9 @@ export default function InstructorTrackManager({
+   const [phaseDrafts, setPhaseDrafts] = useState<Record<string, string>>({});
+   const [savingPhaseId, setSavingPhaseId] = useState<string | null>(null);
+ 
+-  const [newModuleInputs, setNewModuleInputs] = useState<Record<string, string>>({});
++  const [newModuleInputs, setNewModuleInputs] = useState<Record<string, string>>(
++    {}
++  );
+   const [addingModuleFor, setAddingModuleFor] = useState<string | null>(null);
+ 
+   const [newLessonInputs, setNewLessonInputs] = useState<
+@@ -158,6 +170,10 @@ export default function InstructorTrackManager({
+   const [deletingLessonId, setDeletingLessonId] = useState<string | null>(null);
+   const [showEditDetailsModal, setShowEditDetailsModal] = useState(false);
+ 
++  const [uploadingVideoLessonId, setUploadingVideoLessonId] = useState<
++    string | null
++  >(null);
++
+   const fetchCourseData = useCallback(async (): Promise<void> => {
+     try {
+       setLoading(true);
+@@ -195,7 +211,14 @@ export default function InstructorTrackManager({
+                           title: lesson.title ?? "",
+                           notes: lesson.notes ?? null,
+                           videoPath: lesson.videoPath ?? null,
+-                          order: typeof lesson.order === "number" ? lesson.order : 0,
++                          duration:
++                            typeof lesson.duration === "number"
++                              ? lesson.duration
++                              : null,
++                          order:
++                            typeof lesson.order === "number"
++                              ? lesson.order
++                              : 0,
+                           quizzes: Array.isArray(lesson.quizzes)
+                             ? lesson.quizzes.map((quiz): QuizMeta => ({
+                                 id: quiz.id ?? "",
+@@ -212,11 +235,17 @@ export default function InstructorTrackManager({
+                               }))
+                             : [],
+                           resources: Array.isArray(lesson.resources)
+-                            ? lesson.resources.map((res: { id?: string; name?: string; url?: string }) => ({
+-                                id: res.id ?? "",
+-                                name: res.name ?? "",
+-                                url: res.url ?? "",
+-                              }))
++                            ? lesson.resources.map(
++                                (res: {
++                                  id?: string;
++                                  name?: string;
++                                  url?: string;
++                                }) => ({
++                                  id: res.id ?? "",
++                                  name: res.name ?? "",
++                                  url: res.url ?? "",
++                                })
++                              )
+                             : [],
+                         }))
+                       : [],
+@@ -272,7 +301,9 @@ export default function InstructorTrackManager({
+   };
+ 
+   const deletePhase = async (phaseId: string): Promise<void> => {
+-    const confirmed = window.confirm("Are you sure you want to delete this phase?");
++    const confirmed = window.confirm(
++      "Are you sure you want to delete this phase?"
++    );
+     if (!confirmed) return;
+ 
+     try {
+@@ -332,6 +363,7 @@ export default function InstructorTrackManager({
+ 
+   const addModule = async (phaseId: string): Promise<void> => {
+     const title = newModuleInputs[phaseId] || "";
++
+     if (!title.trim()) {
+       alert("Module title is required");
+       return;
+@@ -363,14 +395,22 @@ export default function InstructorTrackManager({
+     }
+   };
+ 
+-  const deleteModule = async (phaseId: string, moduleId: string): Promise<void> => {
+-    const confirmed = window.confirm("Are you sure you want to delete this module?");
++  const deleteModule = async (
++    phaseId: string,
++    moduleId: string
++  ): Promise<void> => {
++    const confirmed = window.confirm(
++      "Are you sure you want to delete this module?"
++    );
+     if (!confirmed) return;
+ 
+     try {
+-      const res = await fetch(`/api/tracks/${trackId}/phases/${phaseId}/modules/${moduleId}`, {
+-        method: "DELETE",
+-      });
++      const res = await fetch(
++        `/api/tracks/${trackId}/phases/${phaseId}/modules/${moduleId}`,
++        {
++          method: "DELETE",
++        }
++      );
+ 
+       const data = await readJsonSafely<ApiMessageResponse>(res);
+ 
+@@ -388,7 +428,10 @@ export default function InstructorTrackManager({
+     }
+   };
+ 
+-  const saveModuleEdit = async (phaseId: string, moduleId: string): Promise<void> => {
++  const saveModuleEdit = async (
++    phaseId: string,
++    moduleId: string
++  ): Promise<void> => {
+     const draftTitle = moduleDrafts[moduleId]?.trim() || "";
+ 
+     if (!draftTitle) {
+@@ -399,11 +442,14 @@ export default function InstructorTrackManager({
+     setSavingModuleId(moduleId);
+ 
+     try {
+-      const res = await fetch(`/api/tracks/${trackId}/phases/${phaseId}/modules/${moduleId}`, {
+-        method: "PATCH",
+-        headers: { "Content-Type": "application/json" },
+-        body: JSON.stringify({ title: draftTitle }),
+-      });
++      const res = await fetch(
++        `/api/tracks/${trackId}/phases/${phaseId}/modules/${moduleId}`,
++        {
++          method: "PATCH",
++          headers: { "Content-Type": "application/json" },
++          body: JSON.stringify({ title: draftTitle }),
++        }
++      );
+ 
+       const data = await readJsonSafely<ApiMessageResponse>(res);
+ 
+@@ -422,7 +468,10 @@ export default function InstructorTrackManager({
+     }
+   };
+ 
+-  const addLesson = async (phaseId: string, moduleId: string): Promise<void> => {
++  const addLesson = async (
++    phaseId: string,
++    moduleId: string
++  ): Promise<void> => {
+     const current: LessonFormState = newLessonInputs[moduleId] || {
+       title: "",
+       notes: "",
+@@ -521,7 +570,9 @@ export default function InstructorTrackManager({
+     moduleId: string,
+     lessonId: string
+   ): Promise<void> => {
+-    const confirmed = window.confirm("Are you sure you want to delete this lesson?");
++    const confirmed = window.confirm(
++      "Are you sure you want to delete this lesson?"
++    );
+     if (!confirmed) return;
+ 
+     setDeletingLessonId(lessonId);
+@@ -552,6 +603,45 @@ export default function InstructorTrackManager({
+     }
+   };
+ 
++  const handleLessonVideoUpload = async (
++    phaseId: string,
++    moduleId: string,
++    lessonId: string,
++    file: File | null
++  ): Promise<void> => {
++    if (!file) return;
++
++    setUploadingVideoLessonId(lessonId);
++
++    try {
++      const formData = new FormData();
++      formData.append("file", file);
++
++      const res = await fetch(
++        `/api/tracks/${trackId}/phases/${phaseId}/modules/${moduleId}/lessons/${lessonId}/video`,
++        {
++          method: "POST",
++          body: formData,
++        }
++      );
++
++      const data = await readJsonSafely<VideoUploadResponse>(res);
++
++      if (!res.ok) {
++        alert(data?.error || "Failed to upload lesson video");
++        return;
++      }
++
++      alert("Video uploaded and converted successfully");
++      await fetchCourseData();
++    } catch (error) {
++      console.error(error);
++      alert("An error occurred while uploading the lesson video");
++    } finally {
++      setUploadingVideoLessonId(null);
++    }
++  };
++
+   const normalizedPhases = useMemo<Phase[]>(() => {
+     if (!track?.phases || !Array.isArray(track.phases)) {
+       return [];
+@@ -593,7 +683,9 @@ export default function InstructorTrackManager({
+               {track.description || "No description for this track"}
+             </p>
+           </div>
++
+           <button
++            type="button"
+             onClick={() => setShowEditDetailsModal(true)}
+             className="shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white text-sm font-semibold transition-all border border-white/20"
+           >
+@@ -609,13 +701,16 @@ export default function InstructorTrackManager({
+             <h3 className="font-bold mb-4 text-foreground flex items-center gap-2">
+               <Plus size={18} className="text-brand-primary" /> Add New Phase
+             </h3>
++
+             <input
+               value={newPhaseTitle}
+               onChange={(e) => setNewPhaseTitle(e.target.value)}
+               className="w-full border border-border rounded-xl px-4 py-3 mb-3 outline-none focus:ring-2 focus:ring-brand-primary text-foreground placeholder:text-muted-foreground bg-background"
+               placeholder="Phase title..."
+             />
++
+             <button
++              type="button"
+               onClick={() => void addPhase()}
+               disabled={addingPhase}
+               className="w-full bg-brand-primary text-white font-bold py-3 rounded-xl hover:bg-brand-primary/90 transition-all disabled:opacity-70"
+@@ -633,30 +728,43 @@ export default function InstructorTrackManager({
+ 
+           {normalizedPhases.length > 0 ? (
+             normalizedPhases.map((phase, phaseIndex) => (
+-              <div key={phase.id} className="bg-card border border-border rounded-2xl p-6 shadow-sm space-y-6">
++              <div
++                key={phase.id}
++                className="bg-card border border-border rounded-2xl p-6 shadow-sm space-y-6"
++              >
+                 <div className="flex justify-between items-start gap-4 pb-4 border-b border-border">
+                   <div className="flex items-start gap-4 flex-1">
+                     <div className="flex items-center justify-center bg-brand-primary/10 text-brand-primary rounded-xl h-10 w-10 shrink-0 font-black">
+                       P{phaseIndex + 1}
+                     </div>
++
+                     <div className="flex-1">
+                       {editingPhaseId === phase.id ? (
+                         <div className="space-y-3 mt-1">
+                           <input
+                             value={phaseDrafts[phase.id] || ""}
+-                            onChange={(e) => setPhaseDrafts((prev) => ({ ...prev, [phase.id]: e.target.value }))}
++                            onChange={(e) =>
++                              setPhaseDrafts((prev) => ({
++                                ...prev,
++                                [phase.id]: e.target.value,
++                              }))
++                            }
+                             className="w-full border border-border rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-brand-primary bg-background text-foreground"
+                             placeholder="Phase title"
+                           />
++
+                           <div className="flex items-center gap-2">
+                             <button
++                              type="button"
+                               onClick={() => void savePhaseEdit(phase.id)}
+                               disabled={savingPhaseId === phase.id}
+                               className="inline-flex items-center gap-2 bg-brand-primary text-white px-4 py-2 rounded-xl font-bold hover:bg-brand-primary/90 transition disabled:opacity-70 text-sm"
+                             >
+                               {savingPhaseId === phase.id ? "Saving..." : "Save"}
+                             </button>
++
+                             <button
++                              type="button"
+                               onClick={() => setEditingPhaseId(null)}
+                               className="inline-flex items-center gap-2 bg-muted text-muted-foreground px-4 py-2 rounded-xl font-bold hover:bg-muted/80 transition text-sm"
+                             >
+@@ -666,25 +774,36 @@ export default function InstructorTrackManager({
+                         </div>
+                       ) : (
+                         <div>
+-                          <h3 className="font-bold text-lg text-foreground mt-1">{phase.title}</h3>
+-                          <p className="text-sm text-muted-foreground mt-1">Modules: {phase.modules.length}</p>
++                          <h3 className="font-bold text-lg text-foreground mt-1">
++                            {phase.title}
++                          </h3>
++                          <p className="text-sm text-muted-foreground mt-1">
++                            Modules: {phase.modules.length}
++                          </p>
+                         </div>
+                       )}
+                     </div>
+                   </div>
++
+                   {editingPhaseId !== phase.id && (
+                     <div className="flex items-center gap-2 shrink-0">
+                       <button
++                        type="button"
+                         onClick={() => {
+                           setEditingPhaseId(phase.id);
+-                          setPhaseDrafts((prev) => ({ ...prev, [phase.id]: phase.title }));
++                          setPhaseDrafts((prev) => ({
++                            ...prev,
++                            [phase.id]: phase.title,
++                          }));
+                         }}
+                         className="p-2 text-muted-foreground hover:text-brand-primary transition-colors"
+                         title="Edit Phase"
+                       >
+                         <Pencil size={18} />
+                       </button>
++
+                       <button
++                        type="button"
+                         onClick={() => void deletePhase(phase.id)}
+                         className="p-2 text-muted-foreground hover:text-red-500 transition-colors"
+                         title="Delete Phase"
+@@ -695,32 +814,51 @@ export default function InstructorTrackManager({
+                   )}
+                 </div>
+ 
+-                {/* Modules List */}
+                 <div className="space-y-4 pl-4 border-l-2 border-brand-primary/20">
+                   {phase.modules.length > 0 ? (
+                     phase.modules.map((module, moduleIndex) => (
+-                      <div key={module.id} className="bg-muted/20 border border-border rounded-xl p-5 space-y-4">
++                      <div
++                        key={module.id}
++                        className="bg-muted/20 border border-border rounded-xl p-5 space-y-4"
++                      >
+                         <div className="flex justify-between items-start gap-4">
+                           <div className="flex items-start gap-3 flex-1">
+-                            <FolderTree size={18} className="text-muted-foreground mt-1 shrink-0" />
++                            <FolderTree
++                              size={18}
++                              className="text-muted-foreground mt-1 shrink-0"
++                            />
++
+                             <div className="flex-1">
+                               {editingModuleId === module.id ? (
+                                 <div className="space-y-3">
+                                   <input
+                                     value={moduleDrafts[module.id] || ""}
+-                                    onChange={(e) => setModuleDrafts((prev) => ({ ...prev, [module.id]: e.target.value }))}
++                                    onChange={(e) =>
++                                      setModuleDrafts((prev) => ({
++                                        ...prev,
++                                        [module.id]: e.target.value,
++                                      }))
++                                    }
+                                     className="w-full border border-border rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-brand-primary bg-background text-foreground"
+                                     placeholder="Module title"
+                                   />
++
+                                   <div className="flex items-center gap-2">
+                                     <button
+-                                      onClick={() => void saveModuleEdit(phase.id, module.id)}
++                                      type="button"
++                                      onClick={() =>
++                                        void saveModuleEdit(phase.id, module.id)
++                                      }
+                                       disabled={savingModuleId === module.id}
+                                       className="inline-flex items-center gap-2 bg-brand-primary text-white px-3 py-1.5 rounded-lg font-bold hover:bg-brand-primary/90 transition disabled:opacity-70 text-xs"
+                                     >
+-                                      {savingModuleId === module.id ? "Saving..." : "Save"}
++                                      {savingModuleId === module.id
++                                        ? "Saving..."
++                                        : "Save"}
+                                     </button>
++
+                                     <button
++                                      type="button"
+                                       onClick={() => setEditingModuleId(null)}
+                                       className="inline-flex items-center gap-2 bg-muted text-muted-foreground px-3 py-1.5 rounded-lg font-bold hover:bg-muted/80 transition text-xs"
+                                     >
+@@ -733,24 +871,35 @@ export default function InstructorTrackManager({
+                                   <h4 className="font-bold text-foreground">
+                                     M{moduleIndex + 1}: {module.title}
+                                   </h4>
+-                                  <p className="text-xs text-muted-foreground mt-0.5">Lessons: {module.lessons.length}</p>
++                                  <p className="text-xs text-muted-foreground mt-0.5">
++                                    Lessons: {module.lessons.length}
++                                  </p>
+                                 </div>
+                               )}
+                             </div>
+                           </div>
++
+                           {editingModuleId !== module.id && (
+                             <div className="flex items-center gap-1 shrink-0">
+                               <button
++                                type="button"
+                                 onClick={() => {
+                                   setEditingModuleId(module.id);
+-                                  setModuleDrafts((prev) => ({ ...prev, [module.id]: module.title }));
++                                  setModuleDrafts((prev) => ({
++                                    ...prev,
++                                    [module.id]: module.title,
++                                  }));
+                                 }}
+                                 className="p-1.5 text-muted-foreground hover:text-brand-primary transition-colors"
+                               >
+                                 <Pencil size={16} />
+                               </button>
++
+                               <button
+-                                onClick={() => void deleteModule(phase.id, module.id)}
++                                type="button"
++                                onClick={() =>
++                                  void deleteModule(phase.id, module.id)
++                                }
+                                 className="p-1.5 text-muted-foreground hover:text-red-500 transition-colors"
+                               >
+                                 <Trash2 size={16} />
+@@ -759,59 +908,95 @@ export default function InstructorTrackManager({
+                           )}
+                         </div>
+ 
+-                        {/* Lessons List */}
+                         <div className="space-y-3">
+                           {module.lessons.length > 0 ? (
+                             module.lessons.map((lesson, lessonIndex) => {
+-                              const lessonIsEditing = editingLessonId === lesson.id;
+-                              const lessonDraft = lessonEditInputs[lesson.id] || {
++                              const lessonIsEditing =
++                                editingLessonId === lesson.id;
++                              const lessonDraft = lessonEditInputs[
++                                lesson.id
++                              ] || {
+                                 title: lesson.title,
+                                 notes: lesson.notes || "",
+                                 videoPath: lesson.videoPath || "",
+                               };
+ 
+                               return (
+-                                <div key={lesson.id} className="border border-border/50 rounded-lg p-4 bg-background shadow-sm space-y-4">
++                                <div
++                                  key={lesson.id}
++                                  className="border border-border/50 rounded-lg p-4 bg-background shadow-sm space-y-4"
++                                >
+                                   {lessonIsEditing ? (
+                                     <div className="space-y-3">
+                                       <input
+                                         value={lessonDraft.title}
+-                                        onChange={(e) => setLessonEditInputs((prev) => ({
+-                                          ...prev,
+-                                          [lesson.id]: { ...prev[lesson.id], title: e.target.value }
+-                                        }))}
++                                        onChange={(e) =>
++                                          setLessonEditInputs((prev) => ({
++                                            ...prev,
++                                            [lesson.id]: {
++                                              ...prev[lesson.id],
++                                              title: e.target.value,
++                                            },
++                                          }))
++                                        }
+                                         placeholder="Lesson title"
+                                         className="w-full border border-border rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-brand-primary bg-background text-sm"
+                                       />
++
+                                       <textarea
+                                         value={lessonDraft.notes}
+-                                        onChange={(e) => setLessonEditInputs((prev) => ({
+-                                          ...prev,
+-                                          [lesson.id]: { ...prev[lesson.id], notes: e.target.value }
+-                                        }))}
++                                        onChange={(e) =>
++                                          setLessonEditInputs((prev) => ({
++                                            ...prev,
++                                            [lesson.id]: {
++                                              ...prev[lesson.id],
++                                              notes: e.target.value,
++                                            },
++                                          }))
++                                        }
+                                         placeholder="Notes"
+                                         rows={2}
+                                         className="w-full border border-border rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-brand-primary resize-none bg-background text-sm"
+                                       />
++
+                                       <input
+                                         value={lessonDraft.videoPath}
+-                                        onChange={(e) => setLessonEditInputs((prev) => ({
+-                                          ...prev,
+-                                          [lesson.id]: { ...prev[lesson.id], videoPath: e.target.value }
+-                                        }))}
++                                        onChange={(e) =>
++                                          setLessonEditInputs((prev) => ({
++                                            ...prev,
++                                            [lesson.id]: {
++                                              ...prev[lesson.id],
++                                              videoPath: e.target.value,
++                                            },
++                                          }))
++                                        }
+                                         placeholder="Video path or URL"
+                                         className="w-full border border-border rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-brand-primary bg-background text-sm"
+                                       />
++
+                                       <div className="flex items-center gap-2">
+                                         <button
+-                                          onClick={() => void saveLessonEdit(phase.id, module.id, lesson.id)}
++                                          type="button"
++                                          onClick={() =>
++                                            void saveLessonEdit(
++                                              phase.id,
++                                              module.id,
++                                              lesson.id
++                                            )
++                                          }
+                                           disabled={savingLessonId === lesson.id}
+                                           className="bg-brand-primary text-white px-3 py-1.5 rounded-md font-bold hover:bg-brand-primary/90 text-xs"
+                                         >
+-                                          {savingLessonId === lesson.id ? "Saving..." : "Save"}
++                                          {savingLessonId === lesson.id
++                                            ? "Saving..."
++                                            : "Save"}
+                                         </button>
++
+                                         <button
+-                                          onClick={() => setEditingLessonId(null)}
++                                          type="button"
++                                          onClick={() =>
++                                            setEditingLessonId(null)
++                                          }
+                                           className="bg-muted text-muted-foreground px-3 py-1.5 rounded-md font-bold hover:bg-muted/80 text-xs"
+                                         >
+                                           Cancel
+@@ -825,56 +1010,131 @@ export default function InstructorTrackManager({
+                                           <div className="bg-brand-primary/10 text-brand-primary p-2 rounded-md">
+                                             <Video size={14} />
+                                           </div>
++
+                                           <div>
+                                             <h5 className="font-bold text-sm text-foreground">
+                                               {lessonIndex + 1}. {lesson.title}
+                                             </h5>
+                                           </div>
+                                         </div>
++
+                                         <div className="flex items-center gap-1 shrink-0">
+                                           <button
++                                            type="button"
+                                             onClick={() => {
+                                               setEditingLessonId(lesson.id);
+                                               setLessonEditInputs((prev) => ({
+                                                 ...prev,
+-                                                [lesson.id]: { title: lesson.title, notes: lesson.notes || "", videoPath: lesson.videoPath || "" }
++                                                [lesson.id]: {
++                                                  title: lesson.title,
++                                                  notes: lesson.notes || "",
++                                                  videoPath:
++                                                    lesson.videoPath || "",
++                                                },
+                                               }));
+                                             }}
+                                             className="p-1 text-muted-foreground hover:text-brand-primary"
+                                           >
+                                             <Pencil size={14} />
+                                           </button>
++
+                                           <button
+-                                            onClick={() => void deleteLesson(phase.id, module.id, lesson.id)}
+-                                            disabled={deletingLessonId === lesson.id}
++                                            type="button"
++                                            onClick={() =>
++                                              void deleteLesson(
++                                                phase.id,
++                                                module.id,
++                                                lesson.id
++                                              )
++                                            }
++                                            disabled={
++                                              deletingLessonId === lesson.id
++                                            }
+                                             className="p-1 text-muted-foreground hover:text-red-500 disabled:opacity-50"
+                                           >
+-                                            {deletingLessonId === lesson.id ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
++                                            {deletingLessonId === lesson.id ? (
++                                              <Loader2
++                                                size={14}
++                                                className="animate-spin"
++                                              />
++                                            ) : (
++                                              <Trash2 size={14} />
++                                            )}
+                                           </button>
+                                         </div>
+                                       </div>
+-                                      
+-                                      {lesson.videoPath && (
+-                                        <div className="mt-2 mb-2 w-full max-w-sm rounded-lg overflow-hidden bg-black aspect-video border border-border">
+-                                          <ReactPlayer
+-                                            url={`/api/videos/hls/${track.id}/${module.id}/${lesson.id}/index.m3u8`}
+-                                            width="100%"
+-                                            height="100%"
+-                                            controls
+-                                            config={{
+-                                              file: {
+-                                                forceHLS: true,
+-                                                hlsOptions: {
+-                                                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+-                                                  xhrSetup: function (xhr: any) { xhr.withCredentials = true; },
+-                                                },
+-                                              },
+-                                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+-                                            } as any}
+-                                          />
++
++                                      <div className="mt-3 border border-dashed border-brand-primary/30 rounded-lg p-3 bg-muted/10">
++                                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
++                                          <div>
++                                            <p className="text-xs font-bold text-foreground flex items-center gap-1.5">
++                                              {lesson.videoPath ? (
++                                                <CheckCircle2
++                                                  size={14}
++                                                  className="text-emerald-500"
++                                                />
++                                              ) : (
++                                                <Video size={14} />
++                                              )}
++                                              Lesson Video
++                                            </p>
++
++                                            <p className="text-xs text-muted-foreground mt-1">
++                                              {lesson.videoPath
++                                                ? "A lesson video is uploaded and converted."
++                                                : "No lesson video uploaded yet."}
++                                            </p>
++
++                                            {lesson.duration ? (
++                                              <p className="text-xs text-muted-foreground mt-1">
++                                                Duration: {lesson.duration}s
++                                              </p>
++                                            ) : null}
++                                          </div>
++
++                                          <label className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-brand-primary text-white text-xs font-bold hover:bg-brand-primary/90 cursor-pointer transition">
++                                            {uploadingVideoLessonId ===
++                                            lesson.id ? (
++                                              <>
++                                                <Loader2
++                                                  size={14}
++                                                  className="animate-spin"
++                                                />
++                                                Uploading...
++                                              </>
++                                            ) : (
++                                              <>
++                                                <Upload size={14} />
++                                                Upload Video
++                                              </>
++                                            )}
++
++                                            <input
++                                              type="file"
++                                              accept="video/mp4,video/webm,video/quicktime"
++                                              className="hidden"
++                                              disabled={
++                                                uploadingVideoLessonId ===
++                                                lesson.id
++                                              }
++                                              onChange={(e) => {
++                                                const selectedFile =
++                                                  e.target.files?.[0] || null;
++
++                                                void handleLessonVideoUpload(
++                                                  phase.id,
++                                                  module.id,
++                                                  lesson.id,
++                                                  selectedFile
++                                                );
++
++                                                e.target.value = "";
++                                              }}
++                                            />
++                                          </label>
+                                         </div>
+-                                      )}
+-                                      
++                                      </div>
++
+                                       {lesson.notes && (
+                                         <div className="text-xs text-muted-foreground bg-muted/30 border border-border rounded-md p-2">
+                                           {lesson.notes}
+@@ -891,6 +1151,7 @@ export default function InstructorTrackManager({
+                                     initialQuiz={lesson.quizzes[0] ?? null}
+                                     onChanged={fetchCourseData}
+                                   />
++
+                                   <LessonResourceManager
+                                     trackId={trackId}
+                                     phaseId={phase.id}
+@@ -909,27 +1170,42 @@ export default function InstructorTrackManager({
+                           )}
+                         </div>
+ 
+-                        {/* Add Lesson Form */}
+                         <div className="pt-3 mt-3 border-t border-border/50 space-y-2">
+                           <h6 className="font-semibold text-xs flex items-center gap-1.5 text-foreground">
+-                            <Plus size={14} className="text-brand-primary" /> Add Lesson to {module.title}
++                            <Plus size={14} className="text-brand-primary" /> Add
++                            Lesson to {module.title}
+                           </h6>
++
+                           <div className="flex flex-col sm:flex-row gap-2">
+                             <input
+                               value={newLessonInputs[module.id]?.title || ""}
+-                              onChange={(e) => setNewLessonInputs((prev) => ({
+-                                ...prev,
+-                                [module.id]: { ...(prev[module.id] || { notes: "", videoPath: "" }), title: e.target.value }
+-                              }))}
++                              onChange={(e) =>
++                                setNewLessonInputs((prev) => ({
++                                  ...prev,
++                                  [module.id]: {
++                                    ...(prev[module.id] || {
++                                      notes: "",
++                                      videoPath: "",
++                                    }),
++                                    title: e.target.value,
++                                  },
++                                }))
++                              }
+                               placeholder="Lesson title"
+                               className="flex-1 border border-border rounded-lg px-3 py-1.5 outline-none focus:ring-2 focus:ring-brand-primary bg-background text-sm"
+                             />
++
+                             <button
+-                              onClick={() => void addLesson(phase.id, module.id)}
++                              type="button"
++                              onClick={() =>
++                                void addLesson(phase.id, module.id)
++                              }
+                               disabled={addingLessonFor === module.id}
+                               className="bg-brand-primary text-white px-3 py-1.5 rounded-lg font-semibold hover:bg-brand-primary/90 disabled:opacity-70 text-xs shrink-0 whitespace-nowrap"
+                             >
+-                              {addingLessonFor === module.id ? "Adding..." : "Add"}
++                              {addingLessonFor === module.id
++                                ? "Adding..."
++                                : "Add"}
+                             </button>
+                           </div>
+                         </div>
+@@ -940,25 +1216,35 @@ export default function InstructorTrackManager({
+                       No modules in this phase yet.
+                     </div>
+                   )}
+-                  
+-                  {/* Add Module Form */}
++
+                   <div className="bg-muted/10 border border-dashed border-brand-primary/30 rounded-xl p-4 mt-4">
+                     <h5 className="font-semibold text-sm mb-2 text-foreground flex items-center gap-1.5">
+-                      <Plus size={14} className="text-brand-primary" /> Add Module to {phase.title}
++                      <Plus size={14} className="text-brand-primary" /> Add
++                      Module to {phase.title}
+                     </h5>
++
+                     <div className="flex flex-col sm:flex-row gap-2">
+                       <input
+                         value={newModuleInputs[phase.id] || ""}
+-                        onChange={(e) => setNewModuleInputs((prev) => ({ ...prev, [phase.id]: e.target.value }))}
++                        onChange={(e) =>
++                          setNewModuleInputs((prev) => ({
++                            ...prev,
++                            [phase.id]: e.target.value,
++                          }))
++                        }
+                         placeholder="Module title"
+                         className="flex-1 border border-border rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-brand-primary bg-background text-sm"
+                       />
++
+                       <button
++                        type="button"
+                         onClick={() => void addModule(phase.id)}
+                         disabled={addingModuleFor === phase.id}
+                         className="bg-brand-primary text-white px-4 py-2 rounded-lg font-semibold hover:bg-brand-primary/90 disabled:opacity-70 text-sm whitespace-nowrap"
+                       >
+-                        {addingModuleFor === phase.id ? "Adding..." : "Add Module"}
++                        {addingModuleFor === phase.id
++                          ? "Adding..."
++                          : "Add Module"}
+                       </button>
+                     </div>
+                   </div>
+diff --git a/src/components/LessonResourceManager.tsx b/src/components/LessonResourceManager.tsx
+index 13aa452..6445b13 100644
+--- a/src/components/LessonResourceManager.tsx
++++ b/src/components/LessonResourceManager.tsx
+@@ -23,7 +23,7 @@ export default function LessonResourceManager({
+ }: LessonResourceManagerProps) {
+   const [loading, setLoading] = useState(false);
+   const [deletingId, setDeletingId] = useState<string | null>(null);
+-  
++
+   const [name, setName] = useState("");
+   const [url, setUrl] = useState("");
+   const [file, setFile] = useState<File | null>(null);
+@@ -48,7 +48,7 @@ export default function LessonResourceManager({
+     setLoading(true);
+ 
+     try {
+-      let finalUrl = url;
++      let finalUrl = url.trim();
+ 
+       if (uploadMode === "file" && file) {
+         const formData = new FormData();
+@@ -60,8 +60,8 @@ export default function LessonResourceManager({
+         });
+ 
+         if (!uploadRes.ok) {
+-          const err = await uploadRes.json();
+-          throw new Error(err.error || "File upload failed");
++          const err = await uploadRes.json().catch(() => null);
++          throw new Error(err?.error || "File upload failed");
+         }
+ 
+         const uploadData = await uploadRes.json();
+@@ -73,18 +73,19 @@ export default function LessonResourceManager({
+         {
+           method: "POST",
+           headers: { "Content-Type": "application/json" },
+-          body: JSON.stringify({ name, url: finalUrl }),
++          body: JSON.stringify({ name: name.trim(), url: finalUrl }),
+         }
+       );
+ 
+       if (!res.ok) {
+-        const err = await res.json();
+-        throw new Error(err.error || "Failed to add resource");
++        const err = await res.json().catch(() => null);
++        throw new Error(err?.error || "Failed to add resource");
+       }
+ 
+       setName("");
+       setUrl("");
+       setFile(null);
++      setUploadMode("url");
+       onChanged();
+     } catch (error: unknown) {
+       if (error instanceof Error) {
+@@ -98,7 +99,9 @@ export default function LessonResourceManager({
+   };
+ 
+   const handleDeleteResource = async (resourceId: string) => {
+-    if (!confirm("Are you sure you want to delete this resource?")) return;
++    if (!window.confirm("Are you sure you want to delete this resource?")) {
++      return;
++    }
+ 
+     setDeletingId(resourceId);
+ 
+@@ -111,7 +114,8 @@ export default function LessonResourceManager({
+       );
+ 
+       if (!res.ok) {
+-        throw new Error("Failed to delete resource");
++        const err = await res.json().catch(() => null);
++        throw new Error(err?.error || "Failed to delete resource");
+       }
+ 
+       onChanged();
+@@ -141,7 +145,10 @@ export default function LessonResourceManager({
+               className="flex items-center justify-between bg-muted/30 border border-border rounded-lg p-2 px-3"
+             >
+               <div className="flex items-center gap-2 overflow-hidden">
+-                <LinkIcon size={14} className="text-muted-foreground shrink-0" />
++                <LinkIcon
++                  size={14}
++                  className="text-muted-foreground shrink-0"
++                />
+                 <a
+                   href={res.url}
+                   target="_blank"
+@@ -151,8 +158,10 @@ export default function LessonResourceManager({
+                   {res.name}
+                 </a>
+               </div>
++
+               <button
+-                onClick={() => handleDeleteResource(res.id)}
++                type="button"
++                onClick={() => void handleDeleteResource(res.id)}
+                 disabled={deletingId === res.id}
+                 className="text-muted-foreground hover:text-red-500 p-1 rounded transition disabled:opacity-50"
+                 title="Delete Material"
+@@ -171,19 +180,28 @@ export default function LessonResourceManager({
+       <div className="bg-muted/30 p-3 rounded-xl border border-border">
+         <div className="flex gap-2 mb-3">
+           <button
+-            onClick={() => setUploadMode("url")}
++            type="button"
++            onClick={() => {
++              setUploadMode("url");
++              setFile(null);
++            }}
+             className={`text-xs px-3 py-1.5 font-medium rounded-full transition ${
+-               uploadMode === "url"
++              uploadMode === "url"
+                 ? "bg-brand-primary/15 text-brand-primary"
+                 : "bg-muted text-muted-foreground border border-border hover:bg-muted/80"
+             }`}
+           >
+             Link URL
+           </button>
++
+           <button
+-            onClick={() => setUploadMode("file")}
++            type="button"
++            onClick={() => {
++              setUploadMode("file");
++              setUrl("");
++            }}
+             className={`text-xs px-3 py-1.5 font-medium rounded-full transition ${
+-               uploadMode === "file"
++              uploadMode === "file"
+                 ? "bg-brand-primary/15 text-brand-primary"
+                 : "bg-muted text-muted-foreground border border-border hover:bg-muted/80"
+             }`}
+@@ -196,35 +214,44 @@ export default function LessonResourceManager({
+           <input
+             type="text"
+             placeholder="Material name (e.g. Slides)"
+-            value={name}
++            value={name ?? ""}
+             onChange={(e) => setName(e.target.value)}
+             className="flex-1 text-sm border border-border rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-brand-primary bg-background text-foreground"
+           />
++
+           {uploadMode === "url" ? (
+             <input
++              key="url-input"
+               type="text"
+               placeholder="https://..."
+-              value={url}
++              value={url ?? ""}
+               onChange={(e) => setUrl(e.target.value)}
+               className="flex-1 text-sm border border-border rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-brand-primary bg-background text-foreground"
+             />
+           ) : (
+             <input
++              key="file-input"
+               type="file"
+               onChange={(e) => setFile(e.target.files?.[0] || null)}
+               className="flex-1 text-sm border border-border rounded-lg px-3 py-1.5 outline-none focus:ring-2 focus:ring-brand-primary bg-background text-foreground"
+             />
+           )}
++
+           <button
+-            onClick={handleAddResource}
++            type="button"
++            onClick={() => void handleAddResource()}
+             disabled={loading}
+             className="bg-brand-primary text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-brand-primary/90 transition disabled:opacity-50 flex items-center justify-center gap-2"
+           >
+-            {loading ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
++            {loading ? (
++              <Loader2 size={14} className="animate-spin" />
++            ) : (
++              <Plus size={14} />
++            )}
+             Add
+           </button>
+         </div>
+       </div>
+     </div>
+   );
+-}
++}
+\ No newline at end of file
+diff --git a/src/components/SecureHlsPlayer.tsx b/src/components/SecureHlsPlayer.tsx
+new file mode 100644
+index 0000000..869da95
+--- /dev/null
++++ b/src/components/SecureHlsPlayer.tsx
+@@ -0,0 +1,87 @@
++"use client";
++
++import { useEffect, useRef } from "react";
++import Hls from "hls.js";
++
++interface SecureHlsPlayerProps {
++  src: string;
++  onProgress?: (playedPercent: number, playedSeconds: number) => void;
++}
++
++export default function SecureHlsPlayer({
++  src,
++  onProgress,
++}: SecureHlsPlayerProps) {
++  const videoRef = useRef<HTMLVideoElement | null>(null);
++  const onProgressRef = useRef<SecureHlsPlayerProps["onProgress"]>(onProgress);
++
++  useEffect(() => {
++    onProgressRef.current = onProgress;
++  }, [onProgress]);
++
++  useEffect(() => {
++    const video = videoRef.current;
++
++    if (!video) return;
++
++    let hls: Hls | null = null;
++
++    const handleTimeUpdate = () => {
++      if (!video.duration || Number.isNaN(video.duration)) return;
++
++      const playedPercent = Math.round(
++        (video.currentTime / video.duration) * 100
++      );
++
++      const playedSeconds = Math.round(video.currentTime);
++
++      onProgressRef.current?.(playedPercent, playedSeconds);
++    };
++
++    const handleLoadedMetadata = () => {
++      video.currentTime = 0;
++    };
++
++    if (Hls.isSupported()) {
++      hls = new Hls({
++        xhrSetup: (xhr) => {
++          xhr.withCredentials = true;
++        },
++      });
++
++      hls.loadSource(src);
++      hls.attachMedia(video);
++
++      hls.on(Hls.Events.MANIFEST_PARSED, () => {
++        console.log("[HLS] Manifest parsed");
++      });
++
++      hls.on(Hls.Events.ERROR, (_event, data) => {
++        console.error("[HLS_ERROR]", data);
++      });
++    } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
++      video.src = src;
++    }
++
++    video.addEventListener("timeupdate", handleTimeUpdate);
++    video.addEventListener("loadedmetadata", handleLoadedMetadata);
++
++    return () => {
++      video.removeEventListener("timeupdate", handleTimeUpdate);
++      video.removeEventListener("loadedmetadata", handleLoadedMetadata);
++
++      if (hls) {
++        hls.destroy();
++      }
++    };
++  }, [src]);
++
++  return (
++    <video
++      ref={videoRef}
++      controls
++      preload="metadata"
++      className="w-full h-full bg-black"
++    />
++  );
++}
+\ No newline at end of file
+diff --git a/src/components/StudentTrackViewer.tsx b/src/components/StudentTrackViewer.tsx
+index eb1ba46..ea12751 100644
+--- a/src/components/StudentTrackViewer.tsx
++++ b/src/components/StudentTrackViewer.tsx
+@@ -12,10 +12,7 @@ import {
+ } from "lucide-react";
+ import StudentQuizPanel from "@/components/StudentQuizPanel";
+ import StudentQAPanel from "@/components/StudentQAPanel";
+-import dynamic from 'next/dynamic';
+-
+-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+-const ReactPlayer = dynamic(() => import('react-player'), { ssr: false }) as any;
++import SecureHlsPlayer from "@/components/SecureHlsPlayer";
+ 
+ interface StudentLesson {
+   id: string;
+@@ -58,11 +55,7 @@ interface StudentTrackResponse {
+   error?: string;
+ }
+ 
+-export default function StudentTrackViewer({
+-  trackId,
+-}: {
+-  trackId: string;
+-}) {
++export default function StudentTrackViewer({ trackId }: { trackId: string }) {
+   const [track, setTrack] = useState<{
+     id: string;
+     title: string;
+@@ -81,8 +74,12 @@ export default function StudentTrackViewer({
+   const fetchTrack = async (): Promise<void> => {
+     try {
+       setLoading(true);
+-      const res = await fetch(`/api/student/tracks/${trackId}`, { cache: "no-store" });
+-      const data = await res.json() as StudentTrackResponse;
++
++      const res = await fetch(`/api/student/tracks/${trackId}`, {
++        cache: "no-store",
++      });
++
++      const data = (await res.json()) as StudentTrackResponse;
+ 
+       if (!res.ok || !data || data.error) {
+         console.error(data?.error || "Failed to fetch student track");
+@@ -96,22 +93,34 @@ export default function StudentTrackViewer({
+         id: data.id ?? "",
+         title: data.title ?? "",
+         description: data.description ?? "",
+-        overallProgress: typeof data.overallProgress === "number" ? data.overallProgress : 0,
++        overallProgress:
++          typeof data.overallProgress === "number" ? data.overallProgress : 0,
+         phases: normalizedPhases,
+       };
+ 
+       setTrack(normalizedTrack);
+ 
+-      const allLessons = normalizedTrack.phases.flatMap(p => p.modules.flatMap(m => m.lessons));
++      const allLessons = normalizedTrack.phases.flatMap((phase) =>
++        phase.modules.flatMap((module) => module.lessons)
++      );
++
+       if (allLessons.length === 0) {
+         setSelectedLessonId(null);
+         return;
+       }
+ 
+-      const stillExists = allLessons.some((lesson) => lesson.id === selectedLessonId);
++      const stillExists = allLessons.some(
++        (lesson) => lesson.id === selectedLessonId
++      );
++
+       if (!stillExists) {
+-        // Select first incomplete but unlocked lesson, or just the first unlocked lesson
+-        const firstUnlockedLesson = allLessons.find(l => l.isUnlocked && !l.isCompleted) || allLessons.find(l => l.isUnlocked) || allLessons[0];
++        const firstUnlockedLesson =
++          allLessons.find(
++            (lesson) => lesson.isUnlocked && !lesson.isCompleted
++          ) ||
++          allLessons.find((lesson) => lesson.isUnlocked) ||
++          allLessons[0];
++
+         setSelectedLessonId(firstUnlockedLesson.id);
+       }
+     } catch (error) {
+@@ -129,30 +138,32 @@ export default function StudentTrackViewer({
+ 
+   const selectedLesson = useMemo(() => {
+     if (!track || !selectedLessonId) return null;
+-    return track.phases
+-      .flatMap(p => p.modules.flatMap(m => m.lessons))
+-      .find((lesson) => lesson.id === selectedLessonId) || null;
++
++    return (
++      track.phases
++        .flatMap((phase) => phase.modules.flatMap((module) => module.lessons))
++        .find((lesson) => lesson.id === selectedLessonId) || null
++    );
+   }, [track, selectedLessonId]);
+ 
+   useEffect(() => {
+     if (!selectedLesson) return;
++
+     setWatchedPercentDraft(selectedLesson.watchedPercent);
+     setLastPositionDraft(selectedLesson.lastPosition);
+   }, [selectedLesson]);
+ 
+-  const selectedModule = useMemo(() => {
+-    if (!track || !selectedLessonId) return null;
+-    return track.phases.flatMap(p => p.modules).find(m => m.lessons.some(l => l.id === selectedLessonId)) || null;
+-  }, [track, selectedLessonId]);
+-
+   const saveProgress = async (): Promise<void> => {
+     if (!selectedLesson) return;
++
+     setSavingProgress(true);
+ 
+     try {
+       const res = await fetch("/api/student/progress", {
+         method: "POST",
+-        headers: { "Content-Type": "application/json" },
++        headers: {
++          "Content-Type": "application/json",
++        },
+         body: JSON.stringify({
+           lessonId: selectedLesson.id,
+           watchedPercent: watchedPercentDraft,
+@@ -161,6 +172,7 @@ export default function StudentTrackViewer({
+       });
+ 
+       const data = await res.json();
++
+       if (!res.ok) {
+         alert(data?.error || "Failed to save progress");
+         return;
+@@ -175,16 +187,54 @@ export default function StudentTrackViewer({
+     }
+   };
+ 
+-  const claimCertificate = async () => {
++  const markLessonComplete = async (): Promise<void> => {
++    if (!selectedLesson) return;
++
++    try {
++      const res = await fetch("/api/student/progress/complete", {
++        method: "POST",
++        headers: {
++          "Content-Type": "application/json",
++        },
++        body: JSON.stringify({
++          lessonId: selectedLesson.id,
++        }),
++      });
++
++      if (res.ok) {
++        await fetchTrack();
++        return;
++      }
++
++      const data = await res.json();
++      alert(data?.error || "Failed to mark complete.");
++    } catch (error) {
++      console.error(error);
++      alert("An error occurred while marking the lesson as complete.");
++    }
++  };
++
++  const claimCertificate = async (): Promise<void> => {
+     if (!track) return;
++
+     setClaimingCert(true);
++
+     try {
+-      const res = await fetch(`/api/student/tracks/${trackId}/certificate`, { method: "POST" });
++      const res = await fetch(`/api/student/tracks/${trackId}/certificate`, {
++        method: "POST",
++      });
++
+       const data = await res.json();
++
+       if (!res.ok) {
+-        alert(data?.error || data || "Failed to claim certificate. Ensure all lessons and quizzes are completed.");
++        alert(
++          data?.error ||
++            data ||
++            "Failed to claim certificate. Ensure all lessons and quizzes are completed."
++        );
+         return;
+       }
++
+       if (data?.uniqueCode) {
+         window.location.href = `/certificates/${data.uniqueCode}`;
+       }
+@@ -228,6 +278,7 @@ export default function StudentTrackViewer({
+               <span>Track Progress</span>
+               <span>{track.overallProgress}%</span>
+             </div>
++
+             <div className="w-full h-3 bg-gray-100 rounded-full overflow-hidden mb-4">
+               <div
+                 className="h-full bg-brand-primary rounded-full transition-all"
+@@ -237,11 +288,16 @@ export default function StudentTrackViewer({
+ 
+             {track.overallProgress === 100 && (
+               <button
+-                onClick={claimCertificate}
++                type="button"
++                onClick={() => void claimCertificate()}
+                 disabled={claimingCert}
+                 className="w-full py-3 bg-linear-to-r from-yellow-400 to-yellow-600 hover:from-yellow-500 hover:to-yellow-700 text-white font-bold rounded-xl shadow-md flex items-center justify-center gap-2 transition-all transform hover:scale-[1.02] active:scale-95 disabled:opacity-50"
+               >
+-                {claimingCert ? <Loader2 className="animate-spin" size={18} /> : <Medal size={20} />}
++                {claimingCert ? (
++                  <Loader2 className="animate-spin" size={18} />
++                ) : (
++                  <Medal size={20} />
++                )}
+                 {claimingCert ? "Generating..." : "Claim Certificate"}
+               </button>
+             )}
+@@ -254,10 +310,13 @@ export default function StudentTrackViewer({
+                   <div className="font-bold text-indigo-800 uppercase tracking-wide text-sm border-b pb-2">
+                     Phase {phaseIndex + 1}: {phase.title}
+                   </div>
+-                  
++
+                   {phase.modules.length > 0 ? (
+                     phase.modules.map((module, moduleIndex) => (
+-                      <div key={module.id} className="border rounded-2xl p-4 bg-gray-50">
++                      <div
++                        key={module.id}
++                        className="border rounded-2xl p-4 bg-gray-50"
++                      >
+                         <h3 className="font-bold text-gray-800 mb-3">
+                           {moduleIndex + 1}. {module.title}
+                         </h3>
+@@ -265,6 +324,7 @@ export default function StudentTrackViewer({
+                         <div className="space-y-2">
+                           {module.lessons.map((lesson, lessonIndex) => {
+                             const isSelected = selectedLessonId === lesson.id;
++
+                             return (
+                               <button
+                                 key={lesson.id}
+@@ -279,7 +339,11 @@ export default function StudentTrackViewer({
+                                   isSelected
+                                     ? "border-indigo-600 bg-indigo-50"
+                                     : "border-gray-200 bg-white"
+-                                } ${!lesson.isUnlocked ? "opacity-60 cursor-not-allowed" : "hover:border-indigo-300"}`}
++                                } ${
++                                  !lesson.isUnlocked
++                                    ? "opacity-60 cursor-not-allowed"
++                                    : "hover:border-indigo-300"
++                                }`}
+                               >
+                                 <div className="flex items-center justify-between gap-3">
+                                   <div className="min-w-0">
+@@ -294,7 +358,9 @@ export default function StudentTrackViewer({
+                                           {lesson.quizPassed
+                                             ? "Passed"
+                                             : lesson.attemptCount > 0
+-                                            ? `Last score ${lesson.latestScore ?? 0}%`
++                                            ? `Last score ${
++                                                lesson.latestScore ?? 0
++                                              }%`
+                                             : "Not attempted"}
+                                         </p>
+                                       )}
+@@ -303,11 +369,20 @@ export default function StudentTrackViewer({
+ 
+                                   <div className="shrink-0">
+                                     {lesson.isCompleted ? (
+-                                      <CheckCircle2 className="text-green-600" size={18} />
++                                      <CheckCircle2
++                                        className="text-green-600"
++                                        size={18}
++                                      />
+                                     ) : lesson.isUnlocked ? (
+-                                      <PlayCircle className="text-indigo-600" size={18} />
++                                      <PlayCircle
++                                        className="text-indigo-600"
++                                        size={18}
++                                      />
+                                     ) : (
+-                                      <Lock className="text-gray-400" size={18} />
++                                      <Lock
++                                        className="text-gray-400"
++                                        size={18}
++                                      />
+                                     )}
+                                   </div>
+                                 </div>
+@@ -318,7 +393,9 @@ export default function StudentTrackViewer({
+                       </div>
+                     ))
+                   ) : (
+-                    <div className="text-xs text-gray-400 italic">No modules in this phase</div>
++                    <div className="text-xs text-gray-400 italic">
++                      No modules in this phase
++                    </div>
+                   )}
+                 </div>
+               ))
+@@ -337,7 +414,10 @@ export default function StudentTrackViewer({
+             <div className="bg-white border rounded-2xl p-6 shadow-sm space-y-6">
+               <div className="flex items-start justify-between gap-4 flex-wrap">
+                 <div>
+-                  <h2 className="text-2xl font-black mb-2">{selectedLesson.title}</h2>
++                  <h2 className="text-2xl font-black mb-2">
++                    {selectedLesson.title}
++                  </h2>
++
+                   <div className="flex items-center gap-3 text-sm flex-wrap">
+                     <span className="px-3 py-1 rounded-full bg-indigo-50 text-indigo-600 font-bold">
+                       {selectedLesson.watchedPercent}% video progress
+@@ -370,26 +450,15 @@ export default function StudentTrackViewer({
+                 <h3 className="font-bold text-gray-800">Lesson Player</h3>
+ 
+                 <div className="border-2 border-dashed rounded-2xl overflow-hidden bg-black text-center text-gray-500 min-h-[400px] flex items-center justify-center">
+-                  {selectedLesson.videoPath && selectedModule ? (
++                  {selectedLesson.videoPath ? (
+                     <div className="w-full h-full aspect-video">
+-                      <ReactPlayer
+-                        url={`/api/videos/hls/${trackId}/${selectedModule.id}/${selectedLesson.id}/index.m3u8`}
+-                        width="100%"
+-                        height="100%"
+-                        controls
+-                        playing={true}
+-                        config={({
+-                          file: {
+-                            forceHLS: true,
+-                            hlsOptions: {
+-                              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+-                              xhrSetup: function (xhr: any) {
+-                                xhr.withCredentials = true;
+-                              },
+-                            },
+-                          },
+-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+-                        }) as any}
++                      <SecureHlsPlayer
++                        key={selectedLesson.id}
++                        src={`/api/student/lessons/${selectedLesson.id}/video/index.m3u8`}
++                        onProgress={(playedPercent, playedSeconds) => {
++                          setWatchedPercentDraft(playedPercent);
++                          setLastPositionDraft(playedSeconds);
++                        }}
+                       />
+                     </div>
+                   ) : (
+@@ -404,34 +473,53 @@ export default function StudentTrackViewer({
+                   </div>
+                 </div>
+ 
+-                {selectedLesson.resources && selectedLesson.resources.length > 0 && (
+-                  <div className="pt-2 border-t">
+-                    <h4 className="font-bold mb-3 flex items-center gap-2">
+-                      <span className="bg-indigo-100 text-indigo-600 p-1.5 rounded-lg">
+-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-file-text"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
+-                      </span>
+-                      Downloads & Materials
+-                    </h4>
+-                    <div className="space-y-2">
+-                      {selectedLesson.resources.map((res) => (
+-                        <a
+-                          key={res.id}
+-                          href={res.url}
+-                          target="_blank"
+-                          rel="noreferrer"
+-                          className="flex items-center justify-between p-3 border rounded-xl hover:border-indigo-300 hover:bg-indigo-50 transition group"
+-                        >
+-                          <span className="font-medium text-gray-700 group-hover:text-indigo-700 transition">
+-                            {res.name}
+-                          </span>
+-                          <span className="text-sm text-indigo-600 font-bold opacity-0 group-hover:opacity-100 transition">
+-                            Open
+-                          </span>
+-                        </a>
+-                      ))}
++                {selectedLesson.resources &&
++                  selectedLesson.resources.length > 0 && (
++                    <div className="pt-2 border-t">
++                      <h4 className="font-bold mb-3 flex items-center gap-2">
++                        <span className="bg-indigo-100 text-indigo-600 p-1.5 rounded-lg">
++                          <svg
++                            xmlns="http://www.w3.org/2000/svg"
++                            width="16"
++                            height="16"
++                            viewBox="0 0 24 24"
++                            fill="none"
++                            stroke="currentColor"
++                            strokeWidth="2"
++                            strokeLinecap="round"
++                            strokeLinejoin="round"
++                            className="lucide lucide-file-text"
++                          >
++                            <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />
++                            <path d="M14 2v4a2 2 0 0 0 2 2h4" />
++                            <path d="M10 9H8" />
++                            <path d="M16 13H8" />
++                            <path d="M16 17H8" />
++                          </svg>
++                        </span>
++                        Downloads & Materials
++                      </h4>
++
++                      <div className="space-y-2">
++                        {selectedLesson.resources.map((resource) => (
++                          <a
++                            key={resource.id}
++                            href={resource.url}
++                            target="_blank"
++                            rel="noreferrer"
++                            className="flex items-center justify-between p-3 border rounded-xl hover:border-indigo-300 hover:bg-indigo-50 transition group"
++                          >
++                            <span className="font-medium text-gray-700 group-hover:text-indigo-700 transition">
++                              {resource.name}
++                            </span>
++                            <span className="text-sm text-indigo-600 font-bold opacity-0 group-hover:opacity-100 transition">
++                              Open
++                            </span>
++                          </a>
++                        ))}
++                      </div>
+                     </div>
+-                  </div>
+-                )}
++                  )}
+               </div>
+ 
+               <div className="border rounded-2xl p-6 space-y-4">
+@@ -441,54 +529,61 @@ export default function StudentTrackViewer({
+                   <label className="block text-sm font-medium mb-2">
+                     Video Watch Percentage
+                   </label>
++
+                   <input
+                     type="range"
+                     min="0"
+                     max="100"
+                     value={watchedPercentDraft}
+-                    onChange={(e) => setWatchedPercentDraft(Number(e.target.value))}
++                    onChange={(e) =>
++                      setWatchedPercentDraft(Number(e.target.value))
++                    }
+                     className="w-full"
+                   />
++
+                   <div className="text-sm text-gray-500 mt-2">
+                     Current value: {watchedPercentDraft}%
+                   </div>
+                 </div>
+ 
+                 <button
++                  type="button"
+                   onClick={() => void saveProgress()}
+                   disabled={savingProgress}
+                   className="inline-flex items-center gap-2 bg-gray-200 text-gray-800 px-5 py-3 rounded-xl font-bold hover:bg-gray-300 transition disabled:opacity-70"
+                 >
+-                  {savingProgress ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
++                  {savingProgress ? (
++                    <Loader2 size={16} className="animate-spin" />
++                  ) : (
++                    <Save size={16} />
++                  )}
+                   Save Video Position
+                 </button>
+               </div>
+ 
+               <div className="border border-indigo-200 rounded-2xl p-6 space-y-4 bg-indigo-50">
+-                <h3 className="font-bold text-indigo-900">Mark Lesson Complete</h3>
++                <h3 className="font-bold text-indigo-900">
++                  Mark Lesson Complete
++                </h3>
++
+                 <p className="text-sm text-indigo-700">
+-                  You must explicitly mark this lesson as complete to unlock the next lesson.
+-                  If there is a quiz, you must pass it first.
++                  You must explicitly mark this lesson as complete to unlock the
++                  next lesson. If there is a quiz, you must pass it first.
+                 </p>
++
+                 <button
+-                  onClick={async () => {
+-                    const res = await fetch("/api/student/progress/complete", {
+-                      method: "POST",
+-                      headers: { "Content-Type": "application/json" },
+-                      body: JSON.stringify({ lessonId: selectedLesson.id })
+-                    });
+-                    if (res.ok) {
+-                      await fetchTrack();
+-                    } else {
+-                      const data = await res.json();
+-                      alert(data.error || "Failed to mark complete.");
+-                    }
+-                  }}
+-                  disabled={selectedLesson.isCompleted || (selectedLesson.hasQuiz && !selectedLesson.quizPassed)}
++                  type="button"
++                  onClick={() => void markLessonComplete()}
++                  disabled={
++                    selectedLesson.isCompleted ||
++                    (selectedLesson.hasQuiz && !selectedLesson.quizPassed)
++                  }
+                   className="w-full inline-flex items-center justify-center gap-2 bg-indigo-600 text-white px-5 py-3 rounded-xl font-bold hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                 >
+                   {selectedLesson.isCompleted ? (
+-                     <> <CheckCircle2 size={16} /> Completed </>
++                    <>
++                      <CheckCircle2 size={16} /> Completed
++                    </>
+                   ) : (
+                     "Mark as Complete"
+                   )}
+diff --git a/src/components/admin/CreateTrackModal.tsx b/src/components/admin/CreateTrackModal.tsx
+index 695e9b3..6c7e34e 100644
+--- a/src/components/admin/CreateTrackModal.tsx
++++ b/src/components/admin/CreateTrackModal.tsx
+@@ -86,10 +86,10 @@ export default function CreateTrackModal({ onClose, onSuccess }: CreateTrackModa
+       const formData = new FormData();
+       formData.append("file", file);
+ 
+-      const res = await fetch("/api/uploads/track-thumbnail", {
+-        method: "POST",
+-        body: formData,
+-      });
++     const res = await fetch("/api/upload", {
++  method: "POST",
++  body: formData,
++});
+ 
+       const data = await res.json().catch(() => null);
+ 
+@@ -98,9 +98,9 @@ export default function CreateTrackModal({ onClose, onSuccess }: CreateTrackModa
+         return;
+       }
+ 
+-      if (data?.file?.url) {
+-        setThumbnail(data.file.url);
+-      }
++     if (data?.url) {
++  setThumbnail(data.url);
++}
+     } catch (error) {
+       console.error(error);
+       alert("An error occurred while uploading the track thumbnail");
+diff --git a/src/components/admin/EditTrackDetailsModal.tsx b/src/components/admin/EditTrackDetailsModal.tsx
+index 2c2398e..bd7fbc2 100644
+--- a/src/components/admin/EditTrackDetailsModal.tsx
++++ b/src/components/admin/EditTrackDetailsModal.tsx
+@@ -105,18 +105,18 @@ export default function EditTrackDetailsModal({
+     try {
+       const formData = new FormData();
+       formData.append("file", file);
+-      const res = await fetch("/api/uploads/track-thumbnail", {
+-        method: "POST",
+-        body: formData,
+-      });
++     const res = await fetch("/api/upload", {
++  method: "POST",
++  body: formData,
++});
+       const data = await res.json().catch(() => null);
+       if (!res.ok) {
+         alert(data?.error || "Failed to upload thumbnail");
+         return;
+       }
+-      if (data?.file?.url) {
+-        setThumbnail(data.file.url);
+-      }
++     if (data?.url) {
++  setThumbnail(data.url);
++}
+     } catch (error) {
+       console.error(error);
+       alert("An error occurred while uploading the thumbnail");

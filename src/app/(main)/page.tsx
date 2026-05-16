@@ -47,12 +47,12 @@ const statVariants: Variants = {
 
 export default function Home() {
   return (
-    <div className="grow flex flex-col items-center justify-center relative overflow-hidden bg-[#0A0A0A]">
+    <div className="grow flex flex-col items-center justify-center relative overflow-hidden bg-background">
       {/* Background Art */}
       <div 
-        className="absolute inset-0 z-0 opacity-20 bg-[url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop')] bg-cover bg-center bg-no-repeat"
+        className="absolute inset-0 z-0 opacity-10 dark:opacity-20 bg-[url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop')] bg-cover bg-center bg-no-repeat"
       />
-      <div className="absolute inset-0 z-0 bg-linear-to-b from-[#0A0A0A]/40 via-[#0A0A0A]/80 to-[#0A0A0A]" />
+      <div className="absolute inset-0 z-0 bg-linear-to-b from-background/40 via-background/80 to-background" />
 
       {/* Animated background blobs */}
       <motion.div 
@@ -62,7 +62,7 @@ export default function Home() {
           rotate: [0, 5, -5, 0]
         }}
         transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute top-1/4 -left-64 w-[500px] h-[500px] bg-[#E5C158] rounded-full blur-[150px] mix-blend-screen pointer-events-none z-0" 
+        className="absolute top-1/4 -left-64 w-[500px] h-[500px] bg-brand-primary rounded-full blur-[150px] dark:mix-blend-screen opacity-50 pointer-events-none z-0" 
       />
       <motion.div 
         animate={{ 
@@ -71,7 +71,7 @@ export default function Home() {
           rotate: [0, -5, 5, 0]
         }}
         transition={{ duration: 18, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-        className="absolute bottom-1/4 -right-64 w-[600px] h-[600px] bg-purple-900 rounded-full blur-[150px] mix-blend-screen pointer-events-none z-0" 
+        className="absolute bottom-1/4 -right-64 w-[600px] h-[600px] bg-purple-600 dark:bg-purple-900 rounded-full blur-[150px] dark:mix-blend-screen opacity-50 pointer-events-none z-0" 
       />
 
       <motion.div 
@@ -80,24 +80,24 @@ export default function Home() {
         animate="visible"
         className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-32 relative z-10 flex flex-col items-start w-full"
       >
-        <motion.div variants={itemVariants} className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass mb-8 border border-[#E5C158]/30 text-sm font-medium text-[#E5C158] self-start md:self-center">
-          <span className="w-2 h-2 rounded-full bg-[#E5C158] animate-pulse" />
+        <motion.div variants={itemVariants} className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-foreground/5 backdrop-blur-md mb-8 border border-brand-primary/30 text-sm font-medium text-brand-primary self-start md:self-center">
+          <span className="w-2 h-2 rounded-full bg-brand-primary animate-pulse" />
           Tracks Hub
         </motion.div>
         
-        <motion.h1 variants={itemVariants} className="text-5xl md:text-7xl font-bold tracking-tight mb-6 text-white max-w-4xl text-left md:text-center self-start md:self-center">
+        <motion.h1 variants={itemVariants} className="text-5xl md:text-7xl font-bold tracking-tight mb-6 text-foreground max-w-4xl text-left md:text-center self-start md:self-center">
           Choose the Right Track for Your Future
         </motion.h1>
         
-        <motion.p variants={itemVariants} className="text-lg md:text-xl text-white/70 max-w-3xl mb-12 leading-relaxed text-left md:text-center self-start md:self-center">
+        <motion.p variants={itemVariants} className="text-lg md:text-xl text-muted-foreground max-w-3xl mb-12 leading-relaxed text-left md:text-center self-start md:self-center">
           Explore every PG Academy track, review module and lesson depth, then apply to start a guided learning journey built for real career outcomes.
         </motion.p>
         
         <motion.div variants={itemVariants} className="flex flex-col sm:flex-row gap-4 items-center justify-start md:justify-center w-full self-start md:self-center">
-          <Link href="/apply" className="w-full sm:w-auto px-8 py-3 bg-[#E5C158] hover:bg-[#D4B047] text-black rounded-lg font-semibold text-lg transition-all shadow-lg flex items-center justify-center">
+          <Link href="/register" className="w-full sm:w-auto px-8 py-3 bg-[#E5C158] hover:bg-[#D4B047] text-black rounded-lg font-semibold text-lg transition-all shadow-lg flex items-center justify-center">
             Apply Now
           </Link>
-          <Link href="/about" className="w-full sm:w-auto px-8 py-3 bg-transparent border border-white/20 hover:border-white/50 text-white rounded-lg font-semibold text-lg transition-all flex items-center justify-center">
+          <Link href="/about" className="w-full sm:w-auto px-8 py-3 bg-transparent border border-border hover:border-foreground/50 text-foreground rounded-lg font-semibold text-lg transition-all flex items-center justify-center">
             Discover PG Academy
           </Link>
         </motion.div>
@@ -110,8 +110,8 @@ export default function Home() {
           className="w-full mt-40"
         >
           <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold mb-4 text-white/90">How the learning process works</h2>
-            <p className="text-white/50 text-lg max-w-3xl mx-auto">A structured sequence that keeps your learning path clear, disciplined, and measurable.</p>
+            <h2 className="text-4xl md:text-5xl font-bold mb-4 text-foreground">How the learning process works</h2>
+            <p className="text-muted-foreground text-lg max-w-3xl mx-auto">A structured sequence that keeps your learning path clear, disciplined, and measurable.</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -137,12 +137,12 @@ export default function Home() {
                 desc: "Pass required quizzes to validate mastery and complete your track."
               }
             ].map((step, i) => (
-              <motion.div key={i} variants={statVariants} className="bg-[#111111] border border-white/5 rounded-2xl p-8 hover:border-[#E5C158]/30 transition-all duration-300">
-                <div className="w-10 h-10 rounded-lg bg-[#E5C158]/10 flex items-center justify-center mb-6 border border-[#E5C158]/20">
+              <motion.div key={i} variants={statVariants} className="bg-card border border-border rounded-2xl p-8 hover:border-brand-primary/30 transition-all duration-300">
+                <div className="w-10 h-10 rounded-lg bg-brand-primary/10 flex items-center justify-center mb-6 border border-brand-primary/20">
                   {step.icon}
                 </div>
-                <h3 className="text-xl font-bold text-white mb-3">{step.title}</h3>
-                <p className="text-white/60 text-sm leading-relaxed">{step.desc}</p>
+                <h3 className="text-xl font-bold text-foreground mb-3">{step.title}</h3>
+                <p className="text-muted-foreground text-sm leading-relaxed">{step.desc}</p>
               </motion.div>
             ))}
           </div>
@@ -157,8 +157,8 @@ export default function Home() {
           className="w-full mt-40"
         >
           <div className="mb-12">
-            <h2 className="text-4xl font-bold text-white mb-4">Four Specialized Tracks. One Career Path.</h2>
-            <p className="text-white/60 text-lg max-w-3xl leading-relaxed">
+            <h2 className="text-4xl font-bold text-foreground mb-4">Four Specialized Tracks. One Career Path.</h2>
+            <p className="text-muted-foreground text-lg max-w-3xl leading-relaxed">
               Explore PG Academy&apos;s four specialized tracks, choose the one that matches your ambition, and advance through a structured journey built for real career outcomes.
             </p>
           </div>
@@ -171,7 +171,7 @@ export default function Home() {
                 subtitle: "Motion Design for the AI Era",
                 desc: "Master AI-powered animation pipelines and produce broadcast-quality content from concept to final render.",
                 bgImg: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=2070&auto=format&fit=crop",
-                overlay: "from-blue-900/80 to-[#111111]"
+                overlay: "from-blue-900/80 to-transparent"
               },
               { 
                 id: "02", 
@@ -179,7 +179,7 @@ export default function Home() {
                 subtitle: "Cinematic Storytelling for the AI Era",
                 desc: "Create cinematic stories using AI tools across scriptwriting, production, VFX, and post-production.",
                 bgImg: "https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=2025&auto=format&fit=crop",
-                overlay: "from-indigo-900/80 to-[#111111]"
+                overlay: "from-indigo-900/80 to-transparent"
               },
               { 
                 id: "03", 
@@ -187,7 +187,7 @@ export default function Home() {
                 subtitle: "Game Worlds for the AI Era",
                 desc: "Design and develop interactive gaming experiences powered by artificial intelligence and creative vision.",
                 bgImg: "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=2070&auto=format&fit=crop",
-                overlay: "from-purple-900/80 to-[#111111]"
+                overlay: "from-purple-900/80 to-transparent"
               },
               { 
                 id: "04", 
@@ -195,13 +195,13 @@ export default function Home() {
                 subtitle: "Performance Marketing for the AI Era",
                 desc: "Build high-impact campaigns using AI content generation, data storytelling, and next-gen digital strategy.",
                 bgImg: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=2015&auto=format&fit=crop",
-                overlay: "from-pink-900/80 to-[#111111]"
+                overlay: "from-pink-900/80 to-transparent"
               }
             ].map((track, i) => (
               <motion.div
                 key={i}
                 variants={statVariants}
-                className="bg-[#111111] rounded-2xl overflow-hidden border border-white/5 hover:border-[#E5C158]/30 transition-all duration-300 flex flex-col"
+                className="bg-card rounded-2xl overflow-hidden border border-border hover:border-brand-primary/30 transition-all duration-300 flex flex-col shadow-sm"
               >
                 <div className="relative h-64 w-full overflow-hidden">
                   <div 
@@ -212,7 +212,7 @@ export default function Home() {
                   
                   {/* Track specific stylized graphic representation */}
                   <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center z-10">
-                    <span className="absolute top-4 left-4 text-[#E5C158] font-mono text-sm font-bold bg-[#E5C158]/10 px-2 py-1 rounded">
+                    <span className="absolute top-4 left-4 text-brand-primary font-mono text-sm font-bold bg-brand-primary/10 px-2 py-1 rounded">
                       {track.id}
                     </span>
                     <h3 className="text-4xl font-black text-white uppercase tracking-wider mb-2 drop-shadow-lg">
@@ -226,12 +226,12 @@ export default function Home() {
                 
                 <div className="p-8 grow flex flex-col justify-between">
                   <div>
-                    <h4 className="text-xl font-bold text-white mb-3">{track.title}</h4>
-                    <p className="text-white/60 text-sm leading-relaxed mb-8">
+                    <h4 className="text-xl font-bold text-foreground mb-3">{track.title}</h4>
+                    <p className="text-muted-foreground text-sm leading-relaxed mb-8">
                       {track.desc}
                     </p>
                   </div>
-                  <Link href="/register" className="inline-flex self-start items-center px-6 py-2.5 bg-[#E5C158]/10 hover:bg-[#E5C158] text-[#E5C158] hover:text-black rounded-lg font-semibold transition-all duration-300 border border-[#E5C158]/20 hover:border-transparent">
+                  <Link href="/register" className="inline-flex self-start items-center px-6 py-2.5 bg-brand-primary/10 hover:bg-brand-primary text-brand-primary hover:text-primary-foreground rounded-lg font-semibold transition-all duration-300 border border-brand-primary/20 hover:border-transparent">
                     Start Registration
                   </Link>
                 </div>

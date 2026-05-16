@@ -17,8 +17,12 @@ export async function PATCH(
     const body = await req.json();
     const { title, isPublished } = body;
 
-    if (!title || typeof title !== "string") {
-      return NextResponse.json({ error: "Title is required" }, { status: 400 });
+    if (title !== undefined && (typeof title !== "string" || !title.trim())) {
+      return NextResponse.json({ error: "Title cannot be empty" }, { status: 400 });
+    }
+
+    if (title === undefined && isPublished === undefined) {
+      return NextResponse.json({ error: "Nothing to update" }, { status: 400 });
     }
 
     const moduleRecord = await db.module.update({
@@ -27,7 +31,7 @@ export async function PATCH(
         phaseId: phaseId,
       },
       data: {
-        title,
+        ...(title !== undefined && { title: title.trim() }),
         ...(isPublished !== undefined && { isPublished }),
       },
     });

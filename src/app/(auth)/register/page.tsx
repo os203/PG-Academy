@@ -5,6 +5,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { Loader2, Mail, Lock, User, ArrowRight, Eye, EyeOff, UserPlus, ClipboardCheck } from 'lucide-react';
 import Link from 'next/link';
+import AuthLayout from '@/components/layout/AuthLayout';
 
 export default function RegisterPage() {
   const [showForm, setShowForm] = useState(false);
@@ -54,14 +55,15 @@ export default function RegisterPage() {
 
   if (showForm) {
     return (
-      <div className="min-h-[calc(100vh-80px)] flex flex-1 items-center justify-center p-4 relative overflow-hidden bg-[#0A0A0A] text-white">
-        <div className="absolute top-[10%] left-[-10%] w-[500px] h-[500px] rounded-full bg-[#E5C158]/5 blur-[100px] mix-blend-screen pointer-events-none" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] rounded-full bg-blue-900/10 blur-[100px] mix-blend-screen pointer-events-none" />
+      <AuthLayout>
+        <div className="min-h-[calc(100vh-80px)] flex flex-1 items-center justify-center p-4 relative overflow-hidden bg-background text-foreground pt-28">
+          <div className="absolute top-[10%] left-[-10%] w-[500px] h-[500px] rounded-full bg-brand-accent/10 dark:bg-brand-accent/5 blur-[100px] dark:mix-blend-screen pointer-events-none" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] rounded-full bg-brand-primary/10 dark:bg-brand-primary/10 blur-[100px] dark:mix-blend-screen pointer-events-none" />
 
-        <div className="w-full max-w-md p-8 rounded-2xl bg-[#111111] border border-white/10 shadow-2xl relative z-10">
+        <div className="w-full max-w-md p-8 rounded-2xl bg-card border border-border shadow-2xl relative z-10">
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold mb-2 tracking-tight">Create Account</h1>
-            <p className="text-white/60">Join PG Academy today</p>
+            <p className="text-muted-foreground">Join PG Academy today</p>
           </div>
 
           {error && (
@@ -72,10 +74,10 @@ export default function RegisterPage() {
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-white/80" htmlFor="name">Full Name</label>
+              <label className="text-sm font-medium text-muted-foreground" htmlFor="name">Full Name</label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <User className="h-5 w-5 text-white/40" />
+                  <User className="h-5 w-5 text-muted-foreground/60" />
                 </div>
                 <input
                   id="name"
@@ -83,17 +85,17 @@ export default function RegisterPage() {
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="block w-full pl-10 pr-3 py-3 rounded-xl bg-black/50 border border-white/10 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-[#E5C158]/50 transition-all"
+                  className="block w-full pl-10 pr-3 py-3 rounded-xl bg-background border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-brand-primary/50 transition-all"
                   placeholder="John Doe"
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-white/80" htmlFor="email">Email Address</label>
+              <label className="text-sm font-medium text-muted-foreground" htmlFor="email">Email Address</label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail className="h-5 w-5 text-white/40" />
+                  <Mail className="h-5 w-5 text-muted-foreground/60" />
                 </div>
                 <input
                   id="email"
@@ -101,17 +103,17 @@ export default function RegisterPage() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="block w-full pl-10 pr-3 py-3 rounded-xl bg-black/50 border border-white/10 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-[#E5C158]/50 transition-all"
+                  className="block w-full pl-10 pr-3 py-3 rounded-xl bg-background border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-brand-primary/50 transition-all"
                   placeholder="you@example.com"
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-white/80" htmlFor="password">Password</label>
+              <label className="text-sm font-medium text-muted-foreground" htmlFor="password">Password</label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-white/40" />
+                  <Lock className="h-5 w-5 text-muted-foreground/60" />
                 </div>
                 <input
                   id="password"
@@ -119,13 +121,13 @@ export default function RegisterPage() {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="block w-full pl-10 pr-10 py-3 rounded-xl bg-black/50 border border-white/10 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-[#E5C158]/50 transition-all"
+                  className="block w-full pl-10 pr-10 py-3 rounded-xl bg-background border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-brand-primary/50 transition-all"
                   placeholder="••••••••"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-white/40 hover:text-white transition-colors"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-muted-foreground/60 hover:text-foreground transition-colors"
                 >
                   {showPassword ? (
                     <EyeOff className="h-5 w-5" />
@@ -139,7 +141,7 @@ export default function RegisterPage() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full flex justify-center items-center py-3 px-4 rounded-xl font-bold text-black bg-[#E5C158] hover:bg-[#f1d06e] transition-colors disabled:opacity-50 disabled:cursor-not-allowed group"
+              className="w-full flex justify-center items-center py-3 px-4 rounded-xl font-bold text-primary-foreground bg-brand-primary hover:bg-brand-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed group"
             >
               {isSubmitting ? (
                 <Loader2 className="animate-spin h-5 w-5" />
@@ -154,28 +156,30 @@ export default function RegisterPage() {
           <div className="mt-8 text-center text-sm">
             <button 
               onClick={() => setShowForm(false)}
-              className="text-white/60 hover:text-white transition-colors mb-4 block w-full"
+              className="text-muted-foreground hover:text-foreground transition-colors mb-4 block w-full"
             >
               ← Back to instructions
             </button>
-            <span className="text-white/60">Already have an account? </span>
+            <span className="text-muted-foreground">Already have an account? </span>
             <Link href="/login" className="font-medium text-[#E5C158] hover:underline transition-all">
               Sign in
             </Link>
           </div>
         </div>
       </div>
+      </AuthLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-white flex flex-col items-center justify-center p-6 relative overflow-hidden">
-      {/* Background Effect */}
-      <div className="absolute inset-0 z-0 opacity-20 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at center, #ffffff 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
+    <AuthLayout>
+      <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center p-6 relative overflow-hidden pt-28">
+        {/* Background Effect */}
+      <div className="absolute inset-0 z-0 opacity-40 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at center, hsl(var(--foreground)/0.15) 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
 
-      <div className="max-w-4xl w-full relative z-10 border border-white/5 bg-[#111111]/80 rounded-3xl p-10 md:p-16 shadow-2xl backdrop-blur-sm">
+      <div className="max-w-4xl w-full relative z-10 border border-border bg-card/80 rounded-3xl p-10 md:p-16 shadow-2xl backdrop-blur-sm">
         
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#E5C158]/30 bg-[#E5C158]/5 text-sm font-medium text-[#E5C158] mb-8">
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-brand-accent/30 bg-brand-accent/5 text-sm font-medium text-brand-accent mb-8">
           <UserPlus size={16} />
           Student Registration
         </div>
@@ -184,29 +188,29 @@ export default function RegisterPage() {
           Create your account, then complete the academic enrollment form
         </h1>
         
-        <p className="text-lg text-white/60 mb-12 leading-relaxed max-w-3xl">
+        <p className="text-lg text-muted-foreground mb-12 leading-relaxed max-w-3xl">
           The enrollment form is available after sign-in. Once your account is created, you will be taken directly to the academic form to select track, level, and learning goal.
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
           {/* Card 1 */}
-          <div className="bg-[#1A1A1A] border border-white/5 rounded-2xl p-8 hover:border-white/10 transition-colors">
-            <div className="w-12 h-12 rounded-xl bg-[#E5C158]/10 flex items-center justify-center mb-6">
-              <UserPlus className="text-[#E5C158]" size={24} />
+          <div className="bg-muted/50 border border-border rounded-2xl p-8 hover:border-border/80 transition-colors shadow-sm">
+            <div className="w-12 h-12 rounded-xl bg-brand-primary/10 flex items-center justify-center mb-6">
+              <UserPlus className="text-brand-primary" size={24} />
             </div>
             <h3 className="text-xl font-bold mb-3">1) Create account</h3>
-            <p className="text-white/60 leading-relaxed">
+            <p className="text-muted-foreground leading-relaxed">
               Create your student account with email to unlock the enrollment form.
             </p>
           </div>
 
           {/* Card 2 */}
-          <div className="bg-[#1A1A1A] border border-white/5 rounded-2xl p-8 hover:border-white/10 transition-colors">
-            <div className="w-12 h-12 rounded-xl bg-[#E5C158]/10 flex items-center justify-center mb-6">
-              <ClipboardCheck className="text-[#E5C158]" size={24} />
+          <div className="bg-muted/50 border border-border rounded-2xl p-8 hover:border-border/80 transition-colors shadow-sm">
+            <div className="w-12 h-12 rounded-xl bg-brand-primary/10 flex items-center justify-center mb-6">
+              <ClipboardCheck className="text-brand-primary" size={24} />
             </div>
             <h3 className="text-xl font-bold mb-3">2) Complete form</h3>
-            <p className="text-white/60 leading-relaxed">
+            <p className="text-muted-foreground leading-relaxed">
               Fill in the academic enrollment form for admissions team review.
             </p>
           </div>
@@ -221,12 +225,13 @@ export default function RegisterPage() {
           </button>
           <Link 
             href="/login" 
-            className="px-8 py-4 rounded-xl border border-white/10 bg-transparent text-white/80 font-medium hover:bg-white/5 hover:text-white transition-colors flex items-center gap-2"
+            className="px-8 py-4 rounded-xl border border-border bg-transparent text-foreground font-medium hover:bg-muted transition-colors flex items-center gap-2"
           >
             I already have an account <ArrowRight size={18} />
           </Link>
         </div>
       </div>
     </div>
+    </AuthLayout>
   );
 }

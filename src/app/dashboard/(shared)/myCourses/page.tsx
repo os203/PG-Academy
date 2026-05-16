@@ -141,7 +141,7 @@ export default function MyCoursesPage() {
               progress={track.progressPercentage || 0}
               totalLessons={track.totalLessons || 0}
               completedLessons={track.completedLessons || 0}
-              onContinue={() => router.push(`/dashboard/student/tracks/${track.id}`)}
+              onContinue={() => router.push(`/dashboard/student/${track.id}`)}
             />
           ))}
         </div>

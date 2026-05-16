@@ -856,15 +856,47 @@ export default function InstructorTrackManager({
                                         rows={2}
                                         className="w-full border border-border rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-brand-primary resize-none bg-background text-sm"
                                       />
-                                      <input
-                                        value={lessonDraft.videoPath}
-                                        onChange={(e) => setLessonEditInputs((prev) => ({
-                                          ...prev,
-                                          [lesson.id]: { ...prev[lesson.id], videoPath: e.target.value }
-                                        }))}
-                                        placeholder="Video path or URL"
-                                        className="w-full border border-border rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-brand-primary bg-background text-sm"
-                                      />
+                                      <div className="space-y-1">
+                                        <label className="text-xs font-semibold text-muted-foreground">Video</label>
+                                        {lessonDraft.videoPath ? (
+                                          <div className="flex items-center gap-2 bg-muted/30 border border-border rounded-lg px-3 py-2">
+                                            <Video size={14} className="text-brand-primary shrink-0" />
+                                            <span className="text-xs text-brand-primary font-medium truncate flex-1">{lessonDraft.videoPath.split('/').pop()}</span>
+                                            <button type="button" onClick={() => setLessonEditInputs((prev) => ({
+                                              ...prev, [lesson.id]: { ...prev[lesson.id], videoPath: "" }
+                                            }))} className="text-red-400 hover:text-red-500 text-xs">Remove</button>
+                                          </div>
+                                        ) : (
+                                          <div className="flex items-center gap-2">
+                                            <label className="flex-1 cursor-pointer border border-dashed border-border rounded-lg px-3 py-2 text-center hover:border-brand-primary/50 transition">
+                                              <input type="file" accept="video/*" className="hidden" onChange={async (e) => {
+                                                const f = e.target.files?.[0];
+                                                if (!f) return;
+                                                const fd = new FormData();
+                                                fd.append("file", f);
+                                                try {
+                                                  const uploadRes = await fetch("/api/upload", { method: "POST", body: fd });
+                                                  if (!uploadRes.ok) throw new Error("Upload failed");
+                                                  const data = await uploadRes.json();
+                                                  setLessonEditInputs((prev) => ({
+                                                    ...prev, [lesson.id]: { ...prev[lesson.id], videoPath: data.url }
+                                                  }));
+                                                } catch { alert("Video upload failed"); }
+                                              }} />
+                                              <span className="text-xs text-muted-foreground">📁 Click to upload video</span>
+                                            </label>
+                                            <span className="text-xs text-muted-foreground">or</span>
+                                            <input
+                                              value={lessonDraft.videoPath}
+                                              onChange={(e) => setLessonEditInputs((prev) => ({
+                                                ...prev, [lesson.id]: { ...prev[lesson.id], videoPath: e.target.value }
+                                              }))}
+                                              placeholder="Paste URL..."
+                                              className="flex-1 border border-border rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-brand-primary bg-background text-xs"
+                                            />
+                                          </div>
+                                        )}
+                                      </div>
                                       <div className="flex items-center gap-2">
                                         <button
                                           onClick={() => void saveLessonEdit(phase.id, module.id, lesson.id)}
