@@ -10,6 +10,9 @@
   },
   "dependencies": {
     "@base-ui/react": "^1.4.0",
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
     "@floating-ui/react": "^0.27.19",
     "@prisma/client": "6.4.1",
     "@types/nodemailer": "^8.0.0",
@@ -19,6 +22,7 @@
     "embla-carousel": "^8.6.0",
     "embla-carousel-react": "^8.6.0",
     "framer-motion": "^12.38.0",
+    "hls.js": "^1.6.16",
     "jose": "^6.2.2",
     "lucide-react": "^1.14.0",
     "motion": "^12.38.0",

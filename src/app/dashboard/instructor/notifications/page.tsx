@@ -82,7 +82,7 @@ export default function InstructorNotificationsPage() {
           <CardContent className="space-y-4">
             {history.length === 0 ? (
               <div className="text-center py-12 text-muted-foreground border border-dashed border-border rounded-lg">
-                You haven't sent any broadcast notifications yet.
+                You haven&apos;t sent any broadcast notifications yet.
               </div>
             ) : (
               history.map((item) => (

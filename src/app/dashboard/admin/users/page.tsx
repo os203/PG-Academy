@@ -487,7 +487,7 @@ export default function AdminUsersPage() {
       {enrollModalUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <Card className="w-full max-w-md border-brand-primary/50 shadow-2xl relative overflow-hidden bg-background">
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-brand-primary to-brand-accent" />
+            <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-brand-primary to-brand-accent" />
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle className="text-lg">Enroll in Track</CardTitle>

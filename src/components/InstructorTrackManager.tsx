@@ -9,9 +9,9 @@ import {
   Video,
   Layers,
   Pencil,
-  Save,
-  X,
   FolderTree,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import LessonQuizManager, { QuizMeta } from "@/components/LessonQuizManager";
 import LessonResourceManager from "@/components/LessonResourceManager";
@@ -27,6 +27,7 @@ interface Lesson {
   notes: string | null;
   videoPath: string | null;
   order: number;
+  isPublished: boolean;
   quizzes: QuizMeta[];
   resources: Resource[];
 }
@@ -41,6 +42,7 @@ interface Module {
   id: string;
   title: string;
   order: number;
+  isPublished: boolean;
   lessons: Lesson[];
 }
 
@@ -78,6 +80,7 @@ interface ApiLesson {
   notes?: string | null;
   videoPath?: string | null;
   order?: number;
+  isPublished?: boolean;
   quizzes?: ApiQuiz[];
   resources?: Resource[];
 }
@@ -86,6 +89,7 @@ interface ApiModule {
   id?: string;
   title?: string;
   order?: number;
+  isPublished?: boolean;
   lessons?: ApiLesson[];
 }
 
@@ -189,6 +193,7 @@ export default function InstructorTrackManager({
                     id: module.id ?? "",
                     title: module.title ?? "",
                     order: typeof module.order === "number" ? module.order : 0,
+                    isPublished: !!module.isPublished,
                     lessons: Array.isArray(module.lessons)
                       ? module.lessons.map((lesson): Lesson => ({
                           id: lesson.id ?? "",
@@ -196,6 +201,7 @@ export default function InstructorTrackManager({
                           notes: lesson.notes ?? null,
                           videoPath: lesson.videoPath ?? null,
                           order: typeof lesson.order === "number" ? lesson.order : 0,
+                          isPublished: !!lesson.isPublished,
                           quizzes: Array.isArray(lesson.quizzes)
                             ? lesson.quizzes.map((quiz): QuizMeta => ({
                                 id: quiz.id ?? "",
@@ -422,6 +428,30 @@ export default function InstructorTrackManager({
     }
   };
 
+  const toggleModulePublish = async (phaseId: string, moduleId: string, currentStatus: boolean) => {
+    try {
+      const res = await fetch(
+        `/api/tracks/${trackId}/phases/${phaseId}/modules/${moduleId}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ isPublished: !currentStatus }),
+        }
+      );
+
+      const data = await readJsonSafely<ApiMessageResponse>(res);
+      if (!res.ok) {
+        alert(data?.error || "Failed to update module status");
+        return;
+      }
+
+      await fetchCourseData();
+    } catch (error) {
+      console.error(error);
+      alert("An error occurred while updating module status");
+    }
+  };
+
   const addLesson = async (phaseId: string, moduleId: string): Promise<void> => {
     const current: LessonFormState = newLessonInputs[moduleId] || {
       title: "",
@@ -516,6 +546,30 @@ export default function InstructorTrackManager({
     }
   };
 
+  const toggleLessonPublish = async (phaseId: string, moduleId: string, lessonId: string, currentStatus: boolean) => {
+    try {
+      const res = await fetch(
+        `/api/tracks/${trackId}/phases/${phaseId}/modules/${moduleId}/lessons/${lessonId}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ isPublished: !currentStatus }),
+        }
+      );
+
+      const data = await readJsonSafely<ApiMessageResponse>(res);
+      if (!res.ok) {
+        alert(data?.error || "Failed to update lesson status");
+        return;
+      }
+
+      await fetchCourseData();
+    } catch (error) {
+      console.error(error);
+      alert("An error occurred while updating lesson status");
+    }
+  };
+
   const deleteLesson = async (
     phaseId: string,
     moduleId: string,
@@ -581,7 +635,7 @@ export default function InstructorTrackManager({
 
   return (
     <div className="max-w-5xl mx-auto p-6 space-y-8">
-      <div className="bg-gradient-to-r from-brand-primary to-brand-accent rounded-3xl p-8 text-white shadow-lg relative overflow-hidden">
+      <div className="bg-linear-to-r from-brand-primary to-brand-accent rounded-3xl p-8 text-white shadow-lg relative overflow-hidden">
         <div className="flex items-start justify-between gap-4">
           <div>
             <h1 className="text-3xl font-black mb-2">{track.title}</h1>
@@ -741,6 +795,15 @@ export default function InstructorTrackManager({
                           {editingModuleId !== module.id && (
                             <div className="flex items-center gap-1 shrink-0">
                               <button
+                                onClick={() => void toggleModulePublish(phase.id, module.id, module.isPublished)}
+                                className={`p-1.5 transition-colors flex items-center gap-1 rounded-md text-xs font-semibold ${module.isPublished ? 'text-emerald-600 hover:bg-emerald-50' : 'text-amber-600 hover:bg-amber-50'}`}
+                                title={module.isPublished ? "Published" : "Draft"}
+                              >
+                                {module.isPublished ? <Eye size={16} /> : <EyeOff size={16} />}
+                                <span className="hidden sm:inline">{module.isPublished ? "Published" : "Draft"}</span>
+                              </button>
+                              <div className="w-px h-4 bg-border mx-1"></div>
+                              <button
                                 onClick={() => {
                                   setEditingModuleId(module.id);
                                   setModuleDrafts((prev) => ({ ...prev, [module.id]: module.title }));
@@ -832,6 +895,14 @@ export default function InstructorTrackManager({
                                           </div>
                                         </div>
                                         <div className="flex items-center gap-1 shrink-0">
+                                          <button
+                                            onClick={() => void toggleLessonPublish(phase.id, module.id, lesson.id, lesson.isPublished)}
+                                            className={`p-1 transition-colors flex items-center gap-1 rounded-md text-xs font-semibold ${lesson.isPublished ? 'text-emerald-600 hover:bg-emerald-50' : 'text-amber-600 hover:bg-amber-50'}`}
+                                            title={lesson.isPublished ? "Published" : "Draft"}
+                                          >
+                                            {lesson.isPublished ? <Eye size={14} /> : <EyeOff size={14} />}
+                                          </button>
+                                          <div className="w-px h-3 bg-border mx-1"></div>
                                           <button
                                             onClick={() => {
                                               setEditingLessonId(lesson.id);

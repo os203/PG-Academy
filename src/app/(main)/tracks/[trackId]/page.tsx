@@ -73,7 +73,12 @@ interface CourseDetails {
   studentsCount: number;
   rating: number;
   reviewCount: number;
-  modules: Module[];
+  phases: {
+    id: string;
+    title: string;
+    order: number;
+    modules: Module[];
+  }[];
 }
 
 function formatDuration(seconds: number): string {
@@ -146,8 +151,9 @@ export default function CoursePreviewPage() {
         if (res.ok) {
           setCourse(data.track);
           // Expand first module by default
-          if (data.track?.modules?.length > 0) {
-            setExpandedModules(new Set([data.track.modules[0].id]));
+          const firstPhase = data.track?.phases?.[0];
+          if (firstPhase?.modules?.length > 0) {
+            setExpandedModules(new Set([firstPhase.modules[0].id]));
           }
         } else {
           setError(data.error || "Failed to load track details.");
@@ -263,7 +269,8 @@ export default function CoursePreviewPage() {
 
   const expandAll = () => {
     if (!track) return;
-    setExpandedModules(new Set(track.modules.map((m) => m.id)));
+    const allModuleIds = track.phases.flatMap((p) => p.modules.map((m) => m.id));
+    setExpandedModules(new Set(allModuleIds));
   };
 
   if (loading) {
@@ -386,49 +393,58 @@ export default function CoursePreviewPage() {
               </div>
 
               <div className="border border-border rounded-lg overflow-hidden divide-y divide-border">
-                {track.modules.length === 0 ? (
+                {track.phases.length === 0 ? (
                   <div className="p-8 text-center text-muted-foreground">
                     No content available yet.
                   </div>
                 ) : (
-                  track.modules.map((mod) => {
-                    const isExpanded = expandedModules.has(mod.id);
-                    return (
-                      <div key={mod.id}>
-                        <button
-                          onClick={() => toggleModule(mod.id)}
-                          className="w-full flex items-center justify-between p-4 bg-muted/40 hover:bg-muted/60 transition-colors text-left"
-                        >
-                          <div className="flex items-center gap-2 font-semibold text-foreground text-sm">
-                            {isExpanded ? <ChevronUp className="w-4 h-4 shrink-0" /> : <ChevronDown className="w-4 h-4 shrink-0" />}
-                            {mod.title}
-                          </div>
-                          <span className="text-xs text-muted-foreground shrink-0 ml-4">
-                            {mod.lessonsCount} lectures
-                            {mod.totalDuration > 0 && ` • ${formatDuration(mod.totalDuration)}`}
-                          </span>
-                        </button>
-                        {isExpanded && (
-                          <div className="divide-y divide-border/50">
-                            {mod.lessons.map((lesson) => (
-                              <div key={lesson.id} className="flex items-center justify-between px-4 py-3 pl-10 text-sm hover:bg-muted/20 transition-colors">
-                                <div className="flex items-center gap-3 text-foreground/80">
-                                  <PlayCircle className="w-4 h-4 text-muted-foreground shrink-0" />
-                                  {lesson.title}
-                                </div>
-                                <div className="flex items-center gap-3 text-muted-foreground shrink-0">
-                                  {lesson.duration ? (
-                                    <span className="text-xs">{formatDurationShort(lesson.duration)}</span>
-                                  ) : null}
-                                  <Lock className="w-3.5 h-3.5" />
-                                </div>
+                  track.phases.map((phase) => (
+                    <div key={phase.id} className="divide-y divide-border">
+                      {phase.title && (
+                        <div className="px-4 py-3 bg-muted/30 text-xs font-bold text-muted-foreground uppercase tracking-wider border-b border-border">
+                          {phase.title}
+                        </div>
+                      )}
+                      {phase.modules.map((mod) => {
+                        const isExpanded = expandedModules.has(mod.id);
+                        return (
+                          <div key={mod.id}>
+                            <button
+                              onClick={() => toggleModule(mod.id)}
+                              className="w-full flex items-center justify-between p-4 bg-muted/40 hover:bg-muted/60 transition-colors text-left"
+                            >
+                              <div className="flex items-center gap-2 font-semibold text-foreground text-sm">
+                                {isExpanded ? <ChevronUp className="w-4 h-4 shrink-0" /> : <ChevronDown className="w-4 h-4 shrink-0" />}
+                                {mod.title}
                               </div>
-                            ))}
+                              <span className="text-xs text-muted-foreground shrink-0 ml-4">
+                                {mod.lessonsCount} lectures
+                                {mod.totalDuration > 0 && ` • ${formatDuration(mod.totalDuration)}`}
+                              </span>
+                            </button>
+                            {isExpanded && (
+                              <div className="divide-y divide-border/50">
+                                {mod.lessons.map((lesson) => (
+                                  <div key={lesson.id} className="flex items-center justify-between px-4 py-3 pl-10 text-sm hover:bg-muted/20 transition-colors">
+                                    <div className="flex items-center gap-3 text-foreground/80">
+                                      <PlayCircle className="w-4 h-4 text-muted-foreground shrink-0" />
+                                      {lesson.title}
+                                    </div>
+                                    <div className="flex items-center gap-3 text-muted-foreground shrink-0">
+                                      {lesson.duration ? (
+                                        <span className="text-xs">{formatDurationShort(lesson.duration)}</span>
+                                      ) : null}
+                                      <Lock className="w-3.5 h-3.5" />
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
                           </div>
-                        )}
-                      </div>
-                    );
-                  })
+                        );
+                      })}
+                    </div>
+                  ))
                 )}
               </div>
             </div>

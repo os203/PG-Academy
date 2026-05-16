@@ -9,6 +9,10 @@ import {
   PlayCircle,
   Save,
   Medal,
+  AlertTriangle,
+  ShieldCheck,
+  ChevronDown,
+  ChevronRight,
 } from "lucide-react";
 import StudentQuizPanel from "@/components/StudentQuizPanel";
 import StudentQAPanel from "@/components/StudentQAPanel";
@@ -77,6 +81,8 @@ export default function StudentTrackViewer({
   const [lastPositionDraft, setLastPositionDraft] = useState<number>(0);
   const [savingProgress, setSavingProgress] = useState(false);
   const [claimingCert, setClaimingCert] = useState(false);
+  const [markingComplete, setMarkingComplete] = useState(false);
+  const [expandedPhases, setExpandedPhases] = useState<string[]>([]);
 
   const fetchTrack = async (): Promise<void> => {
     try {
@@ -109,10 +115,18 @@ export default function StudentTrackViewer({
       }
 
       const stillExists = allLessons.some((lesson) => lesson.id === selectedLessonId);
+      let lessonToSelect = selectedLessonId;
       if (!stillExists) {
         // Select first incomplete but unlocked lesson, or just the first unlocked lesson
         const firstUnlockedLesson = allLessons.find(l => l.isUnlocked && !l.isCompleted) || allLessons.find(l => l.isUnlocked) || allLessons[0];
+        lessonToSelect = firstUnlockedLesson.id;
         setSelectedLessonId(firstUnlockedLesson.id);
+      }
+
+      // Auto-expand the phase that contains the selected lesson
+      const activePhase = normalizedTrack.phases.find(p => p.modules.some(m => m.lessons.some(l => l.id === lessonToSelect)));
+      if (activePhase) {
+        setExpandedPhases((prev) => prev.includes(activePhase.id) ? prev : [...prev, activePhase.id]);
       }
     } catch (error) {
       console.error(error);
@@ -213,9 +227,10 @@ export default function StudentTrackViewer({
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-6 grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <div className="max-w-7xl mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-3 gap-8">
+      {/* Sidebar: Scrollable curriculum list */}
       <div className="lg:col-span-1">
-        <div className="bg-white border rounded-2xl p-6 shadow-sm sticky top-6 space-y-5">
+        <div className="bg-white border rounded-2xl p-6 shadow-sm sticky top-6 space-y-5 max-h-[calc(100vh-3rem)] overflow-y-auto custom-scrollbar">
           <div>
             <h1 className="text-2xl font-black mb-2">{track.title}</h1>
             <p className="text-sm text-gray-500">
@@ -249,14 +264,58 @@ export default function StudentTrackViewer({
 
           <div className="space-y-6">
             {track.phases.length > 0 ? (
-              track.phases.map((phase, phaseIndex) => (
+              track.phases.map((phase, phaseIndex) => {
+                const phaseLessons = phase.modules.flatMap(m => m.lessons);
+                const phaseCompleted = phaseLessons.filter(l => l.isCompleted).length;
+                const phaseTotal = phaseLessons.length;
+                const phasePercent = phaseTotal > 0 ? Math.round((phaseCompleted / phaseTotal) * 100) : 0;
+                const phaseIsLocked = phaseLessons.length > 0 && !phaseLessons[0].isUnlocked && !phaseLessons[0].isCompleted;
+
+                return (
                 <div key={phase.id} className="space-y-4">
-                  <div className="font-bold text-indigo-800 uppercase tracking-wide text-sm border-b pb-2">
-                    Phase {phaseIndex + 1}: {phase.title}
-                  </div>
+                  <button
+                    onClick={() => setExpandedPhases(prev => prev.includes(phase.id) ? prev.filter(id => id !== phase.id) : [...prev, phase.id])}
+                    className={`w-full rounded-xl p-3 border transition-all hover:border-indigo-400 ${
+                    phaseIsLocked
+                      ? 'bg-gray-100 border-gray-200 opacity-60 cursor-not-allowed'
+                      : phasePercent === 100
+                      ? 'bg-green-50 border-green-200'
+                      : 'bg-indigo-50/50 border-indigo-200'
+                  }`}>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-bold text-sm uppercase tracking-wide text-indigo-800 flex items-center gap-2">
+                        {phaseIsLocked ? (
+                          <Lock size={14} className="text-gray-400" />
+                        ) : phasePercent === 100 ? (
+                          <ShieldCheck size={14} className="text-green-600" />
+                        ) : null}
+                        Phase {phaseIndex + 1}: {phase.title}
+                      </span>
+                      <div className="flex items-center gap-3">
+                        <span className="text-xs font-bold text-gray-500">
+                          {phaseCompleted}/{phaseTotal} · {phasePercent}%
+                        </span>
+                        {expandedPhases.includes(phase.id) ? (
+                          <ChevronDown size={16} className="text-indigo-500" />
+                        ) : (
+                          <ChevronRight size={16} className="text-indigo-500" />
+                        )}
+                      </div>
+                    </div>
+                    <div className="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all duration-500 ${
+                          phasePercent === 100 ? 'bg-green-500' : 'bg-amber-400'
+                        }`}
+                        style={{ width: `${phasePercent}%` }}
+                      />
+                    </div>
+                  </button>
                   
-                  {phase.modules.length > 0 ? (
-                    phase.modules.map((module, moduleIndex) => (
+                  {expandedPhases.includes(phase.id) && (
+                    <div className="space-y-4 pl-2 pt-2">
+                      {phase.modules.length > 0 ? (
+                        phase.modules.map((module, moduleIndex) => (
                       <div key={module.id} className="border rounded-2xl p-4 bg-gray-50">
                         <h3 className="font-bold text-gray-800 mb-3">
                           {moduleIndex + 1}. {module.title}
@@ -318,10 +377,13 @@ export default function StudentTrackViewer({
                       </div>
                     ))
                   ) : (
-                    <div className="text-xs text-gray-400 italic">No modules in this phase</div>
+                    <div className="text-gray-500 text-sm py-4">No modules in this phase.</div>
                   )}
                 </div>
-              ))
+              )}
+            </div>
+          );
+        })
             ) : (
               <div className="text-center text-gray-400 py-6">
                 No phases or lessons in this track yet.
@@ -464,30 +526,74 @@ export default function StudentTrackViewer({
                 </button>
               </div>
 
-              <div className="border border-indigo-200 rounded-2xl p-6 space-y-4 bg-indigo-50">
-                <h3 className="font-bold text-indigo-900">Mark Lesson Complete</h3>
+              <div className={`border rounded-2xl p-6 space-y-4 ${
+                selectedLesson.isCompleted
+                  ? 'border-green-200 bg-green-50'
+                  : 'border-indigo-200 bg-indigo-50'
+              }`}>
+                <h3 className={`font-bold ${
+                  selectedLesson.isCompleted ? 'text-green-900' : 'text-indigo-900'
+                }`}>Mark Lesson Complete</h3>
                 <p className="text-sm text-indigo-700">
                   You must explicitly mark this lesson as complete to unlock the next lesson.
                   If there is a quiz, you must pass it first.
                 </p>
+
+                {/* Tooltip: Show reason WHY the button is disabled */}
+                {!selectedLesson.isCompleted && selectedLesson.hasQuiz && !selectedLesson.quizPassed && (
+                  <div className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-xl">
+                    <AlertTriangle size={16} className="text-amber-600 mt-0.5 shrink-0" />
+                    <p className="text-sm text-amber-800 font-medium">
+                      Complete the quiz with a passing score before marking this lesson complete.
+                    </p>
+                  </div>
+                )}
+
+                {!selectedLesson.isCompleted && !selectedLesson.isUnlocked && (
+                  <div className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-xl">
+                    <Lock size={16} className="text-amber-600 mt-0.5 shrink-0" />
+                    <p className="text-sm text-amber-800 font-medium">
+                      Complete all previous lessons before this one.
+                    </p>
+                  </div>
+                )}
+
                 <button
                   onClick={async () => {
-                    const res = await fetch("/api/student/progress/complete", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ lessonId: selectedLesson.id })
-                    });
-                    if (res.ok) {
-                      await fetchTrack();
-                    } else {
-                      const data = await res.json();
-                      alert(data.error || "Failed to mark complete.");
+                    setMarkingComplete(true);
+                    try {
+                      const res = await fetch("/api/student/progress/complete", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ lessonId: selectedLesson.id })
+                      });
+                      if (res.ok) {
+                        await fetchTrack();
+                      } else {
+                        const data = await res.json();
+                        alert(data.error || "Failed to mark complete.");
+                      }
+                    } catch {
+                      alert("An error occurred.");
+                    } finally {
+                      setMarkingComplete(false);
                     }
                   }}
-                  disabled={selectedLesson.isCompleted || (selectedLesson.hasQuiz && !selectedLesson.quizPassed)}
-                  className="w-full inline-flex items-center justify-center gap-2 bg-indigo-600 text-white px-5 py-3 rounded-xl font-bold hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={
+                    markingComplete ||
+                    selectedLesson.isCompleted ||
+                    !selectedLesson.isUnlocked ||
+                    (selectedLesson.hasQuiz && !selectedLesson.quizPassed)
+                  }
+                  className={`w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-bold transition ${
+                    selectedLesson.isCompleted
+                      ? 'bg-green-600 text-white cursor-default'
+                      : 'bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed'
+                  }`}
                 >
-                  {selectedLesson.isCompleted ? (
+                  {markingComplete ? (
+                    <> <Loader2 size={16} className="animate-spin" /> Marking... </>
+                  ) : selectedLesson.isCompleted ? (
                      <> <CheckCircle2 size={16} /> Completed </>
                   ) : (
                     "Mark as Complete"

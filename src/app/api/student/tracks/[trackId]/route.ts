@@ -140,8 +140,8 @@ export async function GET(
     // Compute sequential locks logic
     let isUnlocked = true;
     for (const phase of phases) {
-      for (const module of phase.modules) {
-        for (const lesson of module.lessons) {
+      for (const mod of phase.modules) {
+        for (const lesson of mod.lessons) {
           lesson.isUnlocked = isUnlocked;
           if (!lesson.isCompleted) {
              isUnlocked = false; // Next lessons are locked

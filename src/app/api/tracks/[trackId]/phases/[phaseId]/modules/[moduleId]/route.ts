@@ -15,7 +15,7 @@ export async function PATCH(
     }
 
     const body = await req.json();
-    const { title } = body;
+    const { title, isPublished } = body;
 
     if (!title || typeof title !== "string") {
       return NextResponse.json({ error: "Title is required" }, { status: 400 });
@@ -28,6 +28,7 @@ export async function PATCH(
       },
       data: {
         title,
+        ...(isPublished !== undefined && { isPublished }),
       },
     });
 

@@ -49,8 +49,8 @@ export async function PATCH(
 
     const title = typeof body.title === "string" ? body.title.trim() : "";
     const notes = typeof body.notes === "string" ? body.notes.trim() : "";
-    const videoPath =
-      typeof body.videoPath === "string" ? body.videoPath.trim() : "";
+    const videoPath = typeof body.videoPath === "string" ? body.videoPath.trim() : "";
+    const isPublished = body.isPublished;
 
     if (!title) {
       return NextResponse.json(
@@ -65,6 +65,7 @@ export async function PATCH(
         title,
         notes: notes || null,
         videoPath: videoPath || null,
+        ...(isPublished !== undefined && { isPublished }),
       },
     });
 

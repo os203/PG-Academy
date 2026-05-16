@@ -16,7 +16,6 @@ import {
   BookOpen,
   Wallet,
   Activity,
-  Plus,
   Megaphone,
   AlertCircle,
   MessageSquare,
@@ -434,7 +433,7 @@ export default function InstructorDashboard() {
               className="w-full max-w-xl"
             >
               <Card className="border-brand-primary/50 shadow-2xl relative overflow-hidden bg-background">
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-brand-primary to-brand-accent" />
+                <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-brand-primary to-brand-accent" />
                 <CardHeader>
                   <CardTitle>
                     Edit Track

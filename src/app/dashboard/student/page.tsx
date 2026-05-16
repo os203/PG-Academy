@@ -9,11 +9,23 @@ import {
   Clock4,
   Medal,
   ChartNoAxesCombined,
+  PlayCircle,
+  Lock,
 } from "lucide-react";
 import {
   NotificationList,
   NotificationItem,
 } from "@/components/animate-ui/components/community/notification-list";
+
+interface PhaseSummary {
+  id: string;
+  title: string;
+  order: number;
+  totalLessons: number;
+  completedLessons: number;
+  progressPercentage: number;
+  isLocked: boolean;
+}
 
 interface EnrolledCourse {
   id: string;
@@ -27,16 +39,27 @@ interface EnrolledCourse {
   progressPercentage: number;
   instructorName: string;
   category?: string;
+  phases?: PhaseSummary[];
 }
 
 interface NotificationsResponse {
   notifications?: NotificationItem[];
 }
 
+interface ContinueLearningData {
+  trackId: string;
+  trackTitle: string;
+  phaseTitle: string;
+  moduleTitle: string;
+  lessonId: string;
+  lessonTitle: string;
+}
+
 export default function StudentDashboard() {
   const { user, isLoading: isAuthLoading } = useAuth();
 
   const [tracks, setCourses] = useState<EnrolledCourse[]>([]);
+  const [continueLearning, setContinueLearning] = useState<ContinueLearningData | null>(null);
   const [isCoursesLoading, setIsCoursesLoading] = useState(true);
 
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
@@ -50,12 +73,15 @@ export default function StudentDashboard() {
         if (res.ok) {
           const data = await res.json();
           setCourses(Array.isArray(data?.tracks) ? data.tracks : []);
+          setContinueLearning(data?.continueLearning || null);
         } else {
           setCourses([]);
+          setContinueLearning(null);
         }
       } catch (err) {
         console.error("Failed to fetch tracks", err);
         setCourses([]);
+        setContinueLearning(null);
       } finally {
         setIsCoursesLoading(false);
       }
@@ -107,19 +133,20 @@ export default function StudentDashboard() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-background/95 p-4">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center w-full mb-8 px-4 md:px-8">
-        <div className="w-full h-32 pt-8">
-          <div className="font-bold text-2xl mb-2 tracking-tight">
-            Welcome back! 👋
-          </div>
-          <div className="text-muted-foreground">
+    <div className="min-h-screen flex flex-col bg-background/95 p-4 md:p-8 max-w-7xl mx-auto w-full gap-8">
+      {/* Header & Notifications */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center w-full gap-4">
+        <div>
+          <h1 className="font-bold text-3xl mb-1 tracking-tight">
+            Welcome back, {user?.name?.split(" ")[0] || "Student"}! 👋
+          </h1>
+          <p className="text-muted-foreground">
             Continue your learning journey
-          </div>
+          </p>
         </div>
 
         {!isNotificationsLoading && (
-          <div className="w-full md:w-auto z-10 pt-4 md:pt-0">
+          <div className="w-full md:w-auto z-10">
             <NotificationList
               notifications={notifications}
               onViewAll={() =>
@@ -129,6 +156,43 @@ export default function StudentDashboard() {
           </div>
         )}
       </div>
+
+      {/* Continue Learning Hero Card */}
+      {!isCoursesLoading && continueLearning && (
+        <div className="relative overflow-hidden rounded-3xl border border-indigo-200 bg-linear-to-br from-indigo-900 to-indigo-950 text-white shadow-xl">
+          <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
+            <BookOpen size={180} />
+          </div>
+          <div className="relative z-10 p-8 md:p-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-8">
+            <div className="space-y-4 max-w-2xl">
+              <div className="inline-flex items-center rounded-full bg-indigo-800/50 px-3 py-1 text-sm font-medium text-indigo-200 border border-indigo-700">
+                <PlayCircle size={14} className="mr-2" />
+                Up Next
+              </div>
+              <div>
+                <h2 className="text-3xl font-black mb-2 leading-tight">
+                  {continueLearning.lessonTitle}
+                </h2>
+                <div className="flex flex-wrap items-center gap-2 text-indigo-200 text-sm font-medium">
+                  <span>{continueLearning.trackTitle}</span>
+                  <span className="opacity-50">•</span>
+                  <span>{continueLearning.phaseTitle}</span>
+                  <span className="opacity-50">•</span>
+                  <span>{continueLearning.moduleTitle}</span>
+                </div>
+              </div>
+            </div>
+            
+            <button
+              onClick={() => window.location.href = `/dashboard/student/${continueLearning.trackId}`}
+              className="shrink-0 inline-flex items-center gap-2 bg-yellow-400 hover:bg-yellow-500 text-indigo-950 font-black px-8 py-4 rounded-2xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(250,204,21,0.3)]"
+            >
+              Resume Lesson
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="flex gap-6 justify-around flex-wrap">
         <DashCard
@@ -145,7 +209,7 @@ export default function StudentDashboard() {
         />
       </div>
 
-      <span className="pt-16 text-2xl">Continue Learning</span>
+      <span className="pt-16 text-2xl font-bold">Your Enrolled Tracks</span>
 
       {isCoursesLoading ? (
         <div className="flex justify-center p-12 text-muted-foreground">
@@ -156,22 +220,64 @@ export default function StudentDashboard() {
           You haven&apos;t enrolled in any tracks yet.
         </div>
       ) : (
-        <div
-          className="grid gap-6 gap-y-8 justify-items-center pt-12"
-          style={{ gridTemplateColumns: "repeat(auto-fill, minmax(350px, 1fr))" }}
-        >
+        <div className="flex flex-col gap-16 pt-8">
           {tracks.map((track) => (
-            <MyCourseCard
-              key={track.id}
-              thumbnail={track.thumbnail || "/taco3.jpg"}
-              courseName={track.title}
-              instructor={track.instructorName}
-              category={track.category || "Others"}
-              progress={track.progressPercentage}
-              onContinue={() =>
-                (window.location.href = `/dashboard/student/${track.id}`)
-              }
-            />
+            <div key={track.id} className="flex flex-col gap-6">
+              {/* Track Header */}
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-border pb-4">
+                <div className="flex items-center gap-4">
+                  {track.thumbnail && (
+                    <img src={track.thumbnail} alt={track.title} className="w-16 h-16 rounded-xl object-cover shadow-md" />
+                  )}
+                  <div>
+                    <h3 className="text-2xl font-black">{track.title}</h3>
+                    <p className="text-muted-foreground font-medium">{track.completedLessons} / {track.totalLessons} lessons completed • {track.progressPercentage}%</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => window.location.href = `/dashboard/student/${track.id}`}
+                  className="bg-brand-primary hover:bg-brand-hover text-white px-6 py-2 rounded-xl font-bold transition-all"
+                >
+                  {track.progressPercentage === 0 ? "Start Track" : "Continue Track"}
+                </button>
+              </div>
+
+              {/* Phase Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {track.phases?.map((phase) => (
+                  <div 
+                    key={phase.id} 
+                    className={`relative flex flex-col p-6 rounded-2xl border ${phase.isLocked ? 'bg-muted/30 border-muted opacity-80' : 'bg-card border-border shadow-sm'} transition-all`}
+                  >
+                    {/* Lock Icon */}
+                    {phase.isLocked && (
+                      <div className="absolute top-4 right-4 text-muted-foreground">
+                        <Lock size={20} />
+                      </div>
+                    )}
+                    
+                    <div className="mb-6">
+                      <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Phase {phase.order}</span>
+                      <h4 className="text-lg font-bold mt-1 line-clamp-1">{phase.title}</h4>
+                    </div>
+
+                    <div className="mt-auto space-y-3">
+                      <div className="flex justify-between text-sm font-medium">
+                        <span className="text-muted-foreground">{phase.completedLessons}/{phase.totalLessons} lessons</span>
+                        <span className={phase.progressPercentage === 100 ? "text-yellow-500" : ""}>{phase.progressPercentage}%</span>
+                      </div>
+                      
+                      <div className="w-full h-2.5 bg-muted rounded-full overflow-hidden">
+                        <div
+                          className={`h-full rounded-full transition-all duration-500 ${phase.progressPercentage === 100 ? 'bg-yellow-400 shadow-[0_0_10px_rgba(250,204,21,0.5)]' : 'bg-brand-primary'}`}
+                          style={{ width: `${phase.progressPercentage}%` }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           ))}
         </div>
       )}

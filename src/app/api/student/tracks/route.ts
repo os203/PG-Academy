@@ -5,6 +5,16 @@ import { verifyToken } from "@/lib/auth";
 
 const LESSON_COMPLETE_THRESHOLD = 80;
 
+interface PhaseSummary {
+  id: string;
+  title: string;
+  order: number;
+  totalLessons: number;
+  completedLessons: number;
+  progressPercentage: number;
+  isLocked: boolean;
+}
+
 interface CourseSummaryResponse {
   id: string;
   title: string;
@@ -16,6 +26,7 @@ interface CourseSummaryResponse {
   completedLessons: number;
   progressPercentage: number;
   instructorName: string;
+  phases: PhaseSummary[];
 }
 
 export async function GET() {
@@ -93,9 +104,47 @@ export async function GET() {
     const tracks: CourseSummaryResponse[] = enrollments
       .filter((enrollment) => enrollment.track.status === "PUBLISHED")
       .map((enrollment) => {
-        const allLessons = enrollment.track.phases.flatMap(
-          (phase) => phase.modules.flatMap((module) => module.lessons)
-        );
+        let previousPhaseCompleted = true; // First phase is always unlocked
+        const phases: PhaseSummary[] = [];
+
+        const allLessons = enrollment.track.phases.flatMap((phase) => {
+          const phaseLessons = phase.modules.flatMap((module) => module.lessons);
+          
+          let phaseCompletedLessons = 0;
+          const phaseTotalLessons = phaseLessons.length;
+
+          for (const lesson of phaseLessons) {
+            const watchedPercent = lesson.progress[0]?.watchedPercent ?? 0;
+            const quiz = lesson.quizzes[0];
+            const quizPassed = quiz ? quiz.attempts.some((a) => a.passed) : true;
+            if (watchedPercent >= LESSON_COMPLETE_THRESHOLD && quizPassed) {
+              phaseCompletedLessons++;
+            }
+          }
+
+          const phaseProgressPercentage = phaseTotalLessons > 0 
+            ? Math.round((phaseCompletedLessons / phaseTotalLessons) * 100) 
+            : 0;
+
+          const isLocked = !previousPhaseCompleted;
+          
+          phases.push({
+            id: phase.id,
+            title: phase.title,
+            order: phase.order,
+            totalLessons: phaseTotalLessons,
+            completedLessons: phaseCompletedLessons,
+            progressPercentage: phaseProgressPercentage,
+            isLocked,
+          });
+
+          // Update for next phase
+          if (phaseTotalLessons > 0 && phaseCompletedLessons < phaseTotalLessons) {
+            previousPhaseCompleted = false;
+          }
+
+          return phaseLessons;
+        });
 
         const totalLessons = allLessons.length;
 
@@ -123,10 +172,48 @@ export async function GET() {
           completedLessons,
           progressPercentage,
           instructorName: enrollment.track.instructor.name,
+          phases,
         };
       });
 
-    return NextResponse.json({ tracks });
+    let continueLearning = null;
+
+    // Find the most recently enrolled track that has incomplete lessons
+    for (const enrollment of enrollments) {
+      if (enrollment.track.status !== "PUBLISHED") continue;
+
+      let foundIncomplete = false;
+
+      for (const phase of enrollment.track.phases) {
+        if (foundIncomplete) break;
+        for (const mod of phase.modules) {
+          if (foundIncomplete) break;
+          for (const lesson of mod.lessons) {
+            const watchedPercent = lesson.progress[0]?.watchedPercent ?? 0;
+            const quiz = lesson.quizzes[0];
+            const quizPassed = quiz ? quiz.attempts.some((a) => a.passed) : true;
+            const isCompleted = watchedPercent >= LESSON_COMPLETE_THRESHOLD && quizPassed;
+
+            if (!isCompleted) {
+              continueLearning = {
+                trackId: enrollment.track.id,
+                trackTitle: enrollment.track.title,
+                phaseTitle: phase.title,
+                moduleTitle: mod.title,
+                lessonId: lesson.id,
+                lessonTitle: lesson.title,
+              };
+              foundIncomplete = true;
+              break;
+            }
+          }
+        }
+      }
+
+      if (continueLearning) break;
+    }
+
+    return NextResponse.json({ tracks, continueLearning });
   } catch (error) {
     console.error("[STUDENT_COURSES_GET_ERROR]", error);
     return NextResponse.json({ error: "Internal Error" }, { status: 500 });

@@ -1,6 +1,6 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 const fs = require('fs');
 const path = require('path');
-const { execSync } = require('child_process');
 
 // Directories to process
 const dirs = ['src/app', 'src/components', 'src/lib', 'src/context', 'src/hooks'];

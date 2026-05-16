@@ -167,7 +167,7 @@ export default function Sidebar() {
 
 
     return (
-        <div className={` ${!isMobile && "flex min-h-screen min-w-14 bg-background flex-col items-center justify-center border-r-[2px] border-gray-700 pl-4"}${!open ? "w-14  flex flex-col items-center " : "sm:w-64 md:w-72 w-64 md:block"} ${isMobile && open && "fixed"}`}>
+        <div className={` ${!isMobile && "flex min-h-screen min-w-14 bg-background flex-col items-center justify-center border-r-2 border-gray-700 pl-4"}${!open ? "w-14  flex flex-col items-center " : "sm:w-64 md:w-72 w-64 md:block"} ${isMobile && open && "fixed"}`}>
             <button
                 onClick={() => setOpen(!open)}
                 className={`fixed top-4 transition-transform duration-300 ${open && isMobile && "translate-x-50 translate-y-0.5"} 

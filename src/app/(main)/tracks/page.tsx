@@ -66,17 +66,11 @@ export default function CoursesPage() {
   const router = useRouter();
   const [tracks, setCourses] = useState<PublicCourse[]>([]);
   const [loading, setLoading] = useState(true);
-  const [enrolledCourseIds, setEnrolledCourseIds] = useState<string[]>([]);
-  const { toggleWishlist, isWishlisted } = useWishlist();
 
   const fetchCourses = async (): Promise<void> => {
     try {
       setLoading(true);
-
-      const res = await fetch("/api/public/tracks", {
-        cache: "no-store",
-      });
-
+      const res = await fetch("/api/public/tracks", { cache: "no-store" });
       const data = await readJsonSafely<PublicCoursesResponse>(res);
 
       if (!res.ok) {
@@ -84,7 +78,6 @@ export default function CoursesPage() {
         setCourses([]);
         return;
       }
-
       setCourses(Array.isArray(data?.tracks) ? data.tracks : []);
     } catch (error) {
       console.error(error);
@@ -94,33 +87,8 @@ export default function CoursesPage() {
     }
   };
 
-  const fetchEnrolledCourses = async (): Promise<void> => {
-    try {
-      const res = await fetch("/api/student/tracks", {
-        cache: "no-store",
-      });
-
-      if (!res.ok) {
-        setEnrolledCourseIds([]);
-        return;
-      }
-
-      const data = await readJsonSafely<StudentCoursesResponse>(res);
-
-      const ids = Array.isArray(data?.tracks)
-        ? data.tracks.map((track) => track.id)
-        : [];
-
-      setEnrolledCourseIds(ids);
-    } catch (error) {
-      console.error(error);
-      setEnrolledCourseIds([]);
-    }
-  };
-
   useEffect(() => {
     void fetchCourses();
-    void fetchEnrolledCourses();
   }, []);
 
   const viewCourseDetails = (trackId: string) => {
@@ -129,62 +97,124 @@ export default function CoursesPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="animate-spin text-primary" size={40} />
+      <div className="min-h-screen flex items-center justify-center bg-[#0A0A0A]">
+        <Loader2 className="animate-spin text-[#E5C158]" size={40} />
       </div>
     );
   }
 
+  const overlays = [
+    "from-blue-900/80 to-[#111111]",
+    "from-indigo-900/80 to-[#111111]",
+    "from-purple-900/80 to-[#111111]",
+    "from-pink-900/80 to-[#111111]",
+  ];
+
   return (
-    <div className="min-h-screen bg-background py-10">
-      <div className="max-w-7xl mx-auto px-6">
-        <div className="mb-10 flex items-center justify-between gap-4 flex-wrap">
-          <div>
-            <h1 className="text-3xl font-black mb-2 text-foreground">
-              Available Tracks
-            </h1>
-            <p className="text-muted-foreground">
-              Browse published tracks and enroll as a student
+    <div className="min-h-screen bg-[#0A0A0A] text-white overflow-hidden relative">
+      {/* Background Starfield/Particles Effect (simulated with CSS) */}
+      <div className="absolute inset-0 z-0 opacity-20 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at center, #ffffff 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
+
+      <div className="max-w-[1340px] mx-auto px-6 py-20 relative z-10">
+        
+        {/* Top Header Section */}
+        <div className="max-w-4xl mb-24">
+          <div className="inline-flex items-center px-4 py-1.5 rounded-full border border-white/10 bg-white/5 text-sm font-medium text-white/80 mb-8">
+            Tracks Hub
+          </div>
+          <h1 className="text-5xl md:text-6xl font-black mb-6 leading-tight tracking-tight">
+            Choose the Right Track for Your <br className="hidden md:block"/> Future
+          </h1>
+          <p className="text-xl text-white/60 mb-10 leading-relaxed max-w-3xl">
+            Explore every PG Academy track, review module and lesson depth, then apply to start a guided learning journey built for real career outcomes.
+          </p>
+          <div className="flex flex-wrap items-center gap-4">
+            <Link 
+              href="/apply" 
+              className="px-8 py-4 rounded-lg bg-[#E5C158] text-black font-bold hover:bg-[#f1d06e] transition-colors"
+            >
+              Apply Now
+            </Link>
+            <Link 
+              href="/about" 
+              className="px-8 py-4 rounded-lg border border-white/20 bg-black/50 text-white font-bold hover:bg-white/10 transition-colors"
+            >
+              Discover PG Academy
+            </Link>
+          </div>
+        </div>
+
+        {/* Tracks Grid Section */}
+        <div>
+          <div className="mb-12">
+            <h2 className="text-4xl font-bold text-white mb-4">Four Specialized Tracks. One Career Path.</h2>
+            <p className="text-white/60 text-lg max-w-3xl leading-relaxed">
+              Explore PG Academy&apos;s four specialized tracks, choose the one that matches your ambition, and advance through a structured journey built for real career outcomes.
             </p>
           </div>
 
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 text-muted-foreground hover:text-primary font-medium transition-colors"
-          >
-            <Home size={18} />
-            Home
-            <ChevronLeft size={18} />
-          </Link>
+          {tracks.length === 0 ? (
+            <div className="bg-[#111111] border border-white/10 rounded-2xl p-12 text-center text-white/60">
+              No published tracks available at the moment.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {tracks.map((track, i) => {
+                const num = (i + 1).toString().padStart(2, '0');
+                const overlay = overlays[i % overlays.length];
+                // Use existing DB subtitle if available, else a fallback
+                const subtitle = track.category || "Specialized Track";
+
+                return (
+                  <div
+                    key={track.id}
+                    onClick={() => viewCourseDetails(track.id)}
+                    className="bg-[#111111] rounded-2xl overflow-hidden border border-white/5 hover:border-[#E5C158]/30 transition-all duration-300 flex flex-col cursor-pointer group"
+                  >
+                    <div className="relative h-64 w-full overflow-hidden">
+                      <div 
+                        className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
+                        style={{ backgroundImage: `url(${track.thumbnail || '/placeholder.jpg'})` }}
+                      />
+                      <div className={`absolute inset-0 bg-linear-to-b ${overlay}`} />
+                      
+                      {/* Track specific stylized graphic representation */}
+                      <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center z-10">
+                        <span className="absolute top-4 left-4 text-[#E5C158] font-mono text-sm font-bold bg-[#E5C158]/10 px-2 py-1 rounded">
+                          {num}
+                        </span>
+                        <h3 className="text-4xl font-black text-white uppercase tracking-wider mb-2 drop-shadow-lg text-shadow-xl">
+                          {track.title}
+                        </h3>
+                        <p className="text-white/80 font-medium tracking-widest text-xs uppercase">
+                          {subtitle}
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div className="p-8 grow flex flex-col justify-between">
+                      <div>
+                        <h4 className="text-xl font-bold text-white mb-3">{track.title}</h4>
+                        <p className="text-white/60 text-sm leading-relaxed mb-8 line-clamp-3">
+                          {track.description}
+                        </p>
+                      </div>
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation(); // prevent double navigation
+                          router.push('/register');
+                        }}
+                        className="inline-flex self-start items-center px-6 py-2.5 bg-[#E5C158] text-black rounded-lg font-bold transition-all duration-300 hover:bg-[#f1d06e]"
+                      >
+                        Start Registration
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
-
-
-
-        {tracks.length === 0 ? (
-          <div className="bg-card border border-border rounded-2xl p-12 text-center text-muted-foreground">
-            No published tracks available at the moment.
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {tracks.map((track) => (
-              <TrackCardForSale
-                key={track.id}
-                thumbnail={track.thumbnail ?? "/taco3.jpg"}
-                category={track.category ?? "Others"}
-                title={track.title}
-                instructor={track.instructorName}
-                rating={track.rating}
-                studentsCount={track.studentsCount}
-                price={track.price}
-                isWishlisted={isWishlisted(track.id)}
-                onToggleWishlist={() => toggleWishlist(track.id)}
-                isEnrolled={enrolledCourseIds.includes(track.id)}
-                isProcessing={false}
-                onEnroll={() => viewCourseDetails(track.id)}
-              />
-            ))}
-          </div>
-        )}
       </div>
     </div>
   );

@@ -2,6 +2,8 @@
 
 import Link from 'next/link';
 import { motion, Variants } from 'framer-motion';
+import { AccordionFAQDark } from '@/components/ui/FaqDark';
+import { ClipboardCheck, CheckCircle2, Layers, GraduationCap } from 'lucide-react';
 
 const containerVariants: Variants = {
   hidden: { opacity: 0 },
@@ -29,7 +31,7 @@ const statContainerVariants: Variants = {
     opacity: 1,
     transition: {
       staggerChildren: 0.1,
-      delayChildren: 0.6, // Wait for hero to animate in
+      delayChildren: 0.6,
     },
   },
 };
@@ -45,83 +47,230 @@ const statVariants: Variants = {
 
 export default function Home() {
   return (
-    <div className="grow flex flex-col items-center justify-center relative overflow-hidden">
+    <div className="grow flex flex-col items-center justify-center relative overflow-hidden bg-[#0A0A0A]">
+      {/* Background Art */}
+      <div 
+        className="absolute inset-0 z-0 opacity-20 bg-[url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop')] bg-cover bg-center bg-no-repeat"
+      />
+      <div className="absolute inset-0 z-0 bg-linear-to-b from-[#0A0A0A]/40 via-[#0A0A0A]/80 to-[#0A0A0A]" />
+
       {/* Animated background blobs */}
       <motion.div 
         animate={{ 
           scale: [1, 1.05, 1], 
-          opacity: [0.15, 0.25, 0.15],
+          opacity: [0.1, 0.2, 0.1],
           rotate: [0, 5, -5, 0]
         }}
         transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute top-1/4 -left-64 w-[500px] h-[500px] bg-brand-accent rounded-full blur-[120px] mix-blend-screen pointer-events-none" 
+        className="absolute top-1/4 -left-64 w-[500px] h-[500px] bg-[#E5C158] rounded-full blur-[150px] mix-blend-screen pointer-events-none z-0" 
       />
       <motion.div 
         animate={{ 
           scale: [1, 1.1, 1], 
-          opacity: [0.15, 0.3, 0.15],
+          opacity: [0.1, 0.2, 0.1],
           rotate: [0, -5, 5, 0]
         }}
         transition={{ duration: 18, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-        className="absolute bottom-1/4 -right-64 w-[600px] h-[600px] bg-brand-primary rounded-full blur-[120px] mix-blend-screen pointer-events-none" 
+        className="absolute bottom-1/4 -right-64 w-[600px] h-[600px] bg-purple-900 rounded-full blur-[150px] mix-blend-screen pointer-events-none z-0" 
       />
 
       <motion.div 
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-32 relative z-10 flex flex-col items-center text-center"
+        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-32 relative z-10 flex flex-col items-start w-full"
       >
-        <motion.div variants={itemVariants} className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass mb-8 border border-brand-accent/30 text-sm font-medium text-brand-accent">
-          <span className="w-2 h-2 rounded-full bg-brand-accent animate-pulse" />
-          The Arab-First AI Learning Platform
+        <motion.div variants={itemVariants} className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass mb-8 border border-[#E5C158]/30 text-sm font-medium text-[#E5C158] self-start md:self-center">
+          <span className="w-2 h-2 rounded-full bg-[#E5C158] animate-pulse" />
+          Tracks Hub
         </motion.div>
         
-        <motion.h1 variants={itemVariants} className="text-5xl md:text-7xl font-extrabold tracking-tight mb-8 text-foreground max-w-4xl">
-          Master Your Future with{' '}
-          <span className="text-transparent bg-clip-text bg-linear-to-r from-brand-accent to-brand-primary">
-            Intelligent Learning
-          </span>
+        <motion.h1 variants={itemVariants} className="text-5xl md:text-7xl font-bold tracking-tight mb-6 text-white max-w-4xl text-left md:text-center self-start md:self-center">
+          Choose the Right Track for Your Future
         </motion.h1>
         
-        <motion.p variants={itemVariants} className="text-lg md:text-xl text-foreground/70 max-w-2xl mb-12 leading-relaxed">
-          Unlock your potential with PG Academy. Enjoy secure, culturally-tailored tracks powered by AI, and earn verified credentials on your schedule.
+        <motion.p variants={itemVariants} className="text-lg md:text-xl text-white/70 max-w-3xl mb-12 leading-relaxed text-left md:text-center self-start md:self-center">
+          Explore every PG Academy track, review module and lesson depth, then apply to start a guided learning journey built for real career outcomes.
         </motion.p>
         
-        <motion.div variants={itemVariants} className="flex flex-col sm:flex-row gap-4 items-center justify-center w-full sm:w-auto">
-          <Link href="/tracks" className="w-full sm:w-auto px-8 py-4 bg-brand-primary hover:bg-brand-hover text-white rounded-full font-semibold text-lg transition-all hover-lift shadow-lg shadow-brand-primary/25 flex items-center justify-center gap-2">
-            Explore Tracks
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
-            </svg>
+        <motion.div variants={itemVariants} className="flex flex-col sm:flex-row gap-4 items-center justify-start md:justify-center w-full self-start md:self-center">
+          <Link href="/apply" className="w-full sm:w-auto px-8 py-3 bg-[#E5C158] hover:bg-[#D4B047] text-black rounded-lg font-semibold text-lg transition-all shadow-lg flex items-center justify-center">
+            Apply Now
           </Link>
-          <Link href="/about" className="w-full sm:w-auto px-8 py-4 glass border border-white/10 hover:border-brand-accent/50 text-foreground rounded-full font-semibold text-lg transition-all hover-lift flex items-center justify-center">
-            Learn More
+          <Link href="/about" className="w-full sm:w-auto px-8 py-3 bg-transparent border border-white/20 hover:border-white/50 text-white rounded-lg font-semibold text-lg transition-all flex items-center justify-center">
+            Discover PG Academy
           </Link>
         </motion.div>
 
-        {/* Feature stats */}
-        <motion.div 
+        {/* How the learning process works */}
+        <motion.div
           variants={statContainerVariants}
           initial="hidden"
           animate="visible"
-          className="grid grid-cols-2 md:grid-cols-4 gap-8 mt-24 w-full max-w-4xl mx-auto border-t border-white/5 pt-12"
+          className="w-full mt-40"
         >
-          {[
-            { value: "AI", label: "Smart Assistant" },
-            { value: "100%", label: "Data Sovereignty" },
-            { value: "HLS", label: "Secure Streaming" },
-            { value: "QR", label: "Verified Certificates" }
-          ].map((stat, i) => (
-            <motion.div key={i} variants={statVariants} className="flex flex-col items-center">
-              <span className="text-3xl font-bold bg-clip-text text-transparent bg-linear-to-r from-brand-accent to-brand-primary mb-2">
-                {stat.value}
-              </span>
-              <span className="text-sm text-foreground/60 font-medium uppercase tracking-wider">
-                {stat.label}
-              </span>
-            </motion.div>
-          ))}
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold mb-4 text-white/90">How the learning process works</h2>
+            <p className="text-white/50 text-lg max-w-3xl mx-auto">A structured sequence that keeps your learning path clear, disciplined, and measurable.</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[
+              {
+                icon: <ClipboardCheck className="w-5 h-5 text-[#E5C158]" />,
+                title: "1) Registration",
+                desc: "Create your account and submit the academic enrollment form."
+              },
+              {
+                icon: <CheckCircle2 className="w-5 h-5 text-[#E5C158]" />,
+                title: "2) Admission Review",
+                desc: "Admissions team reviews your request and approves the right track."
+              },
+              {
+                icon: <Layers className="w-5 h-5 text-[#E5C158]" />,
+                title: "3) Sequential Learning",
+                desc: "Lessons unlock step by step inside each phase in strict order."
+              },
+              {
+                icon: <GraduationCap className="w-5 h-5 text-[#E5C158]" />,
+                title: "4) Quizzes and Certification",
+                desc: "Pass required quizzes to validate mastery and complete your track."
+              }
+            ].map((step, i) => (
+              <motion.div key={i} variants={statVariants} className="bg-[#111111] border border-white/5 rounded-2xl p-8 hover:border-[#E5C158]/30 transition-all duration-300">
+                <div className="w-10 h-10 rounded-lg bg-[#E5C158]/10 flex items-center justify-center mb-6 border border-[#E5C158]/20">
+                  {step.icon}
+                </div>
+                <h3 className="text-xl font-bold text-white mb-3">{step.title}</h3>
+                <p className="text-white/60 text-sm leading-relaxed">{step.desc}</p>
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
+
+        {/* Tracks Grid */}
+        <motion.div
+          variants={statContainerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+          className="w-full mt-40"
+        >
+          <div className="mb-12">
+            <h2 className="text-4xl font-bold text-white mb-4">Four Specialized Tracks. One Career Path.</h2>
+            <p className="text-white/60 text-lg max-w-3xl leading-relaxed">
+              Explore PG Academy&apos;s four specialized tracks, choose the one that matches your ambition, and advance through a structured journey built for real career outcomes.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {[
+              { 
+                id: "01", 
+                title: "AI Animation", 
+                subtitle: "Motion Design for the AI Era",
+                desc: "Master AI-powered animation pipelines and produce broadcast-quality content from concept to final render.",
+                bgImg: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=2070&auto=format&fit=crop",
+                overlay: "from-blue-900/80 to-[#111111]"
+              },
+              { 
+                id: "02", 
+                title: "AI Filmmaking", 
+                subtitle: "Cinematic Storytelling for the AI Era",
+                desc: "Create cinematic stories using AI tools across scriptwriting, production, VFX, and post-production.",
+                bgImg: "https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=2025&auto=format&fit=crop",
+                overlay: "from-indigo-900/80 to-[#111111]"
+              },
+              { 
+                id: "03", 
+                title: "AI Games", 
+                subtitle: "Game Worlds for the AI Era",
+                desc: "Design and develop interactive gaming experiences powered by artificial intelligence and creative vision.",
+                bgImg: "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=2070&auto=format&fit=crop",
+                overlay: "from-purple-900/80 to-[#111111]"
+              },
+              { 
+                id: "04", 
+                title: "AI Marketing", 
+                subtitle: "Performance Marketing for the AI Era",
+                desc: "Build high-impact campaigns using AI content generation, data storytelling, and next-gen digital strategy.",
+                bgImg: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=2015&auto=format&fit=crop",
+                overlay: "from-pink-900/80 to-[#111111]"
+              }
+            ].map((track, i) => (
+              <motion.div
+                key={i}
+                variants={statVariants}
+                className="bg-[#111111] rounded-2xl overflow-hidden border border-white/5 hover:border-[#E5C158]/30 transition-all duration-300 flex flex-col"
+              >
+                <div className="relative h-64 w-full overflow-hidden">
+                  <div 
+                    className="absolute inset-0 bg-cover bg-center transition-transform duration-700 hover:scale-105"
+                    style={{ backgroundImage: `url(${track.bgImg})` }}
+                  />
+                  <div className={`absolute inset-0 bg-linear-to-b ${track.overlay}`} />
+                  
+                  {/* Track specific stylized graphic representation */}
+                  <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center z-10">
+                    <span className="absolute top-4 left-4 text-[#E5C158] font-mono text-sm font-bold bg-[#E5C158]/10 px-2 py-1 rounded">
+                      {track.id}
+                    </span>
+                    <h3 className="text-4xl font-black text-white uppercase tracking-wider mb-2 drop-shadow-lg">
+                      {track.title}
+                    </h3>
+                    <p className="text-white/80 font-medium tracking-widest text-xs uppercase">
+                      {track.subtitle}
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="p-8 grow flex flex-col justify-between">
+                  <div>
+                    <h4 className="text-xl font-bold text-white mb-3">{track.title}</h4>
+                    <p className="text-white/60 text-sm leading-relaxed mb-8">
+                      {track.desc}
+                    </p>
+                  </div>
+                  <Link href="/register" className="inline-flex self-start items-center px-6 py-2.5 bg-[#E5C158]/10 hover:bg-[#E5C158] text-[#E5C158] hover:text-black rounded-lg font-semibold transition-all duration-300 border border-[#E5C158]/20 hover:border-transparent">
+                    Start Registration
+                  </Link>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
+
+        {/* FAQ Section */}
+        <motion.div
+          variants={statContainerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+          className="mt-40 w-full flex justify-center pb-20"
+        >
+          <AccordionFAQDark 
+            title="Frequently Asked Questions"
+            eyebrow="PG Academy Support"
+            accentColor="#E5C158"
+            items={[
+              {
+                question: "What makes PG Academy different?",
+                answer: "PG Academy is built specifically for Arab creatives, offering culturally tailored content, 100% data sovereignty, and secure HLS streaming for all video content. You learn from industry experts with verified certificates."
+              },
+              {
+                question: "Do I need prior experience?",
+                answer: "No prior experience is necessary. Our specialized tracks are designed to take you from absolute beginner to industry-ready professional through structured, phase-by-phase learning."
+              },
+              {
+                question: "How does the certification work?",
+                answer: "Upon completing 100% of a track's modules and passing all associated quizzes, you are awarded a verified digital certificate with a unique code that can be authenticated by employers."
+              },
+              {
+                question: "Are the courses self-paced?",
+                answer: "Yes, our Learning Management System enforce sequential progression to ensure you master the fundamentals before moving on, but you can learn at your own pace whenever it suits you."
+              }
+            ]}
+          />
         </motion.div>
       </motion.div>
     </div>

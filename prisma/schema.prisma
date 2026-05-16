@@ -72,14 +72,15 @@ model Phase {
 }
 
 model Module {
-  id        String   @id @default(uuid())
-  title     String
-  order     Int
-  phaseId   String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  lessons   Lesson[]
-  phase     Phase    @relation(fields: [phaseId], references: [id], onDelete: Cascade)
+  id          String   @id @default(uuid())
+  title       String
+  order       Int
+  isPublished Boolean  @default(false)
+  phaseId     String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  lessons     Lesson[]
+  phase       Phase    @relation(fields: [phaseId], references: [id], onDelete: Cascade)
 }
 
 model Lesson {
@@ -88,6 +89,7 @@ model Lesson {
   videoPath   String?
   duration    Int?
   order       Int
+  isPublished Boolean      @default(false)
   moduleId    String
   notes       String?
   createdAt   DateTime     @default(now())
