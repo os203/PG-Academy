@@ -6,22 +6,31 @@ import { cookies } from 'next/headers';
  */
 export async function POST() {
   try {
-    const cookieStore = await cookies();
-    cookieStore.delete('token');
-    cookieStore.delete('refresh_token');
+    const isSecureEnv = process.env.NODE_ENV === 'production' && process.env.REQUIRE_HTTPS === 'true';
 
     const response = NextResponse.json(
       { message: "Logged out successfully" },
       { status: 200 }
     );
     
-    // Invalidate refresh token by setting expiry to epoch (fallback)
-    response.cookies.set('refresh_token', '', {
+    response.cookies.set({
+      name: 'token',
+      value: '',
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      expires: new Date(0), 
-      path: '/', 
+      secure: isSecureEnv,
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 0,
+    });
+
+    response.cookies.set({
+      name: 'refresh_token',
+      value: '',
+      httpOnly: true,
+      secure: isSecureEnv,
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 0,
     });
 
     return response;
