@@ -6,32 +6,14 @@ import { cookies } from 'next/headers';
  */
 export async function POST() {
   try {
-    const isSecureEnv = process.env.NODE_ENV === 'production' && process.env.REQUIRE_HTTPS === 'true';
-
     const response = NextResponse.json(
       { message: "Logged out successfully" },
       { status: 200 }
     );
     
-    response.cookies.set({
-      name: 'token',
-      value: '',
-      httpOnly: true,
-      secure: isSecureEnv,
-      sameSite: 'lax',
-      path: '/',
-      maxAge: 0,
-    });
-
-    response.cookies.set({
-      name: 'refresh_token',
-      value: '',
-      httpOnly: true,
-      secure: isSecureEnv,
-      sameSite: 'lax',
-      path: '/',
-      maxAge: 0,
-    });
+    // Explicitly delete cookies using Next.js Response Cookie API
+    response.cookies.delete('token');
+    response.cookies.delete('refresh_token');
 
     return response;
   } catch (error) {

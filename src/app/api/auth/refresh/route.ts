@@ -43,11 +43,13 @@ export async function POST() {
       },
     });
 
+    const isSecureEnv = process.env.NODE_ENV === 'production' && process.env.REQUIRE_HTTPS === 'true';
+
     response.cookies.set({
       name: 'token',
       value: accessToken,
       httpOnly: true,
-      secure: true,
+      secure: isSecureEnv,
       sameSite: 'lax',
       path: '/',
       maxAge: 15 * 60, // 15 minutes
