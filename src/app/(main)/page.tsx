@@ -240,6 +240,71 @@ export default function Home() {
           </div>
         </motion.div>
 
+        {/* Student Testimonials */}
+        <motion.div
+          variants={statContainerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+          className="w-full mt-40"
+        >
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold mb-4 text-foreground">Student Testimonials</h2>
+            <p className="text-muted-foreground text-lg max-w-3xl mx-auto">Hear from our students about their learning journey at PG Academy.</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[
+              {
+                name: "Layan Khaled",
+                role: "AI Animation Student",
+                quote: "For the first time, the curriculum feels directly tied to industry work. Every lesson is clear and every task produces real output.",
+              },
+              {
+                name: "Omar Al Salem",
+                role: "AI Filmmaking Student",
+                quote: "The sequential system helped me build a structured short-film project without missing steps or losing focus.",
+              },
+              {
+                name: "Nour Hamza",
+                role: "AI Marketing Student",
+                quote: "Training is highly practical. From concept to execution and measurement, every stage was connected and actionable.",
+              },
+            ].map((testimonial, i) => (
+              <motion.div
+                key={i}
+                variants={statVariants}
+                className="bg-card border border-border rounded-2xl p-8 hover:border-brand-primary/30 transition-all duration-300 flex flex-col justify-between"
+              >
+                {/* Stars */}
+                <div>
+                  <div className="flex gap-1 mb-4">
+                    {[...Array(5)].map((_, j) => (
+                      <svg key={j} className="w-5 h-5 text-[#E5C158]" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                      </svg>
+                    ))}
+                  </div>
+
+                  {/* Quote icon */}
+                  <div className="text-[#E5C158] text-2xl font-serif font-bold mb-3 leading-none select-none">&ldquo;&rdquo;</div>
+
+                  {/* Quote text */}
+                  <p className="text-muted-foreground text-sm leading-relaxed mb-8">
+                    {testimonial.quote}
+                  </p>
+                </div>
+
+                {/* Divider + Author */}
+                <div className="border-t border-border pt-4">
+                  <p className="font-bold text-foreground text-sm">{testimonial.name}</p>
+                  <p className="text-muted-foreground text-xs">{testimonial.role}</p>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
+
         {/* FAQ Section */}
         <motion.div
           variants={statContainerVariants}
