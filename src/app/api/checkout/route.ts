@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
     // Free track — enroll directly
     if (track.price === 0) {
       const enrollment = await db.enrollment.create({
-        data: { userId: currentUser.id, trackId },
+        data: { userId: currentUser.id, trackId, status: "APPROVED" },
       });
       return NextResponse.json({ free: true, enrollment }, { status: 201 });
     }
@@ -88,7 +88,7 @@ export async function POST(req: NextRequest) {
       // If discount makes it free, enroll directly
       if (finalPrice <= 0) {
         const [enrollment] = await Promise.all([
-          db.enrollment.create({ data: { userId: currentUser.id, trackId } }),
+          db.enrollment.create({ data: { userId: currentUser.id, trackId, status: "APPROVED" } }),
           db.payment.create({
             data: {
               userId: currentUser.id,

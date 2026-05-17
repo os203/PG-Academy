@@ -57,6 +57,7 @@ export async function POST(req: NextRequest) {
             data: {
               userId,
               trackId,
+              status: "APPROVED",
             },
           }),
           db.payment.create({

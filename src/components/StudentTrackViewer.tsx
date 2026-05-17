@@ -159,7 +159,36 @@ export default function StudentTrackViewer({ trackId }: { trackId: string }) {
   };
 
   useEffect(() => {
-    void fetchTrack();
+    const isPaymentReturn = typeof window !== "undefined" && new URLSearchParams(window.location.search).has("payment_success");
+
+    if (isPaymentReturn) {
+      // After payment, the webhook may not have fired yet. Retry a few times.
+      let retries = 0;
+      const maxRetries = 5;
+      const retryDelay = 2000;
+
+
+      const attemptFetch = async () => {
+        setLoading(true);
+        for (retries = 0; retries <= maxRetries; retries++) {
+          const res = await fetch(`/api/student/tracks/${trackId}`, { cache: "no-store" });
+          if (res.ok) {
+            // Success! Do a proper fetchTrack to populate state
+            await fetchTrack();
+            return;
+          }
+          if (retries < maxRetries) {
+            await new Promise((r) => setTimeout(r, retryDelay));
+          }
+        }
+        // All retries exhausted, do a final fetchTrack to set the error state
+        await fetchTrack();
+      };
+
+      void attemptFetch();
+    } else {
+      void fetchTrack();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [trackId]);
 
