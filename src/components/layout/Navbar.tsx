@@ -21,6 +21,7 @@ export default function Navbar() {
           <div className="hidden md:flex space-x-8 items-center">
             <Link href="/tracks" className="text-muted-foreground hover:text-foreground transition-colors font-medium">Tracks</Link>
             <Link href="/about" className="text-muted-foreground hover:text-foreground transition-colors font-medium">About</Link>
+            <Link href="/contact" className="text-muted-foreground hover:text-foreground transition-colors font-medium">Contact</Link>
             {user ? (
               <div className="flex items-center space-x-4">
                 <Link href="/dashboard" className="text-brand-primary hover:text-brand-accent transition-colors font-medium flex items-center gap-2 bg-brand-primary/10 px-4 py-2 rounded-full">

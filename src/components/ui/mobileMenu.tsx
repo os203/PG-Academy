@@ -82,6 +82,10 @@ export default function MobileMenu() {
                         About
                     </Link>
 
+                    <Link href="/contact" onClick={() => setIsOpen(false)} className="hover:text-brand-accent">
+                        Contact
+                    </Link>
+
                     {user ? (
                         <Link
                             href="/dashboard"
