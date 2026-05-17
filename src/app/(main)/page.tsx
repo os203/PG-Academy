@@ -94,7 +94,7 @@ export default function Home() {
         </motion.p>
         
         <motion.div variants={itemVariants} className="flex flex-col sm:flex-row gap-4 items-center justify-start md:justify-center w-full self-start md:self-center">
-          <Link href="/register" className="w-full sm:w-auto px-8 py-3 bg-[#E5C158] hover:bg-[#D4B047] text-black rounded-lg font-semibold text-lg transition-all shadow-lg flex items-center justify-center">
+          <Link href="/register" className="w-full sm:w-auto px-8 py-3 bg-brand-primary hover:bg-brand-accent text-white rounded-lg font-semibold text-lg transition-all shadow-lg flex items-center justify-center">
             Apply Now
           </Link>
           <Link href="/about" className="w-full sm:w-auto px-8 py-3 bg-transparent border border-border hover:border-foreground/50 text-foreground rounded-lg font-semibold text-lg transition-all flex items-center justify-center">

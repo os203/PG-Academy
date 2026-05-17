@@ -219,7 +219,7 @@ export default function RegisterPage() {
         <div className="flex flex-wrap items-center gap-4">
           <button 
             onClick={() => setShowForm(true)}
-            className="px-8 py-4 rounded-xl bg-[#E5C158] text-black font-bold hover:bg-[#f1d06e] transition-colors"
+            className="px-8 py-4 rounded-xl bg-brand-primary text-white font-bold hover:bg-brand-accent transition-colors"
           >
             Create Account & Register
           </button>

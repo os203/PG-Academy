@@ -135,7 +135,7 @@ export default function CoursesPage() {
           <div className="flex flex-wrap items-center gap-4">
             <Link 
               href="/register" 
-              className="px-8 py-4 rounded-lg bg-[#E5C158] text-black font-bold hover:bg-[#D4B047] transition-all shadow-lg hover:shadow-xl hover:-translate-y-1"
+              className="px-8 py-4 rounded-lg bg-brand-primary text-white font-bold hover:bg-brand-accent transition-all shadow-lg hover:shadow-xl hover:-translate-y-1"
             >
               Apply Now
             </Link>

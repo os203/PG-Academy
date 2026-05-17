@@ -195,7 +195,7 @@ export default function AboutPage() {
             <div className="flex flex-wrap gap-4 pt-4">
               <Link
                 href="/tracks"
-                className="px-6 py-3 bg-[#E5C158] hover:bg-[#D4B047] text-black rounded-lg font-semibold text-sm transition-all shadow-lg"
+                className="px-6 py-3 bg-brand-primary hover:bg-brand-accent text-white rounded-lg font-semibold text-sm transition-all shadow-lg"
               >
                 Explore Tracks
               </Link>
