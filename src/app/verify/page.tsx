@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Search, ShieldCheck, Loader2 } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 
 export default function VerifyCertificatePage() {
   const [code, setCode] = useState("");
@@ -22,8 +23,8 @@ export default function VerifyCertificatePage() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6">
-      <Link href="/" className="absolute top-6 left-6 font-black text-2xl tracking-tighter text-brand-primary">
-        PG Academy<span className="text-brand-secondary">.</span>
+      <Link href="/" className="absolute top-6 left-6 hover:scale-105 transition-transform">
+        <Image src="/logo.jpg" alt="PG Academy" width={180} height={45} className="object-contain rounded-sm" priority />
       </Link>
 
       <div className="w-full max-w-md bg-white rounded-3xl shadow-xl border border-gray-100 p-10 text-center">

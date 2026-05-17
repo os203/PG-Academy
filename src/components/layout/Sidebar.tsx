@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { PanelRightClose, UserRoundPen, PanelLeftClose, House, BellRing, Settings, LogOut, GraduationCap, BrickWallShield, BookSearch, ListTodo, Globe, Send, LayoutDashboard, Users, Library, CreditCard, BarChart3, ScrollText } from 'lucide-react';
 import Link from "next/link"
+import Image from "next/image"
 import { useAuth } from '@/context/AuthContext';
 import { Button } from "@base-ui/react";
 
@@ -189,17 +190,11 @@ export default function Sidebar() {
                 className={`bg-background text-foreground/80 h-screen z-50 transition-all duration-300 ease-in-out flex flex-col
                 fixed top-0 left-0 ${open ? "translate-x-0 " : "w-14 -translate-x-full"} md:static md:translate-x-0  max-w-xs  ${isMobile && "-translate-y-9 top-8"} 
                 `}>
-                {open && (<div className=" flex items-center gap-2 p-5 text-lg font-bold border-b border-gray-700 shrink-0">
-
-                    <div className="w-9 h-9 rounded-xl bg-linear-to-br from-brand-accent to-brand-primary flex items-center justify-center text-white font-bold text-l shadow-lg shadow-brand-accent/20">
-                        PG
+                {open && (
+                    <div className="flex flex-col items-start gap-1 p-5 border-b border-gray-700 shrink-0">
+                        <Image src="/logo.jpg" alt="PG Academy" width={140} height={35} className="object-contain rounded-sm" priority />
+                        <span className="font-medium text-[10px] text-muted-foreground uppercase tracking-wider pl-1">{user?.role}</span>
                     </div>
-                    <div className="flex flex-col font-bold text-xs tracking-tight text-foreground pr-2">
-                        <span>PG Academy</span>
-                        <span className="font-normal text-[9px]">{user?.role}</span>
-                    </div>
-
-                </div>
                 )}
                 <div className="flex-1 overflow-y-auto overflow-x-hidden pb-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                     <nav className="flex flex-col gap-3 p-4">

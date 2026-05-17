@@ -1,13 +1,12 @@
+import Image from "next/image";
+
 export default function Footer() {
   return (
     <footer className="border-t border-white/5 bg-background/50 mt-auto backdrop-blur-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-linear-to-br from-brand-accent to-brand-primary flex items-center justify-center text-white font-bold text-sm shadow-md">
-              PG
-            </div>
-            <span className="font-bold text-xl tracking-tight text-foreground">PG Academy</span>
+            <Image src="/logo.jpg" alt="PG Academy" width={140} height={35} className="object-contain rounded-sm" />
           </div>
           <p className="text-foreground/50 text-sm font-medium">
             © {new Date().getFullYear()} Zarqa University - Software Engineering.

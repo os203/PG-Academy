@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import MobileMenu from "../ui/mobileMenu";
+import Image from "next/image";
 
 
 
@@ -15,12 +16,7 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-20 items-center">
           <Link href="/" className="shrink-0 flex items-center gap-2 hover:scale-105 transition-transform rounded-xl">
-            <div className="w-10 h-10 rounded-xl bg-violet-500 flex items-center justify-center text-white font-bold text-xl shadow-lg">
-              P
-            </div>
-            <div className="font-bold text-2xl tracking-tight text-foreground pr-2">
-              PG Academy
-            </div>
+            <Image src="/logo.jpg" alt="PG Academy" width={160} height={40} className="object-contain rounded-sm" priority />
           </Link>
           <div className="hidden md:flex space-x-8 items-center">
             <Link href="/tracks" className="text-muted-foreground hover:text-foreground transition-colors font-medium">Tracks</Link>

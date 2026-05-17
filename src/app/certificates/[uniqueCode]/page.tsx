@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { CheckCircle, Download, ShieldCheck } from "lucide-react";
 import React from "react";
 
@@ -37,8 +38,8 @@ export default async function CertificateViewPage({
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <header className="bg-white border-b border-gray-200 py-4 px-6 flex items-center justify-between sticky top-0 z-10 shadow-sm">
-        <Link href="/" className="font-black text-2xl tracking-tighter text-brand-primary">
-          PG Academy<span className="text-brand-secondary">.</span>
+        <Link href="/" className="hover:scale-105 transition-transform">
+          <Image src="/logo.jpg" alt="PG Academy" width={180} height={45} className="object-contain rounded-sm" priority />
         </Link>
         <div className="flex items-center gap-4">
           <Link

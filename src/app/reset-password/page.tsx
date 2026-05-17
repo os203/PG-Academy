@@ -2,6 +2,7 @@
 
 import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Lock, ArrowRight, CheckCircle2, Loader2, AlertCircle } from "lucide-react";
 
@@ -89,8 +90,8 @@ function ResetPasswordForm() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
       <div className="w-full max-w-md bg-white rounded-3xl shadow-xl border border-gray-100 p-8 sm:p-10">
         <div className="text-center mb-8">
-          <Link href="/" className="inline-block font-black text-3xl tracking-tighter text-brand-primary mb-8">
-            PG Academy<span className="text-brand-secondary">.</span>
+          <Link href="/" className="inline-block mb-8 hover:scale-105 transition-transform">
+            <Image src="/logo.jpg" alt="PG Academy" width={180} height={45} className="object-contain rounded-sm" priority />
           </Link>
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Create New Password</h1>
           <p className="text-gray-500 text-sm">
