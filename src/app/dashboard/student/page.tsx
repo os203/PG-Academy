@@ -37,6 +37,7 @@ interface EnrolledCourse {
   totalLessons: number;
   completedLessons: number;
   progressPercentage: number;
+  hoursLearned: number;
   instructorName: string;
   category?: string;
   phases?: PhaseSummary[];
@@ -64,6 +65,11 @@ export default function StudentDashboard() {
 
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [isNotificationsLoading, setIsNotificationsLoading] = useState(true);
+
+  const totalHoursLearned = tracks.reduce(
+    (sum, track) => sum + (track.hoursLearned ?? 0),
+    0
+  );
 
   useEffect(() => {
     const fetchCourses = async () => {
@@ -183,13 +189,13 @@ export default function StudentDashboard() {
                 </div>
               </div>
             </div>
-            
+
             <button
               onClick={() => window.location.href = `/dashboard/student/${continueLearning.trackId}`}
               className="shrink-0 inline-flex items-center gap-2 bg-linear-to-r from-[#E5C158] to-[#f1d06e] hover:from-[#f1d06e] hover:to-[#E5C158] text-[#0d0f1a] font-black px-8 py-4 rounded-2xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_30px_rgba(229,193,88,0.25)]"
             >
               Resume Lesson
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>
             </button>
           </div>
         </div>
@@ -201,7 +207,11 @@ export default function StudentDashboard() {
           title="Enrolled Tracks"
           number={tracks.length}
         />
-        <DashCard icon={<Clock4 size={30} />} title="Hours Learned" number={5} />
+        <DashCard
+          icon={<Clock4 size={30} />}
+          title="Hours Learned"
+          number={totalHoursLearned}
+        />
         <DashCard icon={<Medal size={30} />} title="Certificates" number={5} />
         <DashCard
           icon={<ChartNoAxesCombined size={30} />}
@@ -249,8 +259,8 @@ export default function StudentDashboard() {
               {/* Phase Cards */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {track.phases?.map((phase) => (
-                  <div 
-                    key={phase.id} 
+                  <div
+                    key={phase.id}
                     className={`relative flex flex-col p-5 rounded-2xl border transition-all ${phase.isLocked ? 'bg-muted/30 border-border opacity-60' : 'bg-card border-border hover:border-primary/30 dark:hover:border-purple-400/30 hover:shadow-lg dark:hover:shadow-purple-500/5'}`}
                   >
                     {/* Lock Icon */}
@@ -259,7 +269,7 @@ export default function StudentDashboard() {
                         <Lock size={18} />
                       </div>
                     )}
-                    
+
                     <div className="mb-5">
                       <span className="text-[10px] font-black text-primary/60 dark:text-purple-400/60 uppercase tracking-widest">Phase {phase.order}</span>
                       <h4 className="text-base font-bold mt-1 line-clamp-1 text-foreground">{phase.title}</h4>
@@ -270,7 +280,7 @@ export default function StudentDashboard() {
                         <span className="text-muted-foreground">{phase.completedLessons}/{phase.totalLessons} lessons</span>
                         <span className={phase.progressPercentage === 100 ? "text-emerald-500 font-bold" : "text-primary dark:text-purple-300"}>{phase.progressPercentage}%</span>
                       </div>
-                      
+
                       <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
                         <div
                           className={`h-full rounded-full transition-all duration-500 ${phase.progressPercentage === 100 ? 'bg-emerald-500' : 'bg-primary dark:bg-purple-500'}`}

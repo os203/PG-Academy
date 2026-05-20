@@ -25,6 +25,7 @@ interface CourseSummaryResponse {
   totalLessons: number;
   completedLessons: number;
   progressPercentage: number;
+  hoursLearned: number;
   instructorName: string;
   phases: PhaseSummary[];
 }
@@ -108,26 +109,31 @@ export async function GET() {
         const phases: PhaseSummary[] = [];
 
         const allLessons = enrollment.track.phases.flatMap((phase) => {
-          const phaseLessons = phase.modules.flatMap((module) => module.lessons);
-          
+          const phaseLessons = phase.modules.flatMap(
+            (module) => module.lessons,
+          );
+
           let phaseCompletedLessons = 0;
           const phaseTotalLessons = phaseLessons.length;
 
           for (const lesson of phaseLessons) {
             const watchedPercent = lesson.progress[0]?.watchedPercent ?? 0;
             const quiz = lesson.quizzes[0];
-            const quizPassed = quiz ? quiz.attempts.some((a) => a.passed) : true;
+            const quizPassed = quiz
+              ? quiz.attempts.some((a) => a.passed)
+              : true;
             if (watchedPercent >= LESSON_COMPLETE_THRESHOLD && quizPassed) {
               phaseCompletedLessons++;
             }
           }
 
-          const phaseProgressPercentage = phaseTotalLessons > 0 
-            ? Math.round((phaseCompletedLessons / phaseTotalLessons) * 100) 
-            : 0;
+          const phaseProgressPercentage =
+            phaseTotalLessons > 0
+              ? Math.round((phaseCompletedLessons / phaseTotalLessons) * 100)
+              : 0;
 
           const isLocked = !previousPhaseCompleted;
-          
+
           phases.push({
             id: phase.id,
             title: phase.title,
@@ -139,7 +145,10 @@ export async function GET() {
           });
 
           // Update for next phase
-          if (phaseTotalLessons > 0 && phaseCompletedLessons < phaseTotalLessons) {
+          if (
+            phaseTotalLessons > 0 &&
+            phaseCompletedLessons < phaseTotalLessons
+          ) {
             previousPhaseCompleted = false;
           }
 
@@ -156,6 +165,12 @@ export async function GET() {
           return watchedPercent >= LESSON_COMPLETE_THRESHOLD && quizPassed;
         }).length;
 
+        const totalLearnedSeconds = allLessons.reduce((sum, lesson) => {
+          const watchedPercent = lesson.progress[0]?.watchedPercent ?? 0;
+          const duration = lesson.duration ?? 0;
+          return sum + (duration * Math.min(watchedPercent, 100)) / 100;
+        }, 0);
+
         const progressPercentage =
           totalLessons > 0
             ? Math.round((completedLessons / totalLessons) * 100)
@@ -171,6 +186,7 @@ export async function GET() {
           totalLessons,
           completedLessons,
           progressPercentage,
+          hoursLearned: Math.floor(totalLearnedSeconds / 3600),
           instructorName: enrollment.track.instructor.name,
           phases,
         };
@@ -191,8 +207,11 @@ export async function GET() {
           for (const lesson of mod.lessons) {
             const watchedPercent = lesson.progress[0]?.watchedPercent ?? 0;
             const quiz = lesson.quizzes[0];
-            const quizPassed = quiz ? quiz.attempts.some((a) => a.passed) : true;
-            const isCompleted = watchedPercent >= LESSON_COMPLETE_THRESHOLD && quizPassed;
+            const quizPassed = quiz
+              ? quiz.attempts.some((a) => a.passed)
+              : true;
+            const isCompleted =
+              watchedPercent >= LESSON_COMPLETE_THRESHOLD && quizPassed;
 
             if (!isCompleted) {
               continueLearning = {
