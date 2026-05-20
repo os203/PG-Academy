@@ -56,11 +56,20 @@ interface ContinueLearningData {
   lessonTitle: string;
 }
 
+interface StudentTracksResponse {
+  tracks?: EnrolledCourse[];
+  continueLearning?: ContinueLearningData | null;
+  certificateCount?: number;
+  streakDays?: number;
+}
+
 export default function StudentDashboard() {
   const { user, isLoading: isAuthLoading } = useAuth();
 
   const [tracks, setCourses] = useState<EnrolledCourse[]>([]);
   const [continueLearning, setContinueLearning] = useState<ContinueLearningData | null>(null);
+  const [certificateCount, setCertificateCount] = useState(0);
+  const [streakDays, setStreakDays] = useState(0);
   const [isCoursesLoading, setIsCoursesLoading] = useState(true);
 
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
@@ -77,12 +86,16 @@ export default function StudentDashboard() {
         const res = await fetch("/api/student/tracks");
 
         if (res.ok) {
-          const data = await res.json();
+          const data: StudentTracksResponse = await res.json();
           setCourses(Array.isArray(data?.tracks) ? data.tracks : []);
           setContinueLearning(data?.continueLearning || null);
+          setCertificateCount(data?.certificateCount ?? 0);
+          setStreakDays(data?.streakDays ?? 0);
         } else {
           setCourses([]);
           setContinueLearning(null);
+          setCertificateCount(0);
+          setStreakDays(0);
         }
       } catch (err) {
         console.error("Failed to fetch tracks", err);
@@ -212,11 +225,11 @@ export default function StudentDashboard() {
           title="Hours Learned"
           number={totalHoursLearned}
         />
-        <DashCard icon={<Medal size={30} />} title="Certificates" number={5} />
+        <DashCard icon={<Medal size={30} />} title="Certificates" number={certificateCount} />
         <DashCard
           icon={<ChartNoAxesCombined size={30} />}
           title="Streak Days"
-          number={5}
+          number={streakDays}
         />
       </div>
 

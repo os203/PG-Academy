@@ -54,6 +54,39 @@ export async function GET() {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    const certificateCount = await db.certificate.count({
+      where: { userId: currentUser.id },
+    });
+
+    const progressRecords = await db.progress.findMany({
+      where: { userId: currentUser.id },
+      select: { updatedAt: true },
+      orderBy: { updatedAt: "desc" },
+    });
+
+    const progressDates = new Set(
+      progressRecords.map((record) =>
+        record.updatedAt.toISOString().slice(0, 10),
+      ),
+    );
+
+    const getUTCDateString = (date: Date) => date.toISOString().slice(0, 10);
+
+    let streakDays = 0;
+    let currentDay = new Date();
+    currentDay = new Date(
+      Date.UTC(
+        currentDay.getUTCFullYear(),
+        currentDay.getUTCMonth(),
+        currentDay.getUTCDate(),
+      ),
+    );
+
+    while (progressDates.has(getUTCDateString(currentDay))) {
+      streakDays++;
+      currentDay = new Date(currentDay.getTime() - 24 * 60 * 60 * 1000);
+    }
+
     const enrollments = await db.enrollment.findMany({
       where: {
         userId: currentUser.id,
@@ -232,7 +265,12 @@ export async function GET() {
       if (continueLearning) break;
     }
 
-    return NextResponse.json({ tracks, continueLearning });
+    return NextResponse.json({
+      tracks,
+      continueLearning,
+      certificateCount,
+      streakDays,
+    });
   } catch (error) {
     console.error("[STUDENT_COURSES_GET_ERROR]", error);
     return NextResponse.json({ error: "Internal Error" }, { status: 500 });
