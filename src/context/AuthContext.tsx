@@ -8,6 +8,7 @@ export interface User {
   name: string;
   email: string;
   role: string;
+  avatarUrl?: string | null;
 }
 
 interface AuthContextType {
@@ -16,6 +17,7 @@ interface AuthContextType {
   isLoading: boolean;
   login: (userData: User) => void;
   logout: () => void;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -114,12 +116,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // 2. Activity Tracker & JWT Refresh
   useEffect(() => {
     if (!user) return;
-    
+
     // Refresh the token every 14 minutes (since it expires in 15m)
     const tokenInterval = setInterval(() => {
       silentRefresh();
     }, 14 * 60 * 1000);
-    
+
     // --- Activity Tracking Logic ---
     const updateActivity = () => {
       localStorage.setItem('lastActivityTime', Date.now().toString());
@@ -162,8 +164,29 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUser(userData);
   };
 
+  const refreshUser = async () => {
+    try {
+      const res = await fetch('/api/profile', {
+        method: 'GET',
+        cache: 'no-store'
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setUser({
+          id: data.id,
+          name: data.name,
+          email: data.email,
+          role: data.role,
+          avatarUrl: data.avatarUrl,
+        });
+      }
+    } catch (error) {
+      console.error('Failed to refresh user data', error);
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: !!user, isLoading, login, logout }}>
+    <AuthContext.Provider value={{ user, isAuthenticated: !!user, isLoading, login, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

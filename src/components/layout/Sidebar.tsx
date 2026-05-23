@@ -51,7 +51,7 @@ export default function Sidebar() {
         },
         {
             label: "Profile",
-            href: `/profile`,
+            href: `/dashboard/profile`,
             icon: <UserRoundPen />,
             roles: ["admin", "student", "instructor"],
         },

@@ -20,8 +20,12 @@ export default function DashboardNavbar() {
                     <span className="text-l leading-3 font-medium">{user?.name} </span>
                     <span className="text-[9px] text-muted-foreground text-right pt-2">{user?.email} </span>
                 </div>
-                <div className="w-7 h-7 rounded-full bg-brand-primary flex items-center justify-center text-white text-xs font-bold cursor-pointer">
-                    {user?.name ? user.name.charAt(0).toUpperCase() : "U"}
+                <div className="w-7 h-7 rounded-full bg-brand-primary flex items-center justify-center text-white text-xs font-bold overflow-hidden cursor-pointer">
+                    {user?.avatarUrl ? (
+                        <img src={user.avatarUrl} alt={user?.name} className="w-full h-full object-cover" />
+                    ) : (
+                        <span>{user?.name ? user.name.charAt(0).toUpperCase() : "U"}</span>
+                    )}
                 </div>
             </div>
 

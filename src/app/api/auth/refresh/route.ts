@@ -1,35 +1,41 @@
-import { NextResponse } from 'next/server';
-import { verifyToken, signAccessToken, JwtPayload } from '@/lib/auth';
-import { db } from '@/lib/db';
-import { cookies } from 'next/headers';
+import { NextResponse } from "next/server";
+import { verifyToken, signAccessToken, JwtPayload } from "@/lib/auth";
+import { db } from "@/lib/db";
+import { cookies } from "next/headers";
 
 export async function POST() {
   try {
     const cookieStore = await cookies();
-    const refreshToken = cookieStore.get('refresh_token')?.value;
+    const refreshToken = cookieStore.get("refresh_token")?.value;
 
     if (!refreshToken) {
-      return NextResponse.json({ error: 'No refresh token' }, { status: 401 });
+      return NextResponse.json({ error: "No refresh token" }, { status: 401 });
     }
 
     const decoded = await verifyToken(refreshToken);
 
     if (!decoded) {
-      return NextResponse.json({ error: 'Invalid refresh token' }, { status: 401 });
+      return NextResponse.json(
+        { error: "Invalid refresh token" },
+        { status: 401 },
+      );
     }
 
     const user = await db.user.findUnique({
-      where: { id: decoded.userId }
+      where: { id: decoded.userId },
     });
 
     if (!user) {
-      return NextResponse.json({ error: 'User no longer exists' }, { status: 401 });
+      return NextResponse.json(
+        { error: "User no longer exists" },
+        { status: 401 },
+      );
     }
 
     const payload: JwtPayload = {
       userId: user.id,
       email: user.email,
-      role: user.role
+      role: user.role,
     };
 
     const accessToken = await signAccessToken(payload);
@@ -40,25 +46,30 @@ export async function POST() {
         name: user.name,
         email: user.email,
         role: user.role,
+        avatarUrl: user.avatarUrl ?? null,
       },
     });
 
-    const isSecureEnv = process.env.NODE_ENV === 'production' && process.env.REQUIRE_HTTPS === 'true';
+    const isSecureEnv =
+      process.env.NODE_ENV === "production" &&
+      process.env.REQUIRE_HTTPS === "true";
 
     response.cookies.set({
-      name: 'token',
+      name: "token",
       value: accessToken,
       httpOnly: true,
       secure: isSecureEnv,
-      sameSite: 'lax',
-      path: '/',
+      sameSite: "lax",
+      path: "/",
       maxAge: 15 * 60, // 15 minutes
     });
 
     return response;
-
   } catch (error: unknown) {
-    console.error('Refresh Error:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    console.error("Refresh Error:", error);
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 },
+    );
   }
 }

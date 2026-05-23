@@ -1,7 +1,7 @@
-import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-import { hashPassword, signAccessToken, signRefreshToken } from '@/lib/auth';
-import { registerSchema } from '@/lib/validations/auth';
+import { NextResponse } from "next/server";
+import { db } from "@/lib/db";
+import { hashPassword, signAccessToken, signRefreshToken } from "@/lib/auth";
+import { registerSchema } from "@/lib/validations/auth";
 
 /**
  * Create a new user account and initialize session
@@ -14,8 +14,8 @@ export async function POST(req: Request) {
     const validation = registerSchema.safeParse(body);
     if (!validation.success) {
       return NextResponse.json(
-        { error: validation.error.issues[0].message }, 
-        { status: 400 }
+        { error: validation.error.issues[0].message },
+        { status: 400 },
       );
     }
 
@@ -28,8 +28,8 @@ export async function POST(req: Request) {
 
     if (existingUser) {
       return NextResponse.json(
-        { error: 'Email address already registered' }, 
-        { status: 409 }
+        { error: "Email address already registered" },
+        { status: 409 },
       );
     }
 
@@ -42,7 +42,7 @@ export async function POST(req: Request) {
         name,
         email,
         password: hashedPassword,
-        role: 'STUDENT',
+        role: "STUDENT",
       },
     });
 
@@ -55,47 +55,52 @@ export async function POST(req: Request) {
     const accessToken = await signAccessToken(tokenPayload);
     const refreshToken = await signRefreshToken(tokenPayload);
 
-    const response = NextResponse.json({
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
+    const response = NextResponse.json(
+      {
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          avatarUrl: user.avatarUrl ?? null,
+        },
+        token: accessToken,
       },
-      token: accessToken
-    }, { status: 201 });
+      { status: 201 },
+    );
 
-    const isSecureEnv = process.env.NODE_ENV === 'production' && process.env.REQUIRE_HTTPS === 'true';
+    const isSecureEnv =
+      process.env.NODE_ENV === "production" &&
+      process.env.REQUIRE_HTTPS === "true";
 
     // Set access token cookie
     response.cookies.set({
-      name: 'token',
+      name: "token",
       value: accessToken,
       httpOnly: true,
       secure: isSecureEnv,
-      sameSite: 'lax',
-      path: '/',
+      sameSite: "lax",
+      path: "/",
       maxAge: 15 * 60, // 15 minutes
     });
 
     // Establish secure refresh token cookie
     response.cookies.set({
-      name: 'refresh_token',
+      name: "refresh_token",
       value: refreshToken,
-      httpOnly: true, 
+      httpOnly: true,
       secure: isSecureEnv,
-      sameSite: 'lax',
-      path: '/',
-      maxAge: 7 * 24 * 60 * 60, 
+      sameSite: "lax",
+      path: "/",
+      maxAge: 7 * 24 * 60 * 60,
     });
 
     return response;
-
   } catch (error: unknown) {
-    console.error('[AUTH_REGISTRATION_ERROR]:', error);
+    console.error("[AUTH_REGISTRATION_ERROR]:", error);
     return NextResponse.json(
-      { error: 'Internal server error' }, 
-      { status: 500 }
+      { error: "Internal server error" },
+      { status: 500 },
     );
   }
 }

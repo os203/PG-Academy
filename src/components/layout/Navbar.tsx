@@ -25,8 +25,12 @@ export default function Navbar() {
             {user ? (
               <div className="flex items-center space-x-4">
                 <Link href="/dashboard" className="text-brand-primary hover:text-brand-accent transition-colors font-medium flex items-center gap-2 bg-brand-primary/10 px-4 py-2 rounded-full">
-                  <div className="w-6 h-6 rounded-full bg-brand-primary flex items-center justify-center text-white text-xs font-bold">
-                    {user?.name ? user.name.charAt(0).toUpperCase() : "U"}
+                  <div className="w-6 h-6 rounded-full bg-brand-primary flex items-center justify-center text-white text-xs font-bold overflow-hidden">
+                    {user?.avatarUrl ? (
+                      <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <span>{user?.name ? user.name.charAt(0).toUpperCase() : "U"}</span>
+                    )}
                   </div>
                   <span>Dashboard</span>
                 </Link>
