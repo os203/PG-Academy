@@ -209,9 +209,9 @@ export default function ProfilePage() {
                         Profile
                     </div>
                     <div className="space-y-2">
-                        <h1 className="text-3xl font-black tracking-tight text-foreground">Your profile</h1>
+                        <h1 className="text-3xl font-black tracking-tight text-foreground">Excellence</h1>
                         <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
-                            A clean personal dashboard that adapts to your role and keeps all account details in one place.
+                            We believe continuous learning is the key to success
                         </p>
                     </div>
                 </div>
@@ -230,7 +230,7 @@ export default function ProfilePage() {
                 <section className="rounded-3xl border border-border bg-card p-6 shadow-sm">
                     <div className="flex flex-col items-center gap-4 text-center">
                         <div className="relative">
-                            <div className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-full bg-linear-to-br from-indigo-500 to-purple-600 text-3xl font-black text-white shadow-xl">
+                            <div className="flex h-40 w-40 items-center justify-center overflow-hidden rounded-full bg-linear-to-br from-indigo-500 to-purple-600 text-3xl font-black text-white shadow-xl border-border border-[3px]">
                                 {avatarPreview ? (
                                     <img src={avatarPreview} alt="Profile avatar" className="h-full w-full object-cover" />
                                 ) : (
@@ -246,11 +246,6 @@ export default function ProfilePage() {
                                 <Upload size={18} />
                             </button>}
                         </div>
-
-                        <div className="space-y-1">
-                            <p className="text-sm font-semibold text-muted-foreground">Profile photo</p>
-                            <p className="text-sm text-muted-foreground">Upload a new avatar to personalize your account.</p>
-                        </div>
                     </div>
 
                     <input
@@ -261,48 +256,40 @@ export default function ProfilePage() {
                         onChange={handleAvatarChange}
                     />
 
-                    <div className="mt-8 space-y-5">
-                        <div>
-                            <label className="text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">
-                                Full name
-                            </label>
-                            {editMode ? (
-                                <input
-                                    className="mt-3 w-full rounded-3xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/10"
-                                    value={name}
-                                    onChange={(event) => setName(event.target.value)}
-                                />
-                            ) : (
-                                <p className="mt-3 text-lg font-semibold text-foreground">{profile?.name}</p>
-                            )}
-                        </div>
+                    <div className="mt-8">
 
-                        <div>
-                            <label className="text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">
-                                Email address
-                            </label>
-                            <p className="mt-3 rounded-3xl border border-border bg-background px-4 py-3 text-sm text-muted-foreground">
-                                {profile?.email}
-                            </p>
-                        </div>
+                        {editMode ? (
+                            <input
+                                className="mt-3 w-full rounded-3xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/10"
+                                value={name}
+                                onChange={(event) => setName(event.target.value)}
+                            />
+                        ) : (
+                            <p className="mt-3 text-lg font-semibold text-foreground">{profile?.name}</p>
+                        )}
 
-                        <div>
+                        <p className="pt-1 text-md text-muted-foreground">
+                            {profile?.email}
+                        </p>
+
+
+
+                        {editMode ? (<div className="py-4 mt-2">
                             <label className="text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">
                                 Description
                             </label>
-                            {editMode ? (
-                                <textarea
-                                    className="mt-3 w-full rounded-3xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/10"
-                                    rows={5}
-                                    value={bio}
-                                    onChange={(event) => setBio(event.target.value)}
-                                />
-                            ) : (
-                                <p className="mt-3 text-sm leading-7 text-muted-foreground">
-                                    {profile?.bio || "Write a brief introduction about yourself."}
-                                </p>
-                            )}
-                        </div>
+                            <textarea
+                                className="mt-3 w-full rounded-3xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/10"
+                                rows={5}
+                                value={bio}
+                                onChange={(event) => setBio(event.target.value)}
+                            /></div>
+                        ) : (
+                            <p className="mt-3 text-sm leading-7 text-muted-foreground">
+                                {profile?.bio || "Write a brief introduction about yourself."}
+                            </p>
+                        )}
+
 
                         {editMode ? (
                             <>

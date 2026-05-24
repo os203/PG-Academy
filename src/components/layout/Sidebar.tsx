@@ -62,8 +62,8 @@ export default function Sidebar() {
             roles: ["student"],
         },
         {
-            label: "Sittings",
-            href: "/sittings",
+            label: "Settings",
+            href: "/settings",
             icon: <Settings />,
             roles: ["admin", "student", "instructor"],
         },
