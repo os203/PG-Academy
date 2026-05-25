@@ -1,6 +1,6 @@
 "use client";
 
-import { usePathname } from "next/navigation";
+
 import DashboardNavbar from "@/components/layout/DashboardNavbar";
 import Sidebar from "@/components/layout/Sidebar";
 
@@ -17,7 +17,7 @@ export default function DashboardLayout({ children }: Readonly<{ children: React
                     <DashboardNavbar />
                 </div>
 
-                <div className="flex-1 bg-background p-8 py-12">
+                <div className="flex-1 bg-[#09090b] p-6 md:p-8 py-8 md:py-12">
                     {children}
                 </div>
 

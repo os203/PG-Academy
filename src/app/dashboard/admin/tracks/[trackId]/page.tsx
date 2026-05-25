@@ -1,13 +1,18 @@
+"use client";
+
 import InstructorTrackManager from "@/components/InstructorTrackManager";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
+import { useLanguage } from "@/context/LanguageContext";
+import { use } from "react";
 
-export default async function AdminCourseManagePage({
+export default function AdminCourseManagePage({
   params,
 }: {
   params: Promise<{ trackId: string }>;
 }) {
-  const { trackId } = await params;
+  const { trackId } = use(params);
+  const { t } = useLanguage();
 
   return (
     <div className="min-h-screen pb-20">
@@ -18,9 +23,9 @@ export default async function AdminCourseManagePage({
         >
           <ArrowRight
             size={18}
-            className="group-hover:translate-x-1 transition-transform"
+            className="group-hover:-translate-x-1 transition-transform"
           />
-          Back to Track Catalog
+          {t("admin.tracks.backToCatalog")}
         </Link>
       </div>
 

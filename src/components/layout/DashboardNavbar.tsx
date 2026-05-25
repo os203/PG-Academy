@@ -1,31 +1,28 @@
+"use client";
+
 import { Search } from 'lucide-react';
-import { useAuth } from '@/context/AuthContext';
-import { ThemeToggle } from "../ui/ThemeToggle";
+import { UserButton, useUser } from '@clerk/nextjs';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
+import { useLanguage } from '@/context/LanguageContext';
 
 export default function DashboardNavbar() {
-
-    const { user } = useAuth();
-
-
+    const { user } = useUser();
+    const { t } = useLanguage();
 
     return (
-        <div className="sticky top-0 glass bg-linear-to-br from-brand-accent to-brand-primary shadow-lg shadow-brand-accent/20 flex items-center justify-between bg-background p-4 w-full h-18">
-            <div className=" hidden  sm:flex items-center ml-10 md:ml-0 gap-3 px-2 py-1 text-xs rounded-full ring-[1.5px] ring-gray-700">
-                <Search size={21} />
-                <input type="text" className="flex-1 w-[150px] lg:w-[200px] transition-all duration-300 p-2 bg-transparent" placeholder="search...." />
+        <div className="sticky top-0 z-30 glass-dark flex items-center justify-between p-4 w-full h-16 border-b border-zinc-800/50">
+            <div className="hidden sm:flex items-center ms-10 md:ms-0 gap-3 px-3 py-1.5 text-xs rounded-full border border-zinc-700/50 bg-zinc-800/30">
+                <Search size={16} className="text-zinc-500" />
+                <input type="text" className="flex-1 w-[150px] lg:w-[200px] transition-all duration-300 p-1 bg-transparent text-white placeholder:text-zinc-500 outline-none" placeholder={t('common.search') + "..."} />
             </div>
-            <div className="flex items-center gap-4 justify-end w-full">
-                <ThemeToggle />
-                <div className="flex flex-col">
-                    <span className="text-l leading-3 font-medium">{user?.name} </span>
-                    <span className="text-[9px] text-muted-foreground text-right pt-2">{user?.email} </span>
+            <div className="flex items-center gap-3 justify-end w-full">
+                <LanguageSwitcher variant="compact" />
+                <div className="flex flex-col items-end">
+                    <span className="text-sm leading-4 font-medium text-white">{user?.fullName || user?.firstName}</span>
+                    <span className="text-[10px] text-zinc-500 pt-0.5">{user?.primaryEmailAddress?.emailAddress}</span>
                 </div>
-                <div className="w-7 h-7 rounded-full bg-brand-primary flex items-center justify-center text-white text-xs font-bold cursor-pointer">
-                    {user?.name ? user.name.charAt(0).toUpperCase() : "U"}
-                </div>
+                <UserButton appearance={{ elements: { userButtonAvatarBox: "w-8 h-8 rounded-lg border border-[#bd9759]" } }} />
             </div>
-
-
         </div>
-    )
+    );
 }

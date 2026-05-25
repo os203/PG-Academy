@@ -40,7 +40,7 @@ async function authorizeQuizOwner(
     };
   }
 
-  const decoded = await verifyToken(token);
+  const decoded = await verifyToken();
 
   if (!decoded?.userId || !decoded?.role) {
     return {

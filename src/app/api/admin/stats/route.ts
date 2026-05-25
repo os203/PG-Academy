@@ -1,18 +1,19 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { db } from "@/lib/db";
-import { verifyToken } from "@/lib/auth";
+import { auth } from "@clerk/nextjs/server";
 
 export async function GET() {
   try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get("token")?.value;
+    const { userId } = await auth();
 
-    if (!token) {
+    if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const user = await verifyToken(token);
+    const user = await db.user.findUnique({
+      where: { id: userId },
+      select: { role: true }
+    });
 
     if (!user || user.role !== "ADMIN") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

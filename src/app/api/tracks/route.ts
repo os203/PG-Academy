@@ -11,14 +11,7 @@ function isCourseStatus(value: string): value is CourseStatusValue {
 
 export async function GET() {
   try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get("token")?.value;
-
-    if (!token) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const decoded = await verifyToken(token);
+    const decoded = await verifyToken();
 
     if (!decoded?.userId || !decoded?.role) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -73,14 +66,7 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get("token")?.value;
-
-    if (!token) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const decoded = await verifyToken(token);
+    const decoded = await verifyToken();
 
     if (!decoded?.userId || !decoded?.role) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

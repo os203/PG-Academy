@@ -74,7 +74,19 @@ export default function AdminOverview() {
     );
   }
 
-  const s = stats!;
+  if (!stats) {
+    return (
+      <div className="p-8 text-center border rounded-xl bg-red-500/10 border-red-500/20 mt-6">
+        <AlertTriangle className="h-10 w-10 text-red-500 mx-auto mb-4" />
+        <h2 className="text-xl font-bold text-red-500 mb-2">Failed to load Dashboard Data</h2>
+        <p className="text-zinc-400 text-sm">
+          You might not have the correct Admin permissions, or the server encountered an error.
+        </p>
+      </div>
+    );
+  }
+
+  const s = stats;
 
   return (
     <div className="space-y-6">

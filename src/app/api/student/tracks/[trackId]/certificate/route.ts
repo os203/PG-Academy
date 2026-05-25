@@ -22,11 +22,7 @@ export async function GET(
 ) {
   try {
     const { trackId } = await params;
-    const cookieStore = await cookies();
-    const token = cookieStore.get("token")?.value;
-
-    if (!token) return new NextResponse("Unauthorized", { status: 401 });
-    const decoded = await verifyToken(token);
+    const decoded = await verifyToken();
     if (!decoded?.userId) return new NextResponse("Unauthorized", { status: 401 });
 
     const certificate = await db.certificate.findFirst({
@@ -53,11 +49,7 @@ export async function POST(
 ) {
   try {
     const { trackId } = await params;
-    const cookieStore = await cookies();
-    const token = cookieStore.get("token")?.value;
-
-    if (!token) return new NextResponse("Unauthorized", { status: 401 });
-    const decoded = await verifyToken(token);
+    const decoded = await verifyToken();
     if (!decoded?.userId) return new NextResponse("Unauthorized", { status: 401 });
     
     const userId = decoded.userId;

@@ -6,14 +6,7 @@ import { verifyToken } from "@/lib/auth";
 // GET /api/student/qa?lessonId=xxx — get Q&A for a specific lesson
 export async function GET(req: NextRequest) {
   try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get("token")?.value;
-
-    if (!token) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const decoded = await verifyToken(token);
+    const decoded = await verifyToken();
     if (!decoded?.userId) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
@@ -98,14 +91,7 @@ export async function GET(req: NextRequest) {
 // POST /api/student/qa — submit a new question
 export async function POST(req: NextRequest) {
   try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get("token")?.value;
-
-    if (!token) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const decoded = await verifyToken(token);
+    const decoded = await verifyToken();
     if (!decoded?.userId) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }

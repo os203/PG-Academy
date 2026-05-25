@@ -18,6 +18,7 @@ import StudentQuizPanel from "@/components/StudentQuizPanel";
 import StudentQAPanel from "@/components/StudentQAPanel";
 import SecureHlsPlayer from "@/components/SecureHlsPlayer";
 import { useAuth } from "@/context/AuthContext";
+import { useLanguage } from "@/context/LanguageContext";
 
 interface StudentLesson {
   id: string;
@@ -62,6 +63,7 @@ interface StudentTrackResponse {
 
 export default function StudentTrackViewer({ trackId }: { trackId: string }) {
   const { user } = useAuth();
+  const { t } = useLanguage();
 
   const [track, setTrack] = useState<{
     id: string;
@@ -374,12 +376,12 @@ export default function StudentTrackViewer({ trackId }: { trackId: string }) {
               {selectedLesson.isCompleted ? (
                 <span className="px-3 py-1 rounded-full bg-green-500/10 text-green-500 font-bold inline-flex items-center gap-1">
                   <CheckCircle2 size={14} />
-                  Completed
+                  {t("student.trackViewer.completed")}
                 </span>
               ) : (
                 <span className="px-3 py-1 rounded-full bg-muted text-muted-foreground font-bold inline-flex items-center gap-1">
                   <CircleDashed size={14} />
-                  In Progress
+                  {t("student.trackViewer.inProgress")}
                 </span>
               )}
 
@@ -393,11 +395,11 @@ export default function StudentTrackViewer({ trackId }: { trackId: string }) {
                 >
                   {selectedLesson.quizPassed ? (
                     <>
-                      <CheckCircle2 size={13} /> Quiz Passed
+                      <CheckCircle2 size={13} /> {t("student.trackViewer.quizPassed")}
                     </>
                   ) : (
                     <>
-                      <CircleDashed size={13} /> Quiz Required
+                      <CircleDashed size={13} /> {t("student.trackViewer.quizRequired")}
                     </>
                   )}
                 </span>
@@ -439,15 +441,15 @@ export default function StudentTrackViewer({ trackId }: { trackId: string }) {
                 )
               ) : (
                 <p className="text-muted-foreground">
-                  No video uploaded for this lesson yet.
+                  {t("student.trackViewer.noVideo")}
                 </p>
               )}
             </div>
 
             <div className="p-6 border-t border-border">
-              <h4 className="font-bold text-foreground mb-2">Lesson Notes</h4>
+              <h4 className="font-bold text-foreground mb-2">{t("student.trackViewer.lessonNotes")}</h4>
               <div className="text-muted-foreground text-sm leading-relaxed min-h-[60px]">
-                {selectedLesson.notes || "No notes for this lesson."}
+                {selectedLesson.notes || t("student.trackViewer.noNotes")}
               </div>
             </div>
           </div>
@@ -455,7 +457,7 @@ export default function StudentTrackViewer({ trackId }: { trackId: string }) {
           {selectedLesson.resources && selectedLesson.resources.length > 0 && (
             <div className="bg-card border border-border rounded-2xl p-6 space-y-3">
               <h4 className="font-bold text-foreground">
-                Downloads &amp; Materials
+                {t("student.trackViewer.downloads")}
               </h4>
 
               {selectedLesson.resources.map((resource) => (
@@ -470,7 +472,7 @@ export default function StudentTrackViewer({ trackId }: { trackId: string }) {
                     {resource.name}
                   </span>
                   <span className="text-sm text-[#E5C158] font-bold opacity-0 group-hover:opacity-100 transition">
-                    Open
+                    {t("student.trackViewer.open")}
                   </span>
                 </a>
               ))}
@@ -479,11 +481,11 @@ export default function StudentTrackViewer({ trackId }: { trackId: string }) {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
-              <h3 className="font-bold text-foreground">Save Progress</h3>
+              <h3 className="font-bold text-foreground">{t("student.trackViewer.saveProgress")}</h3>
 
               <div>
                 <label className="block text-sm font-medium text-muted-foreground mb-2">
-                  Video Watch Percentage
+                  {t("student.trackViewer.videoWatchPercentage")}
                 </label>
 
                 <input
@@ -498,7 +500,7 @@ export default function StudentTrackViewer({ trackId }: { trackId: string }) {
                 />
 
                 <div className="text-sm text-muted-foreground mt-2">
-                  Current: {watchedPercentDraft}%
+                  {t("student.trackViewer.current")}: {watchedPercentDraft}%
                 </div>
               </div>
 
@@ -513,7 +515,7 @@ export default function StudentTrackViewer({ trackId }: { trackId: string }) {
                 ) : (
                   <Save size={16} />
                 )}
-                Save Position
+                {t("student.trackViewer.savePosition")}
               </button>
             </div>
 
@@ -525,12 +527,11 @@ export default function StudentTrackViewer({ trackId }: { trackId: string }) {
               }`}
             >
               <h3 className="font-bold text-foreground">
-                Mark Lesson Complete
+                {t("student.trackViewer.markLessonComplete")}
               </h3>
 
               <p className="text-sm text-muted-foreground">
-                Mark this lesson as complete to unlock the next one. If there is
-                a quiz, you must pass it first.
+                {t("student.trackViewer.markCompleteDescription")}
               </p>
 
               {!selectedLesson.isCompleted &&
@@ -542,7 +543,7 @@ export default function StudentTrackViewer({ trackId }: { trackId: string }) {
                       className="text-amber-400 mt-0.5 shrink-0"
                     />
                     <p className="text-sm text-amber-300 font-medium">
-                      Complete the quiz first.
+                      {t("student.trackViewer.completeQuizFirst")}
                     </p>
                   </div>
                 )}
@@ -565,15 +566,15 @@ export default function StudentTrackViewer({ trackId }: { trackId: string }) {
                 {markingComplete ? (
                   <>
                     <Loader2 size={16} className="animate-spin" />
-                    Marking...
+                    {t("student.trackViewer.marking")}
                   </>
                 ) : selectedLesson.isCompleted ? (
                   <>
                     <CheckCircle2 size={16} />
-                    Completed
+                    {t("student.trackViewer.completed")}
                   </>
                 ) : (
-                  "Mark as Complete"
+                  t("student.trackViewer.markAsComplete")
                 )}
               </button>
             </div>
@@ -598,9 +599,9 @@ export default function StudentTrackViewer({ trackId }: { trackId: string }) {
         <div className="bg-card border border-border rounded-2xl p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-black">
-              Student Portal{user?.name ? `, ${user.name}` : ""}
+              {t("student.trackViewer.portal").replace("{name}", user?.name || "")}
             </h1>
-            <p className="text-muted-foreground mt-1">Track: {track.title}</p>
+            <p className="text-muted-foreground mt-1">{t("student.trackViewer.trackPrefix").replace("{track}", track.title)}</p>
           </div>
 
           {track.overallProgress === 100 ? (
@@ -615,12 +616,12 @@ export default function StudentTrackViewer({ trackId }: { trackId: string }) {
               ) : (
                 <Medal size={18} />
               )}
-              {claimingCert ? "Generating..." : "Claim Certificate"}
+              {claimingCert ? t("student.trackViewer.generating") : t("student.trackViewer.claimCertificate")}
             </button>
           ) : (
             <div className="text-right shrink-0">
               <div className="text-sm text-muted-foreground mb-1">
-                Overall Progress
+                {t("student.trackViewer.overallProgress")}
               </div>
               <div className="text-2xl font-black text-[#E5C158]">
                 {track.overallProgress}%
@@ -633,7 +634,7 @@ export default function StudentTrackViewer({ trackId }: { trackId: string }) {
           <div className="bg-card border border-border rounded-2xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <p className="text-xs font-bold text-[#E5C158] uppercase tracking-widest mb-1">
-                Continue Learning
+                {t("student.trackViewer.continueLearning")}
               </p>
               <p className="text-lg font-bold">{track.title}</p>
               <p className="text-sm text-muted-foreground">
@@ -646,7 +647,7 @@ export default function StudentTrackViewer({ trackId }: { trackId: string }) {
               onClick={() => setActiveView("lesson")}
               className="px-6 py-3 border border-border rounded-xl font-bold hover:bg-muted transition flex items-center gap-2 shrink-0"
             >
-              Go to lesson <ArrowRight size={16} />
+              {t("student.trackViewer.goToLesson")} <ArrowRight size={16} className="rtl:-scale-x-100" />
             </button>
           </div>
         )}
@@ -699,7 +700,7 @@ export default function StudentTrackViewer({ trackId }: { trackId: string }) {
                   </div>
 
                   <p className="text-xs text-muted-foreground mb-3">
-                    {completed}/{total} lessons completed
+                    {completed}/{total} {t("student.trackViewer.lessonsCompleted")}
                   </p>
 
                   <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden mb-1">

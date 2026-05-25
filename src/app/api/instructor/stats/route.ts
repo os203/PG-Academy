@@ -1,23 +1,25 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { db } from "@/lib/db";
-import { verifyToken } from "@/lib/auth";
+import { auth } from "@clerk/nextjs/server";
 
 export async function GET() {
   try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get("token")?.value;
+    const { userId } = await auth();
 
-    if (!token) {
+    if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const decoded = await verifyToken(token);
-    if (!decoded?.userId || (decoded.role !== "INSTRUCTOR" && decoded.role !== "ADMIN")) {
+    const user = await db.user.findUnique({
+      where: { id: userId },
+      select: { role: true }
+    });
+
+    if (!user || (user.role !== "INSTRUCTOR" && user.role !== "ADMIN")) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const instructorId = decoded.userId;
+    const instructorId = userId;
 
     // Get all tracks for this instructor
     const tracks = await db.track.findMany({

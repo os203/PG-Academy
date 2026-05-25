@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { Loader2, Check, X, User as UserIcon, BookOpen, Calendar } from "lucide-react";
+import { useLanguage } from "@/context/LanguageContext";
 
 interface Enrollment {
   id: string;
@@ -21,6 +22,7 @@ export default function EnrollmentsPage() {
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"ALL" | "PENDING" | "APPROVED" | "REJECTED">("ALL");
+  const { t, locale } = useLanguage();
 
   const fetchEnrollments = async () => {
     try {
@@ -68,10 +70,10 @@ export default function EnrollmentsPage() {
     <div className="space-y-8">
       <div>
         <h1 className="text-3xl font-bold tracking-tight text-foreground mb-2">
-          Enrollment Approval Center
+          {t("admin.enrollments.title")}
         </h1>
         <p className="text-muted-foreground">
-          Review and manage student applications for specialized tracks.
+          {t("admin.enrollments.subtitle")}
         </p>
       </div>
 
@@ -87,7 +89,10 @@ export default function EnrollmentsPage() {
                 : "bg-white border border-gray-200 text-gray-600 hover:bg-gray-50"
             }`}
           >
-            {tab}
+            {tab === "ALL" ? t("admin.enrollments.all") : 
+             tab === "PENDING" ? t("admin.enrollments.pending") :
+             tab === "APPROVED" ? t("admin.enrollments.approved") :
+             t("admin.enrollments.rejected")}
             {tab !== "ALL" && (
               <span
                 className={`ml-2 px-2 py-0.5 rounded-full text-xs ${
@@ -110,7 +115,7 @@ export default function EnrollmentsPage() {
         </div>
       ) : filteredEnrollments.length === 0 ? (
         <div className="bg-white border rounded-2xl p-16 text-center shadow-sm">
-          <p className="text-gray-500 text-lg">No enrollments found for this status.</p>
+          <p className="text-gray-500 text-lg">{t("admin.enrollments.noEnrollments")}</p>
         </div>
       ) : (
         <div className="space-y-4">
@@ -133,17 +138,17 @@ export default function EnrollmentsPage() {
                   </div>
                   {enrollment.status === "PENDING" && (
                     <span className="ml-auto md:ml-4 px-3 py-1 rounded-full bg-amber-100 text-amber-700 text-xs font-bold uppercase tracking-wide">
-                      Pending
+                      {t("admin.enrollments.statusPending")}
                     </span>
                   )}
                   {enrollment.status === "APPROVED" && (
                     <span className="ml-auto md:ml-4 px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold uppercase tracking-wide">
-                      Approved
+                      {t("admin.enrollments.statusApproved")}
                     </span>
                   )}
                   {enrollment.status === "REJECTED" && (
                     <span className="ml-auto md:ml-4 px-3 py-1 rounded-full bg-red-100 text-red-700 text-xs font-bold uppercase tracking-wide">
-                      Rejected
+                      {t("admin.enrollments.statusRejected")}
                     </span>
                   )}
                 </div>
@@ -156,7 +161,7 @@ export default function EnrollmentsPage() {
                   <div className="flex items-center gap-2">
                     <Calendar size={16} className="text-indigo-400" />
                     <span>
-                      Applied {formatDistanceToNow(new Date(enrollment.enrolledAt))} ago
+                      {t("admin.enrollments.appliedAgo").replace("{time}", formatDistanceToNow(new Date(enrollment.enrolledAt)))}
                     </span>
                   </div>
                 </div>
@@ -170,7 +175,7 @@ export default function EnrollmentsPage() {
                     className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white font-semibold transition-colors flex-1 md:flex-auto justify-center"
                   >
                     <Check size={18} />
-                    Approve
+                    {t("admin.enrollments.approve")}
                   </button>
                 )}
                 {enrollment.status !== "REJECTED" && (
@@ -179,7 +184,7 @@ export default function EnrollmentsPage() {
                     className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-red-50 text-red-700 hover:bg-red-600 hover:text-white font-semibold transition-colors flex-1 md:flex-auto justify-center"
                   >
                     <X size={18} />
-                    Reject
+                    {t("admin.enrollments.reject")}
                   </button>
                 )}
               </div>

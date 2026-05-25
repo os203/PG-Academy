@@ -10,6 +10,7 @@ import {
   Clapperboard,
   Rocket,
 } from "lucide-react";
+import { useLanguage } from "@/context/LanguageContext";
 
 const containerVariants: Variants = {
   hidden: { opacity: 0 },
@@ -28,30 +29,34 @@ const itemVariants: Variants = {
   },
 };
 
-const tracks = [
-  {
-    icon: Megaphone,
-    title: "AI Marketing",
-    desc: "Master the integration of artificial intelligence into campaign strategies, data analysis, and brand engagement to revolutionize modern marketing.",
-  },
-  {
-    icon: Gamepad2,
-    title: "AI Gaming",
-    desc: "Learn to build immersive, intelligent game environments and streamline complex development pipelines using next-generation AI tools.",
-  },
-  {
-    icon: Film,
-    title: "AI Filmmaking",
-    desc: "Transform digital storytelling by integrating AI at every stage of production, from initial concept and scriptwriting to advanced post-production and visual effects.",
-  },
-  {
-    icon: Clapperboard,
-    title: "AI Animation",
-    desc: "Master AI-powered animation pipelines and produce broadcast-quality animated content from character design to final render.",
-  },
-];
+// Tracks will be defined inside the component to use the translation hook
 
 export default function AboutPage() {
+  const { t } = useLanguage();
+
+  const tracks = [
+    {
+      icon: Megaphone,
+      title: t("tracksHub.track4.title"),
+      desc: t("tracksHub.track4.desc"),
+    },
+    {
+      icon: Gamepad2,
+      title: t("tracksHub.track3.title"),
+      desc: t("tracksHub.track3.desc"),
+    },
+    {
+      icon: Film,
+      title: t("tracksHub.track2.title"),
+      desc: t("tracksHub.track2.desc"),
+    },
+    {
+      icon: Clapperboard,
+      title: t("tracksHub.track1.title"),
+      desc: t("tracksHub.track1.desc"),
+    },
+  ];
+
   return (
     <div className="min-h-screen bg-background text-foreground pb-24 overflow-hidden">
       {/* Back Link */}
@@ -61,7 +66,7 @@ export default function AboutPage() {
           className="inline-flex items-center gap-2 text-sm text-brand-primary hover:text-brand-accent transition-colors font-medium"
         >
           <ArrowLeft className="w-4 h-4" />
-          Back to homepage
+          {t("nav.backToHome")}
         </Link>
       </div>
 
@@ -80,26 +85,19 @@ export default function AboutPage() {
             {/* Badge */}
             <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-foreground/5 border border-brand-primary/30 text-sm font-medium text-brand-primary">
               <span className="w-2 h-2 rounded-full bg-brand-primary animate-pulse" />
-              About Us
+              {t("about.badge")}
             </span>
 
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-foreground leading-tight">
-              Empowering the Next Generation of Creative Leaders
+              {t("about.hero.title")}
             </h1>
 
             <p className="text-muted-foreground text-base md:text-lg leading-relaxed max-w-3xl">
-              At PG Academy, our goal is clear: to train the next generation of
-              animators, game developers, marketers, and digital content creators
-              to lead the industry on a global stage.
+              {t("about.hero.p1")}
             </p>
 
             <p className="text-muted-foreground text-base md:text-lg leading-relaxed max-w-3xl">
-              Born from Progressive Generation Studios, which proudly stands at
-              the forefront of the animation industry and hosts the largest
-              library of original Arabic children&apos;s content in the MENA
-              region, PG Academy was established to embed our core values of
-              technology, innovation, and creativity into a formal educational
-              framework.
+              {t("about.hero.p2")}
             </p>
           </div>
         </motion.div>
@@ -115,12 +113,10 @@ export default function AboutPage() {
           className="mb-12 space-y-4"
         >
           <h2 className="text-3xl md:text-4xl font-bold text-foreground">
-            Future-Proof Curriculum Tracks
+            {t("about.curriculum.title")}
           </h2>
           <p className="text-muted-foreground text-base md:text-lg leading-relaxed max-w-3xl">
-            We believe in pushing the boundaries of digital content creation. Our
-            specialized curriculum tracks are designed to take students from
-            foundational concepts to advanced, industry-standard production.
+            {t("about.curriculum.desc")}
           </p>
         </motion.div>
 
@@ -170,25 +166,19 @@ export default function AboutPage() {
             </div>
 
             <h2 className="text-3xl md:text-4xl font-bold text-foreground">
-              Our Vision and Impact
+              {t("about.vision.title")}
             </h2>
 
             <p className="text-muted-foreground text-base md:text-lg leading-relaxed max-w-3xl">
-              PG Academy is more than just an educational institution; it is a
-              catalyst for regional growth. By training young talent in Jordan
-              and across the Middle East, we are actively working toward a
-              massive economic and creative milestone: creating{" "}
+              {t("about.vision.p1.start")}{" "}
               <span className="text-foreground font-semibold">
-                50,000 job opportunities
+                {t("about.vision.p1.highlight")}
               </span>{" "}
-              within the creative industries in the MENA region by 2030.
+              {t("about.vision.p1.end")}
             </p>
 
             <p className="text-muted-foreground text-base md:text-lg leading-relaxed max-w-3xl">
-              Whether you are looking to master animation, pioneer new game
-              worlds, or embrace emerging digital marketing technologies, PG
-              Academy is your launchpad. Join us, and become the future of
-              digital content.
+              {t("about.vision.p2")}
             </p>
 
             {/* CTA Buttons */}
@@ -197,13 +187,13 @@ export default function AboutPage() {
                 href="/tracks"
                 className="px-6 py-3 bg-brand-primary hover:bg-brand-accent text-white rounded-lg font-semibold text-sm transition-all shadow-lg"
               >
-                Explore Tracks
+                {t("home.hero.exploreTracks")}
               </Link>
               <Link
                 href="/register"
                 className="px-6 py-3 bg-transparent border border-border hover:border-foreground/50 text-foreground rounded-lg font-semibold text-sm transition-all"
               >
-                Start Registration
+                {t("home.hero.cta")}
               </Link>
             </div>
           </div>

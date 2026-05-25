@@ -10,10 +10,10 @@ export default function AuthLayout({
 }) {
     return (
 
-        <div className="min-h-full flex flex-col selection:bg-brand-accent selection:text-white transition-colors duration-300">
+        <div className="min-h-full flex flex-col bg-[#09090b] text-zinc-100 transition-colors duration-300">
 
             <Navbar />
-            <main className="flex-grow pt-20 flex flex-col">
+            <main className="grow flex flex-col pt-24 pb-12">
                 {children}
             </main>
             <Footer />

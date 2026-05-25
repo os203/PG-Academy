@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { CheckCircle, XCircle, MoreHorizontal, Eye, BarChart, Plus, Pencil } from "lucide-react";
+import { useLanguage } from "@/context/LanguageContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,6 +15,7 @@ import {
   DropdownMenuGroup,
 } from "@/components/ui/dropdown-menu";
 import CreateTrackModal from "@/components/admin/CreateTrackModal";
+import ReassignInstructorModal from "@/components/admin/ReassignInstructorModal";
 
 interface AdminCourse {
   id: string;
@@ -22,12 +24,13 @@ interface AdminCourse {
   status: "DRAFT" | "PUBLISHED";
   createdAt: string;
   instructor: {
+    id: string;
     name: string;
     email: string;
   };
   _count: {
     enrollments: number;
-    modules: number;
+    phases: number;
   }
 }
 
@@ -35,6 +38,8 @@ export default function AdminCoursesPage() {
   const [tracks, setCourses] = useState<AdminCourse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [reassignTrack, setReassignTrack] = useState<{id: string, title: string, instructorId?: string} | null>(null);
+  const { t } = useLanguage();
 
   const fetchCourses = async () => {
     setIsLoading(true);
@@ -108,38 +113,38 @@ export default function AdminCoursesPage() {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">Track Catalog</h1>
-          <p className="text-muted-foreground">Review, approve, and moderate instructor content.</p>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">{t("admin.tracks.title")}</h1>
+          <p className="text-muted-foreground">{t("admin.tracks.subtitle")}</p>
         </div>
         <Button 
           onClick={() => setShowCreateModal(true)}
           className="flex items-center gap-2 bg-brand-primary hover:bg-brand-primary/90 text-white"
         >
-          <Plus className="h-4 w-4" /> Create Track
+          <Plus className="h-4 w-4" /> {t("admin.tracks.createTrack")}
         </Button>
       </div>
 
       <Card className="bg-card border-border shadow-sm">
         <CardHeader>
-          <CardTitle>All Tracks ({tracks.length})</CardTitle>
+          <CardTitle>{t("admin.tracks.allTracks")} ({tracks.length})</CardTitle>
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="flex justify-center p-8 text-muted-foreground">Loading catalog...</div>
+            <div className="flex justify-center p-8 text-muted-foreground">{t("admin.tracks.loading")}</div>
           ) : tracks.length === 0 ? (
             <div className="text-center py-16 text-muted-foreground border border-dashed border-border rounded-lg">
-              No tracks found on the platform.
+              {t("admin.tracks.noTracks")}
             </div>
           ) : (
             <div className="overflow-x-auto rounded-xl border border-border">
               <table className="w-full text-left text-sm">
                 <thead>
                   <tr className="border-b border-border bg-muted/50 text-xs font-bold uppercase tracking-widest text-muted-foreground">
-                    <th className="px-6 py-4">Track Details</th>
-                    <th className="px-6 py-4">Instructor</th>
-                    <th className="px-6 py-4">Status</th>
-                    <th className="px-6 py-4 text-right">Metrics</th>
-                    <th className="px-6 py-4 text-right">Actions</th>
+                    <th className="px-6 py-4">{t("admin.tracks.trackDetails")}</th>
+                    <th className="px-6 py-4">{t("admin.tracks.instructor")}</th>
+                    <th className="px-6 py-4">{t("admin.tracks.status")}</th>
+                    <th className="px-6 py-4 text-right">{t("admin.tracks.metrics")}</th>
+                    <th className="px-6 py-4 text-right">{t("admin.tracks.actions")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -161,8 +166,8 @@ export default function AdminCoursesPage() {
                       </td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex flex-col items-end gap-1">
-                          <span className="text-xs font-medium text-muted-foreground">{c._count.modules} Modules</span>
-                          <span className="text-xs font-medium text-brand-primary">{c._count.enrollments} Students</span>
+                          <span className="text-xs font-medium text-muted-foreground">{c._count.phases} {t("admin.tracks.phases")}</span>
+                          <span className="text-xs font-medium text-brand-primary">{c._count.enrollments} {t("admin.tracks.students")}</span>
                         </div>
                       </td>
                       <td className="px-6 py-4 text-right">
@@ -173,14 +178,14 @@ export default function AdminCoursesPage() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuGroup>
-                              <DropdownMenuLabel>Moderation</DropdownMenuLabel>
+                              <DropdownMenuLabel>{t("admin.tracks.moderation")}</DropdownMenuLabel>
                               {c.status === "DRAFT" ? (
                                 <DropdownMenuItem className="cursor-pointer text-emerald-500 focus:text-emerald-600" onClick={() => handleApprove(c.id)}>
-                                  <CheckCircle className="mr-2 h-4 w-4" /> Approve & Publish
+                                  <CheckCircle className="mr-2 h-4 w-4" /> {t("admin.tracks.approve")}
                                 </DropdownMenuItem>
                               ) : (
                                 <DropdownMenuItem className="cursor-pointer text-amber-500 focus:text-amber-600" onClick={() => handleUnpublish(c.id)}>
-                                  <XCircle className="mr-2 h-4 w-4" /> Revert to Draft
+                                  <XCircle className="mr-2 h-4 w-4" /> {t("admin.tracks.revertDraft")}
                                 </DropdownMenuItem>
                               )}
                             </DropdownMenuGroup>
@@ -190,16 +195,22 @@ export default function AdminCoursesPage() {
                                 className="cursor-pointer"
                                 onClick={() => window.location.href = `/dashboard/admin/tracks/${c.id}`}
                               >
-                                <Pencil className="mr-2 h-4 w-4" /> Manage Track Content
+                                <Pencil className="mr-2 h-4 w-4" /> {t("admin.tracks.manageContent")}
+                              </DropdownMenuItem>
+                              <DropdownMenuItem 
+                                className="cursor-pointer"
+                                onClick={() => setReassignTrack({ id: c.id, title: c.title, instructorId: c.instructor?.id })}
+                              >
+                                <MoreHorizontal className="mr-2 h-4 w-4" /> {t("admin.tracks.reassign")}
                               </DropdownMenuItem>
                               <DropdownMenuItem 
                                 className="cursor-pointer"
                                 onClick={() => window.location.href = `/tracks/${c.id}`}
                               >
-                                <Eye className="mr-2 h-4 w-4" /> View Public Page
+                                <Eye className="mr-2 h-4 w-4" /> {t("admin.tracks.viewPublic")}
                               </DropdownMenuItem>
                               <DropdownMenuItem className="cursor-pointer">
-                                <BarChart className="mr-2 h-4 w-4" /> View Analytics
+                                <BarChart className="mr-2 h-4 w-4" /> {t("admin.tracks.viewAnalytics")}
                               </DropdownMenuItem>
                             </DropdownMenuGroup>
                           </DropdownMenuContent>
@@ -220,6 +231,18 @@ export default function AdminCoursesPage() {
           onSuccess={() => {
             fetchCourses();
           }} 
+        />
+      )}
+
+      {reassignTrack && (
+        <ReassignInstructorModal
+          trackId={reassignTrack.id}
+          trackTitle={reassignTrack.title}
+          currentInstructorId={reassignTrack.instructorId}
+          onClose={() => setReassignTrack(null)}
+          onSuccess={(updatedTrack) => {
+            setCourses(prev => prev.map(c => c.id === updatedTrack.id ? { ...c, instructor: updatedTrack.instructor } : c));
+          }}
         />
       )}
     </div>

@@ -25,6 +25,8 @@ const DEFAULT_ALLOWED_TYPES = [
   "video/mp4",
   "video/webm",
   "video/quicktime",
+  "video/x-msvideo",
+  "video/avi",
 ];
 
 function normalizePathForDb(filePath: string): string {
@@ -127,17 +129,7 @@ async function getAuthorizedLesson(
   moduleId: string,
   lessonId: string
 ) {
-  const cookieStore = await cookies();
-  const token = cookieStore.get("token")?.value;
-
-  if (!token) {
-    return {
-      ok: false as const,
-      response: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
-    };
-  }
-
-  const decoded = await verifyToken(token);
+  const decoded = await verifyToken();
 
   if (!decoded?.userId || !decoded?.role) {
     return {
@@ -333,9 +325,7 @@ export async function POST(
       const duration = await getVideoDurationSeconds(originalFilePath);
 
       const updatedVideoAsset = await db.videoAsset.update({
-        where: {
-          id: videoAsset.id,
-        },
+        where: { id: videoAsset.id },
         data: {
           hlsManifestPath: normalizePathForDb(hlsManifestPath),
           duration,
@@ -345,49 +335,46 @@ export async function POST(
       });
 
       await db.lesson.update({
-        where: {
-          id: lessonId,
-        },
+        where: { id: lessonId },
         data: {
           videoPath: normalizePathForDb(hlsManifestPath),
           duration,
         },
       });
 
-      return NextResponse.json(
-        {
-          message: "Video uploaded and converted successfully",
-          videoAsset: updatedVideoAsset,
-        },
-        { status: 201 }
-      );
+      return NextResponse.json({ message: "Video uploaded and converted to HLS successfully", videoAsset: updatedVideoAsset }, { status: 201 });
     } catch (conversionError) {
-      const errorMessage =
-        conversionError instanceof Error
-          ? conversionError.message
-          : "Video conversion failed";
+      console.warn("[FFMPEG_MISSING_FALLBACK]", conversionError);
+      
+      // Fallback: If ffmpeg is missing (e.g., local development), serve the raw MP4 directly from public directory
+      const publicVideosDir = path.join(process.cwd(), "public", "uploads", "videos", trackId, phaseId, moduleId, lessonId);
+      await ensureDirectory(publicVideosDir);
+      
+      const publicVideoPath = path.join(publicVideosDir, `video${extension}`);
+      await fs.copyFile(originalFilePath, publicVideoPath);
+      
+      const dbPublicPath = `/uploads/videos/${trackId}/${phaseId}/${moduleId}/${lessonId}/video${extension}`;
 
-      const failedVideoAsset = await db.videoAsset.update({
-        where: {
-          id: videoAsset.id,
-        },
+      const updatedVideoAsset = await db.videoAsset.update({
+        where: { id: videoAsset.id },
         data: {
-          status: "FAILED",
-          errorMessage,
+          status: "READY",
+          errorMessage: "HLS skipped, using raw MP4 fallback",
         },
       });
 
-      return NextResponse.json(
-        {
-          error: "Video uploaded but conversion failed",
-          videoAsset: failedVideoAsset,
+      await db.lesson.update({
+        where: { id: lessonId },
+        data: {
+          videoPath: dbPublicPath,
         },
-        { status: 500 }
-      );
+      });
+
+      return NextResponse.json({ message: "Video uploaded using raw MP4 fallback", videoAsset: updatedVideoAsset }, { status: 201 });
     }
   } catch (error) {
     console.error("[LESSON_VIDEO_UPLOAD_ERROR]", error);
 
-    return NextResponse.json({ error: "Internal Error" }, { status: 500 });
+    return NextResponse.json({ error: error instanceof Error ? error.message : String(error) }, { status: 500 });
   }
 }

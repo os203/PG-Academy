@@ -1,19 +1,12 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
+
 import { db } from "@/lib/db";
 import { verifyToken } from "@/lib/auth";
-import bcrypt from "bcryptjs";
+import { clerkClient } from "@clerk/nextjs/server";
 
 export async function POST(request: Request) {
   try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get("token")?.value;
-
-    if (!token) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const decoded = await verifyToken(token);
+    const decoded = await verifyToken();
 
     if (!decoded?.userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -44,15 +37,42 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "A user with this email already exists." }, { status: 400 });
     }
 
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
+    // Create user in Clerk
+    const clerk = await clerkClient();
+    
+    const nameParts = name.split(" ");
+    const firstName = nameParts[0];
+    const lastName = nameParts.length > 1 ? nameParts.slice(1).join(" ") : undefined;
 
-    // Create instructor
-    const newInstructor = await db.user.create({
-      data: {
+    let clerkUser;
+    try {
+      clerkUser = await clerk.users.createUser({
+        emailAddress: [email],
+        password: password,
+        firstName: firstName,
+        lastName: lastName,
+        publicMetadata: { role: "INSTRUCTOR" }
+      });
+    } catch (err: unknown) {
+      console.error("Clerk creation error:", err);
+      const clerkErr = err as { errors?: { message?: string }[] };
+      const errorMsg = clerkErr?.errors?.[0]?.message || "Failed to create user in Clerk";
+      return NextResponse.json({ error: errorMsg }, { status: 400 });
+    }
+
+    // Create instructor in Prisma immediately so the UI reflects it without waiting for webhook
+    const newInstructor = await db.user.upsert({
+      where: { id: clerkUser.id },
+      update: {
+        role: "INSTRUCTOR",
         name,
         email,
-        password: hashedPassword,
+      },
+      create: {
+        id: clerkUser.id,
+        name,
+        email,
+        password: "clerk-managed",
         role: "INSTRUCTOR",
       }
     });

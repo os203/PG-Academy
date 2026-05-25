@@ -12,17 +12,7 @@ function clampPercentage(value: number): number {
 
 export async function POST(req: NextRequest) {
   try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get("token")?.value;
-
-    if (!token) {
-      return NextResponse.json(
-        { error: "You must be logged in" },
-        { status: 401 }
-      );
-    }
-
-    const decoded = await verifyToken(token);
+    const decoded = await verifyToken();
 
     if (!decoded?.userId) {
       return NextResponse.json(

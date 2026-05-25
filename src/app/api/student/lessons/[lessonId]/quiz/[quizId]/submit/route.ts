@@ -16,14 +16,7 @@ export async function POST(
   try {
     const { quizId } = await params;
 
-    const cookieStore = await cookies();
-    const token = cookieStore.get("token")?.value;
-
-    if (!token) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const decoded = await verifyToken(token);
+    const decoded = await verifyToken();
 
     if (!decoded?.userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

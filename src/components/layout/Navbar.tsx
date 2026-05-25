@@ -1,49 +1,161 @@
 "use client";
 
-import Link from 'next/link';
-import { useAuth } from '@/context/AuthContext';
-import { ThemeToggle } from '@/components/ui/ThemeToggle';
-import MobileMenu from "../ui/mobileMenu";
+import Link from "next/link";
 import Image from "next/image";
-
-
+import { useState, useEffect } from "react";
+import { UserButton } from "@clerk/nextjs";
+import { useAuth } from "@/context/AuthContext";
+import { useLanguage } from "@/context/LanguageContext";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
+import { Menu, X } from "lucide-react";
 
 export default function Navbar() {
-  const { user } = useAuth();
+  const { isAuthenticated, user } = useAuth();
+  const { t } = useLanguage();
+  const [scrolled, setScrolled] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 50);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const navLinks = [
+    { href: "/", label: t("nav.home") },
+    { href: "/tracks", label: t("nav.tracks") },
+    { href: "/about", label: t("nav.about") },
+    { href: "/contact", label: t("nav.contact") },
+  ];
 
   return (
-    <nav className="fixed top-6 left-1/2 -translate-x-1/2 w-[95%] max-w-7xl z-50 bg-background/80 backdrop-blur-2xl border border-border rounded-3xl shadow-lg transition-all duration-300">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-20 items-center">
-          <Link href="/" className="shrink-0 flex items-center gap-2 hover:scale-105 transition-transform rounded-xl">
-            <Image src="/logo.jpg" alt="PG Academy" width={160} height={40} className="object-contain rounded-sm" priority />
-          </Link>
-          <div className="hidden md:flex space-x-8 items-center">
-            <Link href="/tracks" className="text-muted-foreground hover:text-foreground transition-colors font-medium">Tracks</Link>
-            <Link href="/about" className="text-muted-foreground hover:text-foreground transition-colors font-medium">About</Link>
-            <Link href="/contact" className="text-muted-foreground hover:text-foreground transition-colors font-medium">Contact</Link>
-            {user ? (
-              <div className="flex items-center space-x-4">
-                <Link href="/dashboard" className="text-brand-primary hover:text-brand-accent transition-colors font-medium flex items-center gap-2 bg-brand-primary/10 px-4 py-2 rounded-full">
-                  <div className="w-6 h-6 rounded-full bg-brand-primary flex items-center justify-center text-white text-xs font-bold">
-                    {user?.name ? user.name.charAt(0).toUpperCase() : "U"}
-                  </div>
-                  <span>Dashboard</span>
+    <>
+      <nav
+        className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 ${
+          scrolled
+            ? "bg-[#09090b]/40 backdrop-blur-md border-b border-[#bd9759]/10 shadow-lg"
+            : "bg-transparent"
+        }`}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16 md:h-20">
+            {/* Logo */}
+            <Link href="/" className="flex items-center gap-3 shrink-0">
+              <Image
+                src="/logo.jpg"
+                alt="PG Academy"
+                width={120}
+                height={32}
+                className="object-contain rounded-sm"
+                priority
+              />
+            </Link>
+
+            {/* Desktop Nav Links */}
+            <div className="hidden md:flex items-center gap-6 absolute left-1/2 -translate-x-1/2">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="text-[13px] font-semibold text-zinc-300 hover:text-white transition-colors duration-200"
+                >
+                  {link.label}
                 </Link>
-              </div>
-            ) : (
-              <>
-                <Link href="/login" className="text-muted-foreground hover:text-foreground transition-colors font-medium">Sign In</Link>
-                <Link href="/register" className="bg-violet-500 hover:bg-violet-600 text-white px-6 py-2.5 rounded-full font-medium transition-all hover:scale-105">
-                  Get Started
-                </Link>
-              </>
-            )}
-            <ThemeToggle />
+              ))}
+            </div>
+
+            {/* Right Section */}
+            <div className="hidden md:flex items-center gap-3">
+              <LanguageSwitcher />
+
+              {isAuthenticated ? (
+                <>
+                  <Link
+                    href={user?.role ? `/dashboard/${user.role.toLowerCase()}` : "/dashboard"}
+                    className="gold-btn px-5 py-2.5 rounded-lg text-sm"
+                  >
+                    {t("nav.dashboard")}
+                  </Link>
+                  <UserButton appearance={{ elements: { userButtonAvatarBox: "w-10 h-10 border-2 border-[#bd9759]" } }} />
+                </>
+              ) : (
+                <>
+                  <Link
+                    href="/sign-in"
+                    className="px-4 py-2 text-[13px] font-medium text-zinc-300 hover:text-white transition-colors"
+                  >
+                    {t("nav.login")}
+                  </Link>
+                  <Link
+                    href="/register"
+                    className="gold-btn px-5 py-2.5 rounded-lg text-sm"
+                  >
+                    {t("nav.register")}
+                  </Link>
+                </>
+              )}
+            </div>
+
+            {/* Mobile Menu Toggle */}
+            <div className="flex md:hidden items-center gap-2">
+              <LanguageSwitcher variant="compact" />
+              <button
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="p-2 text-zinc-300 hover:text-white transition-colors"
+              >
+                {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+              </button>
+            </div>
           </div>
-          <MobileMenu />
         </div>
-      </div>
-    </nav>
+
+        {/* Mobile Menu */}
+        {mobileMenuOpen && (
+          <div className="md:hidden glass-dark border-t border-[#bd9759]/10 animate-in slide-in-from-top-2 duration-200">
+            <div className="px-4 py-4 space-y-1">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block px-4 py-3 text-sm font-medium text-zinc-300 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
+                >
+                  {link.label}
+                </Link>
+              ))}
+              <div className="pt-3 border-t border-zinc-800 space-y-2">
+                {isAuthenticated ? (
+                  <Link
+                    href={user?.role ? `/dashboard/${user.role.toLowerCase()}` : "/dashboard"}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block gold-btn px-4 py-3 rounded-lg text-sm text-center"
+                  >
+                    {t("nav.dashboard")}
+                  </Link>
+                ) : (
+                  <>
+                    <Link
+                      href="/sign-in"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="block px-4 py-3 text-sm font-medium text-zinc-300 hover:text-white hover:bg-white/5 rounded-lg transition-colors text-center"
+                    >
+                      {t("nav.login")}
+                    </Link>
+                    <Link
+                      href="/sign-up"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="block gold-btn px-4 py-3 rounded-lg text-sm text-center"
+                    >
+                      {t("nav.register")}
+                    </Link>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </nav>
+      {/* Removed spacer div so hero section can reach the top */}
+    </>
   );
 }

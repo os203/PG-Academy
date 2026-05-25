@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useLanguage } from "@/context/LanguageContext";
 
 type TrackStatus = "DRAFT" | "PUBLISHED";
 
@@ -129,6 +130,7 @@ function getCategoryId(
 export default function InstructorDashboard() {
   const { user, isLoading, logout } = useAuth();
   const router = useRouter();
+  const { t } = useLanguage();
 
   const [tracks, setCourses] = useState<DashboardCourse[]>([]);
   const [loadingCourses, setLoadingCourses] = useState(true);
@@ -361,25 +363,25 @@ export default function InstructorDashboard() {
 
   const stats = [
     {
-      title: "Total Students",
+      title: t("instructor.dashboard.stats.students"),
       value: realStats ? realStats.totalStudents.toLocaleString() : "—",
       icon: Users,
       trend: "Across all tracks",
     },
     {
-      title: "Avg. Completion",
+      title: t("instructor.dashboard.stats.completion"),
       value: realStats ? `${realStats.avgCompletion}%` : "—",
       icon: BookOpen,
       trend: "Lesson completion",
     },
     {
-      title: "Total Revenue",
+      title: t("instructor.dashboard.stats.revenue"),
       value: realStats ? `$${realStats.totalRevenue.toLocaleString()}` : "—",
       icon: Wallet,
       trend: "Completed payments",
     },
     {
-      title: "Unanswered Q&A",
+      title: t("instructor.dashboard.stats.qa"),
       value: realStats ? realStats.unansweredQA.toString() : "—",
       icon: Activity,
       trend: "Needs reply",
@@ -400,10 +402,10 @@ export default function InstructorDashboard() {
         >
           <div>
             <h1 className="text-3xl font-bold tracking-tight text-foreground">
-              Welcome back, {user?.name || "Instructor"}
+              {t("instructor.dashboard.welcome").replace("{name}", user?.name || "Instructor")}
             </h1>
             <p className="text-muted-foreground mt-1">
-              Here is what&apos;s happening with your tracks today.
+              {t("instructor.dashboard.subtitle")}
             </p>
           </div>
 
@@ -413,7 +415,7 @@ export default function InstructorDashboard() {
               onClick={logout}
               className="hidden sm:flex items-center gap-2 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 border-red-200 dark:border-red-900/30"
             >
-              <LogOut className="h-4 w-4" /> Log out
+              <LogOut className="h-4 w-4" /> {t("instructor.dashboard.logout")}
             </Button>
 
             <Button
@@ -423,7 +425,7 @@ export default function InstructorDashboard() {
               }
               className="hidden sm:flex items-center gap-2"
             >
-              <Megaphone className="h-4 w-4" /> Announce
+              <Megaphone className="h-4 w-4" /> {t("instructor.dashboard.announce")}
             </Button>
           </div>
         </motion.div>
@@ -693,10 +695,10 @@ export default function InstructorDashboard() {
           <div className="xl:col-span-2 space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <h2 className="text-xl font-semibold text-foreground">
-                Your Tracks
+                {t("instructor.dashboard.yourTracks")}
               </h2>
               <AnimatedTabs
-                tabs={["All Tracks", "Published", "Drafts"]}
+                tabs={[t("admin.tracks.allTracks"), t("shared.published"), t("shared.draft")]}
                 variant="default"
               />
             </div>
@@ -718,7 +720,7 @@ export default function InstructorDashboard() {
 
           <div className="space-y-6">
             <h2 className="text-xl font-semibold text-foreground">
-              Recent Activity
+              {t("instructor.dashboard.recentActivity")}
             </h2>
             <div className="flex justify-start">
               <NotificationList

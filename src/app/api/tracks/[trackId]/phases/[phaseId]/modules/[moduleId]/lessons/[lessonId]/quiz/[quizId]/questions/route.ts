@@ -53,26 +53,22 @@ async function authorizeQuizOwner(
   lessonId: string,
   quizId: string
 ) {
-  const cookieStore = await cookies();
-  const token = cookieStore.get("token")?.value;
-
-  if (!token) {
-    return {
-      ok: false as const,
-      response: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
-    };
-  }
-
-  const decoded = await verifyToken(token);
+  console.log("[authorizeQuizOwner] Starting auth for quizId:", quizId);
+  
+  const decoded = await verifyToken();
 
   if (!decoded?.userId || !decoded?.role) {
+    console.error("[authorizeQuizOwner] verifyToken returned null/invalid:", decoded);
     return {
       ok: false as const,
       response: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
     };
   }
 
+  console.log("[authorizeQuizOwner] User:", decoded.userId, "Role:", decoded.role);
+
   if (decoded.role !== "ADMIN" && decoded.role !== "INSTRUCTOR") {
+    console.error("[authorizeQuizOwner] Role not ADMIN/INSTRUCTOR:", decoded.role);
     return {
       ok: false as const,
       response: NextResponse.json({ error: "Forbidden" }, { status: 403 }),
@@ -115,11 +111,14 @@ async function authorizeQuizOwner(
   });
 
   if (!quiz) {
+    console.error("[authorizeQuizOwner] Quiz not found with params:", { quizId, lessonId, moduleId, phaseId, trackId });
     return {
       ok: false as const,
       response: NextResponse.json({ error: "Quiz not found" }, { status: 404 }),
     };
   }
+
+  console.log("[authorizeQuizOwner] Quiz found:", quiz.id);
 
   if (
     decoded.role === "INSTRUCTOR" &&
@@ -154,6 +153,8 @@ export async function GET(
   try {
     const { trackId, phaseId, moduleId, lessonId, quizId } = await params;
 
+    console.log("[QUIZ_QUESTIONS_GET] Params:", { trackId, phaseId, moduleId, lessonId, quizId });
+
     const authResult = await authorizeQuizOwner(
       trackId,
       phaseId,
@@ -163,6 +164,7 @@ export async function GET(
     );
 
     if (!authResult.ok) {
+      console.error("[QUIZ_QUESTIONS_GET] Auth failed");
       return authResult.response;
     }
 

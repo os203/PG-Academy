@@ -18,6 +18,7 @@ import {
 import LessonQuizManager, { QuizMeta } from "@/components/LessonQuizManager";
 import LessonResourceManager from "@/components/LessonResourceManager";
 import EditTrackDetailsModal from "@/components/admin/EditTrackDetailsModal";
+import { useLanguage } from "@/context/LanguageContext";
 
 interface Lesson {
   id: string;
@@ -176,6 +177,8 @@ export default function InstructorTrackManager({
   const [uploadingVideoLessonId, setUploadingVideoLessonId] = useState<
     string | null
   >(null);
+  const [uploadProgress, setUploadProgress] = useState<number>(0);
+  const { t } = useLanguage();
 
   const fetchCourseData = useCallback(async (): Promise<void> => {
     try {
@@ -674,34 +677,78 @@ export default function InstructorTrackManager({
   ): Promise<void> => {
     if (!file) return;
 
+    // File format validation
+    const allowedExtensions = ['.mp4', '.mov', '.avi', '.webm'];
+    const fileExt = '.' + (file.name.split('.').pop() || '').toLowerCase();
+    if (!allowedExtensions.includes(fileExt)) {
+      alert(t("video.invalidFormat"));
+      return;
+    }
+
+    // File size validation (500MB)
+    const maxSize = 500 * 1024 * 1024;
+    if (file.size > maxSize) {
+      alert(t("video.fileTooLarge"));
+      return;
+    }
+
     setUploadingVideoLessonId(lessonId);
+    setUploadProgress(0);
 
     try {
-      const formData = new FormData();
-      formData.append("file", file);
+      const extension = file.name.split('.').pop() || 'mp4';
+      const sanitizedFile = new File([file], `upload_${Date.now()}.${extension}`, { type: file.type });
 
-      const res = await fetch(
-        `/api/tracks/${trackId}/phases/${phaseId}/modules/${moduleId}/lessons/${lessonId}/video`,
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
+      // Use XMLHttpRequest for progress tracking
+      const result = await new Promise<{ ok: boolean; error?: string }>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
 
-      const data = await readJsonSafely<VideoUploadResponse>(res);
+        xhr.upload.addEventListener('progress', (event) => {
+          if (event.lengthComputable) {
+            const percent = Math.round((event.loaded / event.total) * 100);
+            setUploadProgress(percent);
+          }
+        });
 
-      if (!res.ok) {
-        alert(data?.error || "Failed to upload lesson video");
+        xhr.addEventListener('load', () => {
+          try {
+            const respData = JSON.parse(xhr.responseText);
+            if (xhr.status >= 200 && xhr.status < 300 && respData?.ok) {
+              resolve({ ok: true });
+            } else {
+              resolve({ ok: false, error: respData?.error || 'Upload failed' });
+            }
+          } catch {
+            resolve({ ok: false, error: 'Invalid response' });
+          }
+        });
+
+        xhr.addEventListener('error', () => reject(new Error('Network error')));
+        xhr.addEventListener('abort', () => reject(new Error('Upload aborted')));
+
+        xhr.open('POST', '/api/raw-video-upload');
+        xhr.setRequestHeader('x-track-id', trackId);
+        xhr.setRequestHeader('x-phase-id', phaseId);
+        xhr.setRequestHeader('x-module-id', moduleId);
+        xhr.setRequestHeader('x-lesson-id', lessonId);
+        xhr.setRequestHeader('x-file-name', sanitizedFile.name);
+        xhr.setRequestHeader('Content-Type', 'application/octet-stream');
+        xhr.send(sanitizedFile);
+      });
+
+      if (!result.ok) {
+        alert(result.error || t("video.uploadFailed"));
         return;
       }
 
-      alert("Video uploaded and converted successfully");
+      setUploadProgress(100);
       await fetchCourseData();
     } catch (error) {
       console.error(error);
-      alert("An error occurred while uploading the lesson video");
+      alert(t("video.uploadFailed"));
     } finally {
       setUploadingVideoLessonId(null);
+      setUploadProgress(0);
     }
   };
 
@@ -734,42 +781,40 @@ export default function InstructorTrackManager({
 
   return (
     <div className="max-w-5xl mx-auto p-6 space-y-8">
-      <div className="bg-linear-to-r from-brand-primary to-brand-accent rounded-3xl p-8 text-white shadow-lg relative overflow-hidden">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-black mb-2">{track.title}</h1>
-            <p className="opacity-80 flex items-center gap-2 mb-2">
-              <Layers size={16} />
-              Track Content Management
-            </p>
-            <p className="text-sm opacity-80">
-              {track.description || "No description for this track"}
-            </p>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-gradient-to-r from-brand-primary/20 to-transparent p-6 rounded-2xl border border-brand-primary/30 mb-8">
+        <div>
+          <h1 className="text-3xl font-black text-white mb-2">{track.title}</h1>
+          <div className="flex items-center gap-2 text-brand-primary font-medium text-sm">
+            <Layers size={16} />
+            {t("instructor.trackManager.title")}
           </div>
-
-          <button
-            type="button"
-            onClick={() => setShowEditDetailsModal(true)}
-            className="shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white text-sm font-semibold transition-all border border-white/20"
-          >
-            <Pencil size={16} />
-            Edit Details
-          </button>
+          <p className="text-sm opacity-80 mt-2">
+            {track.description || t("instructor.trackManager.noDescription")}
+          </p>
         </div>
+
+        <button
+          type="button"
+          onClick={() => setShowEditDetailsModal(true)}
+          className="shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white text-sm font-semibold transition-all border border-white/20"
+        >
+          <Pencil size={16} />
+          {t("instructor.trackManager.editDetails")}
+        </button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-1">
           <div className="bg-card border border-border rounded-2xl p-6 shadow-sm sticky top-6">
             <h3 className="font-bold mb-4 text-foreground flex items-center gap-2">
-              <Plus size={18} className="text-brand-primary" /> Add New Phase
+              <Plus size={18} className="text-brand-primary" /> {t("instructor.trackManager.addPhase")}
             </h3>
 
             <input
               value={newPhaseTitle}
               onChange={(e) => setNewPhaseTitle(e.target.value)}
               className="w-full border border-border rounded-xl px-4 py-3 mb-3 outline-none focus:ring-2 focus:ring-brand-primary text-foreground placeholder:text-muted-foreground bg-background"
-              placeholder="Phase title..."
+              placeholder={t("instructor.trackManager.phaseTitle")}
             />
 
             <button
@@ -778,7 +823,7 @@ export default function InstructorTrackManager({
               disabled={addingPhase}
               className="w-full bg-brand-primary text-white font-bold py-3 rounded-xl hover:bg-brand-primary/90 transition-all disabled:opacity-70"
             >
-              {addingPhase ? "Saving..." : "Save Phase"}
+              {addingPhase ? t("common.loading") : t("instructor.trackManager.savePhase")}
             </button>
           </div>
         </div>
@@ -786,7 +831,7 @@ export default function InstructorTrackManager({
         <div className="lg:col-span-2 space-y-6">
           <h2 className="text-xl font-bold flex items-center gap-2 text-foreground">
             <LayoutGrid className="text-brand-primary" />
-            Curriculum Structure
+            {t("instructor.trackManager.curriculum")}
           </h2>
 
           {normalizedPhases.length > 0 ? (
@@ -841,7 +886,7 @@ export default function InstructorTrackManager({
                             {phase.title}
                           </h3>
                           <p className="text-sm text-muted-foreground mt-1">
-                            Modules: {phase.modules.length}
+                            {t("instructor.trackManager.modules")}: {phase.modules.length}
                           </p>
                         </div>
                       )}
@@ -935,7 +980,7 @@ export default function InstructorTrackManager({
                                     M{moduleIndex + 1}: {module.title}
                                   </h4>
                                   <p className="text-xs text-muted-foreground mt-0.5">
-                                    Lessons: {module.lessons.length}
+                                    {t("instructor.trackManager.lessons")}: {module.lessons.length}
                                   </p>
                                 </div>
                               )}
@@ -959,7 +1004,7 @@ export default function InstructorTrackManager({
                                     : "text-amber-600 hover:bg-amber-50"
                                 }`}
                                 title={
-                                  module.isPublished ? "Published" : "Draft"
+                                  module.isPublished ? t("instructor.trackManager.published") : t("instructor.trackManager.draft")
                                 }
                               >
                                 {module.isPublished ? (
@@ -968,7 +1013,7 @@ export default function InstructorTrackManager({
                                   <EyeOff size={16} />
                                 )}
                                 <span className="hidden sm:inline">
-                                  {module.isPublished ? "Published" : "Draft"}
+                                  {module.isPublished ? t("instructor.trackManager.published") : t("instructor.trackManager.draft")}
                                 </span>
                               </button>
 
@@ -1198,13 +1243,13 @@ export default function InstructorTrackManager({
                                               ) : (
                                                 <Video size={14} />
                                               )}
-                                              Lesson Video
+                                              {t("video.lessonVideo")}
                                             </p>
 
                                             <p className="text-xs text-muted-foreground mt-1">
                                               {lesson.videoPath
-                                                ? "A lesson video is uploaded and converted."
-                                                : "No lesson video uploaded yet."}
+                                                ? t("video.hasVideo")
+                                                : t("video.noVideo")}
                                             </p>
                                           </div>
 
@@ -1216,18 +1261,18 @@ export default function InstructorTrackManager({
                                                   size={14}
                                                   className="animate-spin"
                                                 />
-                                                Uploading...
+                                                {t("video.uploading")}
                                               </>
                                             ) : (
                                               <>
                                                 <Upload size={14} />
-                                                Upload Video
+                                                {t("video.upload")}
                                               </>
                                             )}
 
                                             <input
                                               type="file"
-                                              accept="video/mp4,video/webm,video/quicktime"
+                                              accept=".mp4,.mov,.avi,.webm"
                                               className="hidden"
                                               disabled={
                                                 uploadingVideoLessonId ===

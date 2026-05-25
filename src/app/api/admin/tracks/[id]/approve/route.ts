@@ -10,15 +10,7 @@ export async function PATCH(
   try {
     const { id } = await params;
     console.log("PATCH /api/admin/tracks/[id]/approve - id:", id);
-    const cookieStore = await cookies();
-    const token = cookieStore.get("token")?.value;
-    
-    if (!token) {
-      console.log("No token found");
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const user = await verifyToken(token);
+    const user = await verifyToken();
     
     if (!user || user.role !== "ADMIN") {
       console.log("Invalid user or not ADMIN:", user);

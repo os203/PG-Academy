@@ -1,13 +1,12 @@
+"use client";
+
 import Link from "next/link";
 import { ArrowLeft, Clock, MessageSquareText, ShieldCheck, Send } from "lucide-react";
-import type { Metadata } from 'next';
-
-export const metadata: Metadata = {
-  title: 'Contact Us | PG Academy',
-  description: 'Official Contact Form for PG Academy',
-};
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function ContactPage() {
+  const { t } = useLanguage();
+
   return (
     <div className="min-h-screen pt-32 pb-20 relative overflow-hidden">
       {/* Background decorations matching the website's dark theme */}
@@ -20,7 +19,7 @@ export default function ContactPage() {
           className="inline-flex items-center text-muted-foreground hover:text-brand-primary transition-colors mb-8 group"
         >
           <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
-          Back to homepage
+          {t("nav.backToHome")}
         </Link>
 
         <div className="bg-card/50 backdrop-blur-xl border border-border/50 rounded-3xl p-8 md:p-12 shadow-2xl relative overflow-hidden">
@@ -28,15 +27,14 @@ export default function ContactPage() {
           <div className="mb-12">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-brand-primary/10 border border-brand-primary/20 text-brand-primary text-sm font-medium mb-6">
               <MessageSquareText className="w-4 h-4" />
-              <span>Contact Us</span>
+              <span>{t("contact.badge")}</span>
             </div>
             
             <h1 className="text-4xl md:text-5xl font-bold mb-4 tracking-tight">
-              Official Contact Form
+              {t("contact.title")}
             </h1>
             <p className="text-muted-foreground text-lg max-w-2xl leading-relaxed">
-              Send your inquiry directly to the PG Academy team using the form below. 
-              Share clear details so we can support you quickly and accurately.
+              {t("contact.subtitle")}
             </p>
           </div>
 
@@ -44,30 +42,30 @@ export default function ContactPage() {
             
             {/* Form Section */}
             <div className="lg:col-span-7 bg-background/40 border border-border/40 rounded-2xl p-6 md:p-8">
-              <h2 className="text-2xl font-semibold mb-6">Send your message</h2>
+              <h2 className="text-2xl font-semibold mb-6">{t("contact.form.title")}</h2>
               
               <form className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <label htmlFor="fullName" className="text-sm font-medium text-foreground">
-                      Full name
+                      {t("contact.form.nameLabel")}
                     </label>
                     <input 
                       type="text" 
                       id="fullName"
-                      placeholder="Enter your name" 
+                      placeholder={t("contact.form.namePlaceholder")} 
                       className="w-full px-4 py-3 bg-background/50 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-primary/50 transition-all placeholder:text-muted-foreground/50"
                     />
                   </div>
                   
                   <div className="space-y-2">
                     <label htmlFor="email" className="text-sm font-medium text-foreground">
-                      Email
+                      {t("contact.form.emailLabel")}
                     </label>
                     <input 
                       type="email" 
                       id="email"
-                      placeholder="name@example.com" 
+                      placeholder={t("contact.form.emailPlaceholder")} 
                       className="w-full px-4 py-3 bg-background/50 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-primary/50 transition-all placeholder:text-muted-foreground/50"
                     />
                   </div>
@@ -75,28 +73,28 @@ export default function ContactPage() {
 
                 <div className="space-y-2">
                   <label htmlFor="inquiryType" className="text-sm font-medium text-foreground">
-                    Inquiry type
+                    {t("contact.form.typeLabel")}
                   </label>
                   <select 
                     id="inquiryType"
                     className="w-full px-4 py-3 bg-background/50 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-primary/50 transition-all appearance-none text-foreground"
                     defaultValue="general"
                   >
-                    <option value="general" className="bg-background">General inquiry</option>
-                    <option value="support" className="bg-background">Technical Support</option>
-                    <option value="billing" className="bg-background">Billing & Payments</option>
-                    <option value="academic" className="bg-background">Academic Follow-up</option>
+                    <option value="general" className="bg-background">{t("contact.form.typeGeneral")}</option>
+                    <option value="support" className="bg-background">{t("contact.form.typeSupport")}</option>
+                    <option value="billing" className="bg-background">{t("contact.form.typeBilling")}</option>
+                    <option value="academic" className="bg-background">{t("contact.form.typeAcademic")}</option>
                   </select>
                 </div>
 
                 <div className="space-y-2">
                   <label htmlFor="message" className="text-sm font-medium text-foreground">
-                    Message
+                    {t("contact.form.messageLabel")}
                   </label>
                   <textarea 
                     id="message"
                     rows={5}
-                    placeholder="Write your request details or the issue you need help with..." 
+                    placeholder={t("contact.form.messagePlaceholder")} 
                     className="w-full px-4 py-3 bg-background/50 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-primary/50 transition-all placeholder:text-muted-foreground/50 resize-y"
                   ></textarea>
                 </div>
@@ -106,7 +104,7 @@ export default function ContactPage() {
                   className="inline-flex items-center justify-center gap-2 bg-brand-primary hover:bg-brand-accent text-white px-8 py-3.5 rounded-xl font-medium transition-all hover:scale-[1.02] active:scale-[0.98] w-full sm:w-auto"
                 >
                   <Send className="w-4 h-4" />
-                  <span>Send Message</span>
+                  <span>{t("contact.form.submit")}</span>
                 </button>
               </form>
             </div>
@@ -116,14 +114,14 @@ export default function ContactPage() {
               
               {/* How we handle requests */}
               <div className="bg-background/40 border border-border/40 rounded-2xl p-6 md:p-8">
-                <h3 className="text-xl font-semibold mb-6">How we handle requests</h3>
+                <h3 className="text-xl font-semibold mb-6">{t("contact.sidebar.title1")}</h3>
                 <ul className="space-y-5">
                   <li className="flex gap-4">
                     <div className="shrink-0 mt-0.5">
                       <Clock className="w-5 h-5 text-brand-primary" />
                     </div>
                     <p className="text-sm text-muted-foreground leading-relaxed">
-                      Requests are reviewed continuously and answered based on inquiry type.
+                      {t("contact.sidebar.p1")}
                     </p>
                   </li>
                   <li className="flex gap-4">
@@ -131,7 +129,7 @@ export default function ContactPage() {
                       <MessageSquareText className="w-5 h-5 text-brand-primary" />
                     </div>
                     <p className="text-sm text-muted-foreground leading-relaxed">
-                      The clearer your issue description, the faster and better our response.
+                      {t("contact.sidebar.p2")}
                     </p>
                   </li>
                   <li className="flex gap-4">
@@ -139,7 +137,7 @@ export default function ContactPage() {
                       <ShieldCheck className="w-5 h-5 text-brand-primary" />
                     </div>
                     <p className="text-sm text-muted-foreground leading-relaxed">
-                      Submitted data is used only for communication and academic follow-up.
+                      {t("contact.sidebar.p3")}
                     </p>
                   </li>
                 </ul>
@@ -147,7 +145,7 @@ export default function ContactPage() {
 
               {/* Social Media */}
               <div className="bg-background/40 border border-border/40 rounded-2xl p-6 md:p-8">
-                <h3 className="text-xl font-semibold mb-6">Follow Us on Social Media</h3>
+                <h3 className="text-xl font-semibold mb-6">{t("contact.sidebar.title2")}</h3>
                 <div className="grid grid-cols-2 gap-4">
                   <a href="#" className="flex items-center gap-3 px-4 py-3 rounded-xl border border-border/50 hover:bg-border/50 hover:border-brand-primary/30 transition-all group">
                     <svg className="w-5 h-5 text-muted-foreground group-hover:text-brand-primary transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

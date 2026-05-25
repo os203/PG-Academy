@@ -1,9 +1,6 @@
-import { SignJWT, jwtVerify } from "jose";
-import bcrypt from "bcryptjs";
-
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || "fallback_secret_key_DO_NOT_USE_IN_PROD"
-);
+import { auth } from "@clerk/nextjs/server";
+import { db } from "@/lib/db";
+import { NextResponse } from "next/server";
 
 export interface JwtPayload {
   userId: string;
@@ -11,65 +8,53 @@ export interface JwtPayload {
   role: string;
 }
 
-export async function signAccessToken(payload: JwtPayload): Promise<string> {
-  return new SignJWT({ ...payload })
-    .setProtectedHeader({ alg: "HS256" })
-    .setIssuedAt()
-    .setExpirationTime("15m")
-    .sign(JWT_SECRET);
-}
-
-export async function signRefreshToken(payload: JwtPayload): Promise<string> {
-  return new SignJWT({ ...payload })
-    .setProtectedHeader({ alg: "HS256" })
-    .setIssuedAt()
-    .setExpirationTime("7d")
-    .sign(JWT_SECRET);
-}
-
-export async function verifyToken(token: string): Promise<JwtPayload | null> {
+// Shim for API routes that previously verified JWTs
+export async function verifyToken(_token?: string): Promise<JwtPayload | null> {
   try {
-    const { payload } = await jwtVerify(token, JWT_SECRET);
-    return payload as unknown as JwtPayload;
+    const { userId } = await auth();
+    if (!userId) return null;
+
+    const user = await db.user.findUnique({
+      where: { id: userId },
+      select: { id: true, email: true, role: true },
+    });
+
+    if (!user) return null;
+
+    return {
+      userId: user.id,
+      email: user.email,
+      role: user.role,
+    };
   } catch (error) {
     return null;
   }
 }
 
-export async function hashPassword(password: string): Promise<string> {
-  const salt = await bcrypt.genSalt(10);
-  return bcrypt.hash(password, salt);
-}
-
-export async function comparePasswords(password: string, hash: string): Promise<boolean> {
-  return bcrypt.compare(password, hash);
-}
-
-import { db } from "@/lib/db";
-import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
-
+// Shim for authorization logic
 export async function getAuthorizedCourse(trackId: string) {
-  const cookieStore = await cookies();
-  const token = cookieStore.get("token")?.value;
+  const { userId } = await auth();
 
-  if (!token) {
+  if (!userId) {
     return {
       ok: false as const,
       response: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
     };
   }
 
-  const decoded = await verifyToken(token);
+  const user = await db.user.findUnique({
+    where: { id: userId },
+    select: { role: true },
+  });
 
-  if (!decoded?.userId || !decoded?.role) {
+  if (!user?.role) {
     return {
       ok: false as const,
       response: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
     };
   }
 
-  if (decoded.role !== "ADMIN" && decoded.role !== "INSTRUCTOR") {
+  if (user.role !== "ADMIN" && user.role !== "INSTRUCTOR") {
     return {
       ok: false as const,
       response: NextResponse.json({ error: "Forbidden" }, { status: 403 }),
@@ -78,11 +63,11 @@ export async function getAuthorizedCourse(trackId: string) {
 
   const track = await db.track.findFirst({
     where:
-      decoded.role === "ADMIN"
+      user.role === "ADMIN"
         ? { id: trackId }
         : {
             id: trackId,
-            instructorId: decoded.userId,
+            instructorId: userId,
           },
   });
 
@@ -99,6 +84,6 @@ export async function getAuthorizedCourse(trackId: string) {
   return {
     ok: true as const,
     track,
-    decoded,
+    decoded: { userId, role: user.role },
   };
 }
