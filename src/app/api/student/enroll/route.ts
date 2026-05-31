@@ -80,45 +80,29 @@ export async function POST(req: NextRequest) {
 
     // If enrollment already exists
     if (existingEnrollment) {
-      // If free track and enrollment is still pending/rejected, approve it
-      if (existingEnrollment.status !== "APPROVED") {
-        const updatedEnrollment = await db.enrollment.update({
-          where: {
-            id: existingEnrollment.id,
-          },
-          data: {
-            status: "APPROVED",
-          },
-        });
-
-        return NextResponse.json({
-          message: "Enrollment approved successfully",
-          enrollment: updatedEnrollment,
-          alreadyEnrolled: true,
-        });
-      }
-
       return NextResponse.json({
         message: "You are already enrolled in this track",
         enrollment: existingEnrollment,
         alreadyEnrolled: true,
+        status: existingEnrollment.status,
       });
     }
 
-    // Free track enrollment should be approved immediately
+    // Free track enrollment — create as PENDING, admin will approve
     const enrollment = await db.enrollment.create({
       data: {
         userId: currentUser.id,
         trackId,
-        status: "APPROVED",
+        status: "PENDING",
       },
     });
 
     return NextResponse.json(
       {
-        message: "Enrolled successfully",
+        message: "Enrollment request submitted successfully. You will be notified once approved.",
         enrollment,
         alreadyEnrolled: false,
+        pending: true,
       },
       { status: 201 }
     );

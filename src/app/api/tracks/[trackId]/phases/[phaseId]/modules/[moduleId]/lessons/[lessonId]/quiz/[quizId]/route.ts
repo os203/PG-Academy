@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { db } from "@/lib/db";
-import { verifyToken } from "@/lib/auth";
+import { auth } from "@clerk/nextjs/server";
 
 function normalizePassingScore(value: unknown): number {
   const num = Number(value);
@@ -26,21 +25,27 @@ function normalizeMaxAttempts(value: unknown): number | null {
 }
 
 async function authorizeQuizOwner(
-  token: string | undefined,
   trackId: string,
   phaseId: string,
   moduleId: string,
   lessonId: string,
   quizId: string
 ) {
-  if (!token) {
+  const { userId } = await auth();
+
+  if (!userId) {
     return {
       ok: false as const,
       response: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
     };
   }
 
-  const decoded = await verifyToken();
+  const user = await db.user.findUnique({
+    where: { id: userId },
+    select: { role: true },
+  });
+
+  const decoded = user ? { userId, role: user.role } : null;
 
   if (!decoded?.userId || !decoded?.role) {
     return {
@@ -131,11 +136,7 @@ export async function PATCH(
   try {
     const { trackId, phaseId, moduleId, lessonId, quizId } = await params;
 
-    const cookieStore = await cookies();
-    const token = cookieStore.get("token")?.value;
-
     const authResult = await authorizeQuizOwner(
-      token,
       trackId,
       phaseId,
       moduleId,
@@ -195,11 +196,7 @@ export async function DELETE(
   try {
     const { trackId, phaseId, moduleId, lessonId, quizId } = await params;
 
-    const cookieStore = await cookies();
-    const token = cookieStore.get("token")?.value;
-
     const authResult = await authorizeQuizOwner(
-      token,
       trackId,
       phaseId,
       moduleId,

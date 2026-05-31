@@ -64,7 +64,7 @@ export default function CoursesPage() {
           </p>
           <div className="flex flex-wrap items-center gap-4">
             <Link 
-              href="/register" 
+              href="/sign-up" 
               className="px-8 py-4 rounded-lg bg-[#bd9759] text-black font-bold hover:bg-[#a6844c] transition-all shadow-lg hover:shadow-xl hover:-translate-y-1"
             >
               {t("tracksHub.btnApply")}
@@ -123,7 +123,7 @@ export default function CoursesPage() {
                       {track.desc}
                     </p>
                   </div>
-                  <Link href="/register" className="inline-flex self-start items-center gold-btn px-6 py-2.5 rounded-lg text-sm font-semibold">
+                  <Link href="/sign-up" className="inline-flex self-start items-center gold-btn px-6 py-2.5 rounded-lg text-sm font-semibold">
                     {t("tracksHub.startRegistration")}
                   </Link>
                 </div>

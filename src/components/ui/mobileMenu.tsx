@@ -97,11 +97,11 @@ export default function MobileMenu() {
                         </Link>
                     ) : (
                         <>
-                            <Link href="/login" onClick={() => setIsOpen(false)} className="hover:text-brand-accent">
+                            <Link href="/sign-in" onClick={() => setIsOpen(false)} className="hover:text-brand-accent">
                                 Sign In
                             </Link>
                             <Link
-                                href="/register"
+                                href="/sign-up"
                                 onClick={() => setIsOpen(false)}
                                 className="bg-brand-primary text-white px-5 py-2 rounded-full text-center"
                             >

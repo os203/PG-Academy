@@ -17,7 +17,7 @@ export default function UnauthorizedPage() {
 
           <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
             <Link
-              href="/login"
+              href="/sign-in"
               className="inline-flex items-center justify-center rounded-2xl bg-brand-primary text-white px-6 py-3 text-sm font-semibold transition hover:opacity-90 shadow-lg"
             >
               Sign In

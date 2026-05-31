@@ -55,7 +55,7 @@ function ResetPasswordForm() {
       } else {
         setSuccess(true);
         setTimeout(() => {
-          router.push("/login");
+          router.push("/sign-in");
         }, 3000);
       }
     } catch (err) {
@@ -117,7 +117,7 @@ function ResetPasswordForm() {
               </p>
             </div>
             <Link 
-              href="/login" 
+              href="/sign-in" 
               className="block w-full py-3 px-4 bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium rounded-xl transition text-center"
             >
               Go to Login Now

@@ -208,7 +208,7 @@ export default function InstructorDashboard() {
 
   useEffect(() => {
     if (!isLoading && !user) {
-      router.push("/login");
+      router.push("/sign-in");
     }
   }, [user, isLoading, router]);
 

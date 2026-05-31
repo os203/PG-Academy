@@ -21,6 +21,8 @@ import {
   CreditCard,
   BarChart3,
   ScrollText,
+  Heart,
+  ClipboardList,
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -63,7 +65,7 @@ export default function Sidebar() {
       label: t("nav.wishlist"),
       href: `/dashboard/wishlist`,
       icon: <ListTodo size={20} />,
-      roles: ["student", "instructor"],
+      roles: ["student"],
     },
     {
       label: t("nav.notifications"),
@@ -126,6 +128,12 @@ export default function Sidebar() {
       roles: ["admin"],
     },
     {
+      label: "Enrollments",
+      href: "/dashboard/admin/enrollments",
+      icon: <ClipboardList size={20} />,
+      roles: ["admin"],
+    },
+    {
       label: t("nav.transactions"),
       href: "/dashboard/admin/transactions",
       icon: <CreditCard size={20} />,
@@ -141,6 +149,12 @@ export default function Sidebar() {
       label: t("nav.systemLogs"),
       href: "/dashboard/admin/logs",
       icon: <ScrollText size={20} />,
+      roles: ["admin"],
+    },
+    {
+      label: "Wishlist Insights",
+      href: "/dashboard/admin/wishlist-analytics",
+      icon: <Heart size={20} />,
       roles: ["admin"],
     },
     {

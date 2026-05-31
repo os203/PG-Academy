@@ -16,7 +16,7 @@ export default function DashboardGateway() {
         router.push(`/dashboard/${user.role.toLowerCase()}`);
       } else {
         // If no user/role, send back to login
-        router.push('/login');
+        router.push('/sign-in');
       }
     }
   }, [user, isLoading, router]);

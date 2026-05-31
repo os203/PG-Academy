@@ -105,7 +105,7 @@ export default function Home() {
           </motion.p>
           
           <motion.div variants={itemVariants} className="flex flex-col sm:flex-row gap-4 items-center justify-start w-full self-start">
-            <Link href="/register" className="w-full sm:w-auto gold-btn px-8 py-3.5 rounded-lg font-semibold text-lg flex items-center justify-center shadow-xl hover:shadow-2xl transition-all group">
+            <Link href="/sign-up" className="w-full sm:w-auto gold-btn px-8 py-3.5 rounded-lg font-semibold text-lg flex items-center justify-center shadow-xl hover:shadow-2xl transition-all group">
               {t('home.hero.cta')}
               <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform rtl:rotate-180 rtl:mr-2 rtl:ml-0" />
             </Link>
@@ -271,7 +271,7 @@ export default function Home() {
                       {track.desc}
                     </p>
                   </div>
-                  <Link href="/register" className="inline-flex items-center justify-center bg-[#bd9759] hover:bg-[#a6844b] text-black font-bold text-sm px-5 py-2.5 rounded-lg transition-colors w-fit">
+                  <Link href="/sign-up" className="inline-flex items-center justify-center bg-[#bd9759] hover:bg-[#a6844b] text-black font-bold text-sm px-5 py-2.5 rounded-lg transition-colors w-fit">
                     {t('home.exploreTrack')} <span className="mx-2">→</span>
                   </Link>
                 </div>
@@ -372,7 +372,7 @@ export default function Home() {
           <div className="rounded-2xl border border-[#bd9759]/20 bg-[#0a0805]/80 p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl shadow-black">
             <p className="text-[15px] text-zinc-200 font-medium">{t('home.faq.cta')}</p>
             <Link 
-              href="/register"
+              href="/sign-up"
               className="gold-btn px-6 py-3 rounded-lg text-sm font-semibold shrink-0"
             >
               {t('home.hero.cta')}

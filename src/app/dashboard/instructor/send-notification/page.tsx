@@ -1,26 +1,18 @@
-import { cookies } from "next/headers";
+import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
-import { verifyToken } from "@/lib/auth";
 import SendNotificationForm from "@/app/dashboard/instructor/send-notification/SendNotificationForm";
 
 export default async function InstructorSendNotificationPage() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get("token")?.value;
+  const { userId } = await auth();
 
-  if (!token) {
-    redirect("/login");
-  }
-
-  const decoded = await verifyToken(token);
-
-  if (!decoded?.userId) {
-    redirect("/login");
+  if (!userId) {
+    redirect("/sign-in");
   }
 
   // Verify instructor role
   const user = await db.user.findUnique({
-    where: { id: decoded.userId },
+    where: { id: userId },
     select: { role: true },
   });
 
@@ -30,7 +22,7 @@ export default async function InstructorSendNotificationPage() {
 
   // Fetch tracks taught by this instructor
   const tracks = await db.track.findMany({
-    where: { instructorId: decoded.userId },
+    where: { instructorId: userId },
     select: { id: true, title: true },
     orderBy: { createdAt: "desc" },
   });

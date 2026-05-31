@@ -63,6 +63,7 @@ export default function StudentDashboard() {
   const [tracks, setCourses] = useState<EnrolledCourse[]>([]);
   const [continueLearning, setContinueLearning] = useState<ContinueLearningData | null>(null);
   const [isCoursesLoading, setIsCoursesLoading] = useState(true);
+  const [certificatesCount, setCertificatesCount] = useState(0);
 
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [isNotificationsLoading, setIsNotificationsLoading] = useState(true);
@@ -115,9 +116,22 @@ export default function StudentDashboard() {
       }
     };
 
+    const fetchCertificates = async () => {
+      try {
+        const res = await fetch("/api/student/certificates/count");
+        if (res.ok) {
+          const data = await res.json();
+          setCertificatesCount(data.count || 0);
+        }
+      } catch (err) {
+        console.error("Failed to fetch certificates count", err);
+      }
+    };
+
     if (!isAuthLoading && user) {
       void fetchCourses();
       void fetchNotifications();
+      void fetchCertificates();
     } else if (!isAuthLoading && !user) {
       setIsCoursesLoading(false);
       setIsNotificationsLoading(false);
@@ -203,12 +217,20 @@ export default function StudentDashboard() {
           title={t("student.dashboard.stats.tracks")}
           number={tracks.length}
         />
-        <DashCard icon={<Clock4 size={30} />} title={t("student.dashboard.stats.hours")} number={5} />
-        <DashCard icon={<Medal size={30} />} title={t("student.dashboard.stats.certificates")} number={5} />
+        <DashCard
+          icon={<Clock4 size={30} />}
+          title={t("student.dashboard.stats.hours")}
+          number={tracks.reduce((sum, t) => sum + t.completedLessons, 0)}
+        />
+        <DashCard
+          icon={<Medal size={30} />}
+          title={t("student.dashboard.stats.certificates")}
+          number={certificatesCount}
+        />
         <DashCard
           icon={<ChartNoAxesCombined size={30} />}
           title={t("student.dashboard.stats.streak")}
-          number={5}
+          number={tracks.length > 0 ? Math.round(tracks.reduce((sum, t) => sum + t.progressPercentage, 0) / tracks.length) : 0}
         />
       </div>
 

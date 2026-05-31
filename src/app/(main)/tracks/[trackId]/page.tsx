@@ -138,6 +138,7 @@ export default function CoursePreviewPage() {
   const [isEnrolling, setIsEnrolling] = useState(false);
   const [enrollError, setEnrollError] = useState<string | null>(null);
   const [isEnrolled, setIsEnrolled] = useState(false);
+  const [enrollPending, setEnrollPending] = useState(false);
 
   const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set());
   const [showFullDescription, setShowFullDescription] = useState(false);
@@ -150,7 +151,6 @@ export default function CoursePreviewPage() {
         const data = await res.json();
         if (res.ok) {
           setCourse(data.track);
-          // Expand first module by default
           const firstPhase = data.track?.phases?.[0];
           if (firstPhase?.modules?.length > 0) {
             setExpandedModules(new Set([firstPhase.modules[0].id]));
@@ -184,7 +184,7 @@ export default function CoursePreviewPage() {
 
   const handleEnroll = async () => {
     if (!user) {
-      router.push("/login");
+      router.push("/sign-in");
       return;
     }
 
@@ -197,9 +197,9 @@ export default function CoursePreviewPage() {
     setEnrollError(null);
 
     try {
-      // Paid track → go through Stripe checkout
-      if (track && track.price > 0) {
-        const res = await fetch("/api/checkout", {
+      // Free track → direct enrollment request (admin approves)
+      if (track && track.price <= 0) {
+        const res = await fetch("/api/student/enroll", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ trackId }),
@@ -209,29 +209,33 @@ export default function CoursePreviewPage() {
 
         if (!res.ok) {
           if (data?.alreadyEnrolled) {
-            setIsEnrolled(true);
+            if (data?.status === "PENDING") {
+              setEnrollPending(true);
+            } else {
+              setIsEnrolled(true);
+            }
           } else {
-            setEnrollError(data?.error || "Failed to create checkout session.");
+            setEnrollError(data?.error || "Failed to enroll.");
           }
           return;
         }
 
-        // Free after coupon
-        if (data.free) {
-          setIsEnrolled(true);
-          router.push(`/dashboard/student/${trackId}`);
+        if (data?.alreadyEnrolled) {
+          if (data?.status === "PENDING") {
+            setEnrollPending(true);
+          } else {
+            setIsEnrolled(true);
+          }
           return;
         }
 
-        // Redirect to Stripe Checkout
-        if (data.url) {
-          window.location.href = data.url;
-          return;
-        }
+        // New enrollment submitted
+        setEnrollPending(true);
+        return;
       }
 
-      // Free track → direct enrollment
-      const res = await fetch("/api/student/enroll", {
+      // Paid track → go through Stripe checkout
+      const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ trackId }),
@@ -240,13 +244,29 @@ export default function CoursePreviewPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        setEnrollError(data?.error || "Failed to enroll.");
+        if (data?.alreadyEnrolled) {
+          setIsEnrolled(true);
+        } else {
+          setEnrollError(data?.error || "Failed to create checkout session.");
+        }
         return;
       }
 
-      setIsEnrolled(true);
-      if (!data?.alreadyEnrolled) {
-        router.push(`/dashboard/student/tracks/${trackId}`);
+      // Free after coupon
+      if (data.free) {
+        if (data.pending) {
+          setEnrollPending(true);
+        } else {
+          setIsEnrolled(true);
+          router.push(`/dashboard/student/${trackId}`);
+        }
+        return;
+      }
+
+      // Redirect to Stripe Checkout
+      if (data.url) {
+        window.location.href = data.url;
+        return;
       }
     } catch {
       setEnrollError("An error occurred during enrollment.");
@@ -599,7 +619,15 @@ export default function CoursePreviewPage() {
                 )}
 
                 {/* Action Button */}
-                {isEnrolled ? (
+                {enrollPending ? (
+                  <div className="w-full text-center space-y-2">
+                    <Button className="w-full bg-amber-600/20 text-amber-400 font-bold py-6 text-base cursor-default border border-amber-600/30" disabled>
+                      <Clock className="mr-2 h-5 w-5" />
+                      Pending Approval
+                    </Button>
+                    <p className="text-xs text-muted-foreground">Your enrollment request has been submitted. You&apos;ll be notified once approved.</p>
+                  </div>
+                ) : isEnrolled ? (
                   <Button
                     className="w-full bg-brand-accent hover:bg-brand-accent/90 text-white font-bold py-6 text-base"
                     onClick={() => router.push(`/dashboard/student/tracks/${trackId}`)}
@@ -660,7 +688,12 @@ export default function CoursePreviewPage() {
             {track.price === 0 ? "Free" : `$${Number(track.price).toFixed(2)}`}
           </div>
         </div>
-        {isEnrolled ? (
+        {enrollPending ? (
+          <Button className="bg-amber-600/20 text-amber-400 font-bold py-3 px-8 border border-amber-600/30" disabled>
+            <Clock className="mr-2 h-4 w-4" />
+            Pending Approval
+          </Button>
+        ) : isEnrolled ? (
           <Button
             className="bg-brand-accent hover:bg-brand-accent/90 text-white font-bold py-3 px-8"
             onClick={() => router.push(`/dashboard/student/tracks/${trackId}`)}

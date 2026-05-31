@@ -12,6 +12,7 @@ import {
   Calendar,
   Pencil,
   Loader2,
+  Camera,
   BookOpen,
   Award,
   Library,
@@ -40,9 +41,27 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
   const [editForm, setEditForm] = useState({ name: "", bio: "" });
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !clerkUser) return;
+
+    setUploadingImage(true);
+    try {
+      await clerkUser.setProfileImage({ file });
+      setSuccessMsg(t("profile.profileUpdated") || "Profile updated");
+      setTimeout(() => setSuccessMsg(""), 3000);
+    } catch (err) {
+      console.error("Error uploading image:", err);
+      setErrorMsg("Failed to upload image");
+    } finally {
+      setUploadingImage(false);
+    }
+  };
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -167,7 +186,7 @@ export default function ProfilePage() {
         {/* Banner */}
         <div className="h-32 bg-linear-to-r from-[#bd9759]/30 via-[#e0a84d]/20 to-[#bd9759]/10 relative">
           <div className="absolute -bottom-12 inset-s-6">
-            <div className="h-24 w-24 rounded-2xl overflow-hidden bg-linear-to-br from-[#bd9759] to-[#e0a84d] flex items-center justify-center text-3xl font-black text-black shadow-lg shadow-[#bd9759]/20 border-4 border-[#09090b]">
+            <div className="relative group h-24 w-24 rounded-2xl overflow-hidden bg-linear-to-br from-[#bd9759] to-[#e0a84d] flex items-center justify-center text-3xl font-black text-black shadow-lg shadow-[#bd9759]/20 border-4 border-[#09090b]">
               {clerkUser?.imageUrl ? (
                 <img
                   src={clerkUser.imageUrl}
@@ -177,6 +196,21 @@ export default function ProfilePage() {
               ) : (
                 getInitials(profile.name)
               )}
+              
+              <label className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer">
+                {uploadingImage ? (
+                  <Loader2 className="h-6 w-6 text-white animate-spin" />
+                ) : (
+                  <Camera className="h-6 w-6 text-white" />
+                )}
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  className="hidden" 
+                  onChange={handleImageUpload}
+                  disabled={uploadingImage}
+                />
+              </label>
             </div>
           </div>
         </div>

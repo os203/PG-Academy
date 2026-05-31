@@ -41,15 +41,26 @@ export async function GET() {
       const email = clerkUser.emailAddresses[0]?.emailAddress || `no-email-${userId}@example.com`;
       const name = [clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(" ") || "New User";
       
-      await db.user.create({
-        data: {
-          id: userId,
-          email,
-          name,
-          password: 'clerk-managed',
-          role: 'STUDENT',
-        }
-      });
+      const existingUser = await db.user.findUnique({ where: { email } });
+      
+      if (existingUser) {
+        // Link the existing user account to the new Clerk user ID
+        await db.user.update({
+          where: { email },
+          data: { id: userId }
+        });
+      } else {
+        // Create a brand new user
+        await db.user.create({
+          data: {
+            id: userId,
+            email,
+            name,
+            password: 'clerk-managed',
+            role: 'STUDENT',
+          }
+        });
+      }
       
       // Fetch again to get the exact shape we expect
       user = await db.user.findUnique({

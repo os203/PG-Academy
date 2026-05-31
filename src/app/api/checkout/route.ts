@@ -47,12 +47,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "You are already enrolled in this track", alreadyEnrolled: true }, { status: 400 });
     }
 
-    // Free track — enroll directly
+    // Free track — create pending enrollment request (admin must approve)
     if (track.price === 0) {
       const enrollment = await db.enrollment.create({
-        data: { userId: currentUser.id, trackId, status: "APPROVED" },
+        data: { userId: currentUser.id, trackId, status: "PENDING" },
       });
-      return NextResponse.json({ free: true, enrollment }, { status: 201 });
+      return NextResponse.json({ free: true, pending: true, enrollment }, { status: 201 });
     }
 
     // Calculate discount if coupon provided

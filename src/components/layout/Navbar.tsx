@@ -87,7 +87,7 @@ export default function Navbar() {
                     {t("nav.login")}
                   </Link>
                   <Link
-                    href="/register"
+                    href="/sign-up"
                     className="gold-btn px-5 py-2.5 rounded-lg text-sm"
                   >
                     {t("nav.register")}

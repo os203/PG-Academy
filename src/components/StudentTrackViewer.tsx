@@ -85,6 +85,8 @@ export default function StudentTrackViewer({ trackId }: { trackId: string }) {
     "curriculum"
   );
 
+
+
   const fetchTrack = async (): Promise<void> => {
     try {
       setLoading(true);
@@ -204,6 +206,61 @@ export default function StudentTrackViewer({ trackId }: { trackId: string }) {
     );
   }, [track, selectedLessonId]);
 
+  const watchedPercentRef = React.useRef(0);
+  const lastPositionRef = React.useRef(0);
+
+  useEffect(() => {
+    watchedPercentRef.current = watchedPercentDraft;
+    lastPositionRef.current = lastPositionDraft;
+  }, [watchedPercentDraft, lastPositionDraft]);
+
+  useEffect(() => {
+    if (!selectedLesson) return;
+
+    let lastSavedPercent = selectedLesson.watchedPercent;
+    let lastSavedPosition = selectedLesson.lastPosition;
+
+    const interval = setInterval(() => {
+      const currentPercent = watchedPercentRef.current;
+      const currentPos = lastPositionRef.current;
+
+      if (currentPercent !== lastSavedPercent || currentPos !== lastSavedPosition) {
+        setSavingProgress(true);
+        fetch("/api/student/progress", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            lessonId: selectedLesson.id,
+            watchedPercent: currentPercent,
+            lastPosition: currentPos,
+          }),
+        }).then(res => {
+          if (res.ok) {
+            lastSavedPercent = currentPercent;
+            lastSavedPosition = currentPos;
+          }
+        }).catch(console.error).finally(() => setSavingProgress(false));
+      }
+    }, 10000);
+
+    return () => {
+      const currentPercent = watchedPercentRef.current;
+      const currentPos = lastPositionRef.current;
+      if (currentPercent !== lastSavedPercent || currentPos !== lastSavedPosition) {
+        fetch("/api/student/progress", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "keepalive": "true" },
+          body: JSON.stringify({
+            lessonId: selectedLesson.id,
+            watchedPercent: currentPercent,
+            lastPosition: currentPos,
+          }),
+        }).catch(console.error);
+      }
+      clearInterval(interval);
+    };
+  }, [selectedLesson]);
+
   useEffect(() => {
     if (!selectedLesson) return;
 
@@ -231,39 +288,7 @@ export default function StudentTrackViewer({ trackId }: { trackId: string }) {
     return null;
   }, [track, selectedLessonId]);
 
-  const saveProgress = async (): Promise<void> => {
-    if (!selectedLesson) return;
 
-    setSavingProgress(true);
-
-    try {
-      const res = await fetch("/api/student/progress", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          lessonId: selectedLesson.id,
-          watchedPercent: watchedPercentDraft,
-          lastPosition: lastPositionDraft,
-        }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        alert(data?.error || "Failed to save progress");
-        return;
-      }
-
-      await fetchTrack();
-    } catch (error) {
-      console.error(error);
-      alert("An error occurred while saving progress");
-    } finally {
-      setSavingProgress(false);
-    }
-  };
 
   const claimCertificate = async (): Promise<void> => {
     if (!track) return;
@@ -481,42 +506,31 @@ export default function StudentTrackViewer({ trackId }: { trackId: string }) {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
-              <h3 className="font-bold text-foreground">{t("student.trackViewer.saveProgress")}</h3>
+              <div className="flex items-center justify-between">
+                <h3 className="font-bold text-foreground">Video Progress</h3>
+                {savingProgress && (
+                  <span className="text-xs font-bold text-[#E5C158] flex items-center gap-1">
+                    <Loader2 size={12} className="animate-spin" /> Auto-saving...
+                  </span>
+                )}
+              </div>
 
               <div>
                 <label className="block text-sm font-medium text-muted-foreground mb-2">
                   {t("student.trackViewer.videoWatchPercentage")}
                 </label>
 
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  value={watchedPercentDraft}
-                  onChange={(event) =>
-                    setWatchedPercentDraft(Number(event.target.value))
-                  }
-                  className="w-full accent-[#E5C158]"
-                />
+                <div className="relative w-full h-3 bg-muted rounded-full overflow-hidden">
+                  <div
+                    className="absolute top-0 left-0 h-full bg-[#E5C158] transition-all duration-300"
+                    style={{ width: `${watchedPercentDraft}%` }}
+                  />
+                </div>
 
                 <div className="text-sm text-muted-foreground mt-2">
                   {t("student.trackViewer.current")}: {watchedPercentDraft}%
                 </div>
               </div>
-
-              <button
-                type="button"
-                onClick={() => void saveProgress()}
-                disabled={savingProgress}
-                className="inline-flex items-center gap-2 bg-muted text-foreground px-5 py-3 rounded-xl font-bold hover:bg-muted/80 transition disabled:opacity-50"
-              >
-                {savingProgress ? (
-                  <Loader2 size={16} className="animate-spin" />
-                ) : (
-                  <Save size={16} />
-                )}
-                {t("student.trackViewer.savePosition")}
-              </button>
             </div>
 
             <div

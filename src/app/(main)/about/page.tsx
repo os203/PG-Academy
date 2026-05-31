@@ -190,7 +190,7 @@ export default function AboutPage() {
                 {t("home.hero.exploreTracks")}
               </Link>
               <Link
-                href="/register"
+                href="/sign-up"
                 className="px-6 py-3 bg-transparent border border-border hover:border-foreground/50 text-foreground rounded-lg font-semibold text-sm transition-all"
               >
                 {t("home.hero.cta")}

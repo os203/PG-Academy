@@ -27,7 +27,7 @@ export default function InstructorNotificationsPage() {
 
   useEffect(() => {
     if (!isLoading && !user) {
-      router.push('/login');
+      router.push('/sign-in');
     }
   }, [user, isLoading, router]);
 

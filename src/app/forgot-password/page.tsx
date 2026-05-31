@@ -76,7 +76,7 @@ export default function ForgotPasswordPage() {
               </p>
             </div>
             <Link 
-              href="/login" 
+              href="/sign-in" 
               className="block w-full py-3 px-4 bg-brand-primary hover:bg-brand-primary/90 text-white font-medium rounded-xl transition text-center"
             >
               Return to Login
@@ -118,7 +118,7 @@ export default function ForgotPasswordPage() {
             </button>
             
             <div className="text-center mt-6">
-              <Link href="/login" className="text-sm font-medium text-brand-primary hover:text-brand-secondary transition">
+              <Link href="/sign-in" className="text-sm font-medium text-brand-primary hover:text-brand-secondary transition">
                 Wait, I remember my password!
               </Link>
             </div>
