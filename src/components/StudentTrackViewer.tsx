@@ -437,7 +437,7 @@ export default function StudentTrackViewer({ trackId }: { trackId: string }) {
               {selectedLesson.videoPath ? (
                 selectedLesson.videoPath.startsWith("/uploads/") ? (
                   <video
-                    src={selectedLesson.videoPath}
+                    src={`/api/student/lessons/${selectedLesson.id}/raw-video`}
                     controls
                     className="w-full h-full bg-black object-contain"
                     onTimeUpdate={(event) => {

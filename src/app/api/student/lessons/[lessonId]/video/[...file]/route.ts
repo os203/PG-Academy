@@ -112,13 +112,49 @@ export async function GET(
       return NextResponse.json({ error: "Invalid file path" }, { status: 400 });
     }
 
-    const fileBuffer = await fs.readFile(targetPath);
     const contentType = getContentType(requestedFile);
+    const fsSync = await import("fs").then((m) => m.default);
+    const stat = fsSync.statSync(targetPath);
+    const fileSize = stat.size;
+    const range = _req.headers.get("range");
+
+    if (range && requestedFile.endsWith(".ts")) {
+      // Range request for .ts segments
+      const parts = range.replace(/bytes=/, "").split("-");
+      const start = parseInt(parts[0], 10);
+      const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
+      const chunkSize = end - start + 1;
+      const stream = fsSync.createReadStream(targetPath, { start, end });
+      const readableStream = new ReadableStream({
+        start(controller) {
+          stream.on("data", (chunk: Buffer) => controller.enqueue(new Uint8Array(chunk)));
+          stream.on("end", () => controller.close());
+          stream.on("error", (err: Error) => controller.error(err));
+        },
+        cancel() { stream.destroy(); },
+      });
+
+      return new NextResponse(readableStream, {
+        status: 206,
+        headers: {
+          "Content-Range": `bytes ${start}-${end}/${fileSize}`,
+          "Accept-Ranges": "bytes",
+          "Content-Length": chunkSize.toString(),
+          "Content-Type": contentType,
+          "Cache-Control": "private, no-store",
+        },
+      });
+    }
+
+    // Full file (m3u8 manifests are small, safe to read fully)
+    const fileBuffer = await fs.readFile(targetPath);
 
     return new NextResponse(fileBuffer, {
       status: 200,
       headers: {
         "Content-Type": contentType,
+        "Accept-Ranges": "bytes",
+        "Content-Length": fileSize.toString(),
         "Cache-Control": "private, no-store",
       },
     });
