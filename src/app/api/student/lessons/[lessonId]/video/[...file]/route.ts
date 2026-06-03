@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import path from "path";
 import fs from "fs/promises";
 import { db } from "@/lib/db";
@@ -127,7 +126,7 @@ export async function GET(
       const stream = fsSync.createReadStream(targetPath, { start, end });
       const readableStream = new ReadableStream({
         start(controller) {
-          stream.on("data", (chunk: Buffer) => controller.enqueue(new Uint8Array(chunk)));
+          stream.on("data", (chunk: any) => controller.enqueue(new Uint8Array(chunk)));
           stream.on("end", () => controller.close());
           stream.on("error", (err: Error) => controller.error(err));
         },

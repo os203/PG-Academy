@@ -7,7 +7,6 @@ import {
   Loader2,
   Lock,
   PlayCircle,
-  Save,
   Medal,
   AlertTriangle,
   ChevronDown,

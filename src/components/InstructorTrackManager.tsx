@@ -781,7 +781,7 @@ export default function InstructorTrackManager({
 
   return (
     <div className="max-w-5xl mx-auto p-6 space-y-8">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-gradient-to-r from-brand-primary/20 to-transparent p-6 rounded-2xl border border-brand-primary/30 mb-8">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-linear-to-r from-brand-primary/20 to-transparent p-6 rounded-2xl border border-brand-primary/30 mb-8">
         <div>
           <h1 className="text-3xl font-black text-white mb-2">{track.title}</h1>
           <div className="flex items-center gap-2 text-brand-primary font-medium text-sm">
