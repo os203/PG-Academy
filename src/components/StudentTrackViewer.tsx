@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useCallback } from "react";
 import {
   CheckCircle2,
   CircleDashed,
@@ -213,19 +213,19 @@ export default function StudentTrackViewer({ trackId }: { trackId: string }) {
     lastPositionRef.current = lastPositionDraft;
   }, [watchedPercentDraft, lastPositionDraft]);
 
-  useEffect(() => {
+  // We now trigger saves manually (on pause, end, or unmount) instead of an aggressive interval
+  // to prevent any potential stream interruptions during playback.
+  const saveProgressNow = useCallback(async () => {
     if (!selectedLesson) return;
+    
+    const currentPercent = watchedPercentRef.current;
+    const currentPos = lastPositionRef.current;
 
-    let lastSavedPercent = selectedLesson.watchedPercent;
-    let lastSavedPosition = selectedLesson.lastPosition;
-
-    const interval = setInterval(() => {
-      const currentPercent = watchedPercentRef.current;
-      const currentPos = lastPositionRef.current;
-
-      if (currentPercent !== lastSavedPercent || currentPos !== lastSavedPosition) {
-        setSavingProgress(true);
-        fetch("/api/student/progress", {
+    // Only save if progress actually changed
+    if (currentPercent > 0 || currentPos > 0) {
+      setSavingProgress(true);
+      try {
+        await fetch("/api/student/progress", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -233,19 +233,23 @@ export default function StudentTrackViewer({ trackId }: { trackId: string }) {
             watchedPercent: currentPercent,
             lastPosition: currentPos,
           }),
-        }).then(res => {
-          if (res.ok) {
-            lastSavedPercent = currentPercent;
-            lastSavedPosition = currentPos;
-          }
-        }).catch(console.error).finally(() => setSavingProgress(false));
+        });
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setSavingProgress(false);
       }
-    }, 10000);
+    }
+  }, [selectedLesson]);
 
+  // Save progress on unmount or lesson change
+  useEffect(() => {
     return () => {
+      if (!selectedLesson) return;
       const currentPercent = watchedPercentRef.current;
       const currentPos = lastPositionRef.current;
-      if (currentPercent !== lastSavedPercent || currentPos !== lastSavedPosition) {
+      
+      if (currentPercent > 0 || currentPos > 0) {
         fetch("/api/student/progress", {
           method: "POST",
           headers: { "Content-Type": "application/json", "keepalive": "true" },
@@ -256,7 +260,6 @@ export default function StudentTrackViewer({ trackId }: { trackId: string }) {
           }),
         }).catch(console.error);
       }
-      clearInterval(interval);
     };
   }, [selectedLesson]);
 
@@ -265,6 +268,14 @@ export default function StudentTrackViewer({ trackId }: { trackId: string }) {
 
     setWatchedPercentDraft(selectedLesson.watchedPercent);
     setLastPositionDraft(selectedLesson.lastPosition);
+
+    // Sync refs to display state every 2 seconds (not on every frame)
+    const displaySync = setInterval(() => {
+      setWatchedPercentDraft(watchedPercentRef.current);
+      setLastPositionDraft(lastPositionRef.current);
+    }, 2000);
+
+    return () => clearInterval(displaySync);
   }, [selectedLesson]);
 
   const currentLessonInfo = useMemo(() => {
@@ -436,8 +447,10 @@ export default function StudentTrackViewer({ trackId }: { trackId: string }) {
               {selectedLesson.videoPath ? (
                 selectedLesson.videoPath.startsWith("/uploads/") ? (
                   <video
-                    src={`/api/student/lessons/${selectedLesson.id}/raw-video`}
+                    key={`video-${selectedLesson.id}`}
+                    src={selectedLesson.videoPath}
                     controls
+                    preload="auto"
                     className="w-full h-full bg-black object-contain"
                     onTimeUpdate={(event) => {
                       const video = event.currentTarget;
@@ -450,9 +463,12 @@ export default function StudentTrackViewer({ trackId }: { trackId: string }) {
                         (video.currentTime / video.duration) * 100
                       );
 
-                      setWatchedPercentDraft(percent);
-                      setLastPositionDraft(Math.round(video.currentTime));
+                      // Write to refs only (no re-render) to prevent video remounting
+                      watchedPercentRef.current = percent;
+                      lastPositionRef.current = Math.round(video.currentTime);
                     }}
+                    onPause={saveProgressNow}
+                    onEnded={saveProgressNow}
                   />
                 ) : (
                   <SecureHlsPlayer

@@ -126,7 +126,7 @@ export async function GET(
       const stream = fsSync.createReadStream(targetPath, { start, end });
       const readableStream = new ReadableStream({
         start(controller) {
-          stream.on("data", (chunk: any) => controller.enqueue(new Uint8Array(chunk)));
+          stream.on("data", (chunk) => controller.enqueue(new Uint8Array(chunk as Buffer)));
           stream.on("end", () => controller.close());
           stream.on("error", (err: Error) => controller.error(err));
         },

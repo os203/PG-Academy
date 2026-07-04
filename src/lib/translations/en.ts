@@ -132,6 +132,7 @@ const en = {
   "tracksHub.grid.title": "Four Specialized Tracks. One Career Path.",
   "tracksHub.grid.desc": "Explore PG Academy's four specialized tracks, choose the one that matches your ambition, and advance through a structured journey built for real career outcomes.",
   "tracksHub.startRegistration": "Start Registration",
+  "tracksHub.showTrack": "Show Track",
   
   "tracksHub.track1.title": "AI Animation",
   "tracksHub.track1.subtitle": "Motion Design for the AI Era",

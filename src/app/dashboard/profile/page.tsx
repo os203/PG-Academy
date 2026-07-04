@@ -104,6 +104,19 @@ export default function ProfilePage() {
       const data = await res.json();
 
       if (res.ok) {
+        // Also update Clerk's frontend cache so the Navbar instantly reflects the new name
+        if (clerkUser) {
+          const nameParts = editForm.name.trim().split(" ");
+          const firstName = nameParts[0];
+          const lastName = nameParts.slice(1).join(" ") || undefined;
+          
+          try {
+            await clerkUser.update({ firstName, lastName });
+          } catch (clerkErr) {
+            console.error("Failed to sync name with Clerk:", clerkErr);
+          }
+        }
+
         setProfile((prev) =>
           prev ? { ...prev, name: data.user.name, bio: data.user.bio } : prev
         );
@@ -188,6 +201,7 @@ export default function ProfilePage() {
           <div className="absolute -bottom-12 inset-s-6">
             <div className="relative group h-24 w-24 rounded-2xl overflow-hidden bg-linear-to-br from-[#bd9759] to-[#e0a84d] flex items-center justify-center text-3xl font-black text-black shadow-lg shadow-[#bd9759]/20 border-4 border-[#09090b]">
               {clerkUser?.imageUrl ? (
+                /* eslint-disable-next-line @next/next/no-img-element */
                 <img
                   src={clerkUser.imageUrl}
                   alt={profile.name}

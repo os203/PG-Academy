@@ -27,7 +27,7 @@ interface InstructorCourse {
   thumbnail: string | null;
   price: number;
   status: "DRAFT" | "PUBLISHED";
-  category: string | null;
+  category: { id: string; name: string; slug: string } | null;
   instructor?: { name: string };
   _count?: { modules: number; enrollments: number };
   modules?: Array<{ _count: { lessons: number } }>;
@@ -118,7 +118,7 @@ export default function MyCoursesPage() {
                 thumbnail={track.thumbnail || "/taco3.jpg"}
                 courseName={track.title}
                 instructor={track.instructor?.name || user?.name || "Instructor"}
-                category={track.category || "General"}
+                category={track.category?.name || "General"}
                 progress={0}
                 totalLessons={totalLessons}
                 studentCount={track._count?.enrollments || 0}

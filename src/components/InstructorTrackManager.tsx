@@ -113,17 +113,7 @@ interface ApiMessageResponse {
   details?: string;
 }
 
-interface VideoUploadResponse extends ApiMessageResponse {
-  videoAsset?: {
-    id: string;
-    lessonId: string;
-    originalPath?: string | null;
-    hlsManifestPath?: string | null;
-    duration?: number | null;
-    status?: "PROCESSING" | "READY" | "FAILED";
-    errorMessage?: string | null;
-  };
-}
+
 
 async function readJsonSafely<T>(res: Response): Promise<T | null> {
   const contentType = res.headers.get("content-type") || "";
@@ -177,7 +167,7 @@ export default function InstructorTrackManager({
   const [uploadingVideoLessonId, setUploadingVideoLessonId] = useState<
     string | null
   >(null);
-  const [uploadProgress, setUploadProgress] = useState<number>(0);
+
   const { t } = useLanguage();
 
   const fetchCourseData = useCallback(async (): Promise<void> => {
@@ -693,7 +683,6 @@ export default function InstructorTrackManager({
     }
 
     setUploadingVideoLessonId(lessonId);
-    setUploadProgress(0);
 
     try {
       const extension = file.name.split('.').pop() || 'mp4';
@@ -705,8 +694,7 @@ export default function InstructorTrackManager({
 
         xhr.upload.addEventListener('progress', (event) => {
           if (event.lengthComputable) {
-            const percent = Math.round((event.loaded / event.total) * 100);
-            setUploadProgress(percent);
+            // const percent = Math.round((event.loaded / event.total) * 100);
           }
         });
 
@@ -741,14 +729,12 @@ export default function InstructorTrackManager({
         return;
       }
 
-      setUploadProgress(100);
       await fetchCourseData();
     } catch (error) {
       console.error(error);
       alert(t("video.uploadFailed"));
     } finally {
       setUploadingVideoLessonId(null);
-      setUploadProgress(0);
     }
   };
 

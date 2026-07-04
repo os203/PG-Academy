@@ -5,12 +5,16 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { useLanguage } from "@/context/LanguageContext";
 
+import { useAuth } from "@clerk/nextjs";
+
 export default function CoursesPage() {
   const { t } = useLanguage();
+  const { userId } = useAuth();
 
   const specializedTracks = [
     { 
-      id: "01", 
+      id: "01",
+      dbId: "dde6cf39-2903-4930-b3a0-99f94d5716d1",
       title: t("tracksHub.track1.title"), 
       subtitle: t("tracksHub.track1.subtitle"),
       desc: t("tracksHub.track1.desc"),
@@ -18,7 +22,8 @@ export default function CoursesPage() {
       overlay: "from-zinc-950/90 to-transparent"
     },
     { 
-      id: "02", 
+      id: "02",
+      dbId: "ff74573e-c981-42e6-af5d-55effe5c9311",
       title: t("tracksHub.track2.title"), 
       subtitle: t("tracksHub.track2.subtitle"),
       desc: t("tracksHub.track2.desc"),
@@ -26,7 +31,8 @@ export default function CoursesPage() {
       overlay: "from-zinc-950/90 to-transparent"
     },
     { 
-      id: "03", 
+      id: "03",
+      dbId: "760fa627-a8ae-4cd9-ab5c-2873f01acf7c",
       title: t("tracksHub.track3.title"), 
       subtitle: t("tracksHub.track3.subtitle"),
       desc: t("tracksHub.track3.desc"),
@@ -34,7 +40,8 @@ export default function CoursesPage() {
       overlay: "from-zinc-950/90 to-transparent"
     },
     { 
-      id: "04", 
+      id: "04",
+      dbId: "96a58368-126e-461e-8c28-8b5ff16840ce",
       title: t("tracksHub.track4.title"), 
       subtitle: t("tracksHub.track4.subtitle"),
       desc: t("tracksHub.track4.desc"),
@@ -64,17 +71,19 @@ export default function CoursesPage() {
           </p>
           <div className="flex flex-wrap items-center gap-4">
             <Link 
-              href="/sign-up" 
+              href={userId ? "/dashboard" : "/sign-up"} 
               className="px-8 py-4 rounded-lg bg-[#bd9759] text-black font-bold hover:bg-[#a6844c] transition-all shadow-lg hover:shadow-xl hover:-translate-y-1"
             >
-              {t("tracksHub.btnApply")}
+              {userId ? t("tracksHub.btnDiscover") : t("tracksHub.btnApply")}
             </Link>
-            <Link 
-              href="/about" 
-              className="px-8 py-4 rounded-lg border border-border bg-foreground/5 text-foreground font-bold hover:bg-foreground/10 transition-all backdrop-blur-sm"
-            >
-              {t("tracksHub.btnDiscover")}
-            </Link>
+            {!userId && (
+              <Link 
+                href="/about" 
+                className="px-8 py-4 rounded-lg border border-border bg-foreground/5 text-foreground font-bold hover:bg-foreground/10 transition-all backdrop-blur-sm"
+              >
+                {t("tracksHub.btnDiscover")}
+              </Link>
+            )}
           </div>
         </div>
 
@@ -123,8 +132,8 @@ export default function CoursesPage() {
                       {track.desc}
                     </p>
                   </div>
-                  <Link href="/sign-up" className="inline-flex self-start items-center gold-btn px-6 py-2.5 rounded-lg text-sm font-semibold">
-                    {t("tracksHub.startRegistration")}
+                  <Link href={userId ? `/tracks/${track.dbId}` : "/sign-up"} className="inline-flex self-start items-center gold-btn px-6 py-2.5 rounded-lg text-sm font-semibold">
+                    {userId ? (t("tracksHub.showTrack") || "Show Track") : t("tracksHub.startRegistration")}
                   </Link>
                 </div>
               </motion.div>

@@ -132,6 +132,7 @@ const ar: Record<string, string> = {
   "tracksHub.grid.title": "أربعة مسارات متخصصة. مسار مهني واحد.",
   "tracksHub.grid.desc": "استكشف المسارات الأربعة المتخصصة في أكاديمية PG، واختر المسار الذي يطابق طموحك، وتقدم عبر رحلة منظمة مبنية لتحقيق نتائج مهنية حقيقية.",
   "tracksHub.startRegistration": "ابدأ التسجيل",
+  "tracksHub.showTrack": "عرض المسار",
   
   "tracksHub.track1.title": "الأنيميشن بالذكاء الاصطناعي",
   "tracksHub.track1.subtitle": "تصميم الحركة لعصر الذكاء الاصطناعي",
